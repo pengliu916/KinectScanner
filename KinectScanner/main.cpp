@@ -1,9 +1,5 @@
 //--------------------------------------------------------------------------------------
-// File: Marching Cubes.cpp
-//
-// Empty starting point for new Direct3D 9 and/or Direct3D 11 applications
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// KinectScanner
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
 #include "DXUTgui.h"
