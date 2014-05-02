@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="MultiTexturePresenter.fx" />
+    <FxCompile Include="NormalGenerator.fx" />
+    <FxCompile Include="RGBBilateralFilter.fx" />
+    <FxCompile Include="FilteredPCL.fx" />
+    <FxCompile Include="VolumeTSDF.fx" />
+    <FxCompile Include="RayCast.fx" />
+    <FxCompile Include="TSDFImages.fx" />
+    <FxCompile Include="Reduction.fx" />
+    <FxCompile Include="PoseEstimator.fx" />
+    <FxCompile Include="HistoPyramidMC.fx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MultiTexturePresenter.h" />
+    <ClInclude Include="Scanner.h" />
+    <ClInclude Include="FilteredPCL.h" />
+    <ClInclude Include="NormalGenerator.h" />
+    <ClInclude Include="RGBBilateralFilter.h" />
+    <ClInclude Include="TransPCLs.h" />
+    <ClInclude Include="header.h" />
+    <ClInclude Include="VolumeTSDF.h" />
+    <ClInclude Include="RayCast.h" />
+    <ClInclude Include="TSDFImages.h" />
+    <ClInclude Include="Reduction.h" />
+    <ClInclude Include="PoseEstimator.h" />
+    <ClInclude Include="HistoPyramidMC.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D3DX_DXGIFormatConvert.inl" />
+  </ItemGroup>
+</Project>
