@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// KinectScanner
+// KinectScanner----changed in Alienware, push before browser commit
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
 #include "DXUTgui.h"
