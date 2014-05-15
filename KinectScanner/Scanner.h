@@ -323,11 +323,11 @@ HRESULT Scanner::ProcessColor( ID3D11DeviceContext* pd3dimmediateContext )
 
 	hr = m_pNuiSensor->NuiImageStreamReleaseFrame( m_pColorStreamHandle, &imageFrame );
 
-	/*D3D11_MAPPED_SUBRESOURCE msT;
+	D3D11_MAPPED_SUBRESOURCE msT;
 	hr = pd3dimmediateContext->Map(m_pColorTex,NULL,D3D11_MAP_WRITE_DISCARD,NULL,&msT);
 	if(FAILED(hr))	 {return hr;}
 	memcpy(msT.pData,m_colorRGBX,LockedRect.size);
-	pd3dimmediateContext->Unmap(m_pColorTex,NULL);*/
+	pd3dimmediateContext->Unmap(m_pColorTex,NULL);
 
 	return hr;
 }

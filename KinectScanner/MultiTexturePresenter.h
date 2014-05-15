@@ -85,7 +85,6 @@ public:
 		default:
 			widthNum=1;heightNum=1;
 		}
-
 		sd.BufferCount = 1;
 		sd.BufferDesc.Width = m_uTextureWidth*widthNum;
 		sd.BufferDesc.Height = m_uTextureHeight*heightNum;
@@ -152,7 +151,7 @@ public:
 		}
 
 		ID3DBlob* pVSBlob = NULL;
-		wstring filename = L"MultiTexturePresenter.fx";
+		wstring filename = L"Shader\\MultiTexturePresenter.fx";
 
 		V_RETURN(DXUTCompileFromFile(filename.c_str(), nullptr, "VS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob));
 		V_RETURN(pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(),pVSBlob->GetBufferSize(),NULL,&m_pPassVS));
