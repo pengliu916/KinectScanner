@@ -14,24 +14,24 @@ public:
     OpenCVThread(KinectSensor* _m_pKinect){ 
         m_pKinect = _m_pKinect; 
         m_bTerminated = false;
-        cv::createTrackbar("Low Threashold","Canny",&m_uLowThreashold,255,[](int pos,void*){
-            //this->m_uLowThreashold = pos;
-        });
+        cv::namedWindow("Color",cv::WINDOW_AUTOSIZE);
+        /*
+        cv::namedWindow("Canny",cv::WINDOW_AUTOSIZE);
+        cv::createTrackbar("Low Threashold","Canny",&m_uLowThreashold,255);
+        cv::createTrackbar("High Threashold","Canny",&m_uHighThreashold,255);*/
     };
 
     void Run(){
         while(!m_bTerminated){
             cv::Mat img_gry,img_canny;
             m_pKinect->UpdateColorMat();
-            cv::cvtColor(m_pKinect->m_matColor,img_gry,cv::COLOR_BGR2GRAY);
-            cv::Canny(img_gry,img_canny,10,100,3,true);
-            cv::imshow("Canny",img_canny);
+            cv::imshow("Color",m_pKinect->m_matColor);
+            /*cv::cvtColor(m_pKinect->m_matColor,img_gry,cv::COLOR_BGR2GRAY);
+            cv::Canny(img_gry,img_canny,m_uLowThreashold,m_uHighThreashold,3,true);
+            cv::imshow("Canny",img_canny);*/
             cv::waitKey(10);
         }
     }
 
     OpenCVThread(const OpenCVThread&) = delete;
-    void onTrackbarSlide(int pos, void*){
-        m_u
-    }
 };

@@ -10,7 +10,7 @@
 #include "VolumeTSDF.h"
 #include "TSDFImages.h"
 #include "PoseEstimator.h"
-
+//hi
 CDXUTDialogResourceManager      g_DialogResourceManager;
 CDXUTTextHelper*                g_pTxtHelper = NULL;
 wchar_t                         g_debugLine1[100];

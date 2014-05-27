@@ -107,7 +107,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\build\include;\.;..\KinectScanner;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\build\include;\.;..\.;..\KinectScanner;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
       <AdditionalOptions>/wd4430 %(AdditionalOptions)</AdditionalOptions>
       <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
@@ -149,7 +149,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\build\include;\.;..\KinectScanner;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_DIR)\build\include;\.;..\.;..\KinectScanner;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -313,6 +313,4 @@ void      WINAPI DXUTDestroyState(); // Optional method to destroy DXUT's memory
 #include "DXUTmisc.h"
 #include "DXUTDevice11.h"
 
-
-
 #include "Eigen/Dense"

@@ -55,7 +55,7 @@ public:
 
 
     KinectSensor(bool);
-    KinectSensor(const KinectSensor&) = delete;
+    //KinectSensor(const KinectSensor&) = delete;
     ~KinectSensor();
     HRESULT InitialKinect();
     HRESULT CreateResource(ID3D11Device* pd3dDevice);
@@ -360,9 +360,9 @@ void KinectSensor::UpdateColorMat()
     for(UINT y=0;y<m_colorHeight;++y){
         cv::Vec3b* pColorRow = m_matColor.ptr<cv::Vec3b>(y);
         for( UINT x=0;x<m_colorWidth;++x){
-            pColorRow[x] = cv::Vec3b(m_colorRGBX[y*m_colorWidth*cBytesPerPixel+x*4+2],
+            pColorRow[x] = cv::Vec3b(m_colorRGBX[y*m_colorWidth*cBytesPerPixel+x*4+0],
                                      m_colorRGBX[y*m_colorWidth*cBytesPerPixel+x*4+1],
-                                     m_colorRGBX[y*m_colorWidth*cBytesPerPixel+x*4+0]);
+                                     m_colorRGBX[y*m_colorWidth*cBytesPerPixel+x*4+2]);
         }
     }
 }
@@ -441,7 +441,7 @@ HRESULT KinectSensor::UpdateDepthTexture(ID3D11DeviceContext* pd3dimmediateConte
         return hr;
     bool needToMapColorToDepth = false;
 
-    if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextDepthFrameEvent, 0))
+    if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextDepthFrameEvent, 1000))
     {
         // if we have received any valid new depth data we may need to draw
         if (SUCCEEDED(ProcessDepth()))
@@ -457,7 +457,7 @@ HRESULT KinectSensor::UpdateDepthTexture(ID3D11DeviceContext* pd3dimmediateConte
         }
     }
 
-    if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextColorFrameEvent, 0))
+    if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextColorFrameEvent, 1000))
     {
         // if we have received any valid new color data we may need to draw
         if (SUCCEEDED(ProcessColor()))
