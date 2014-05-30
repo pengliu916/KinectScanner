@@ -31,7 +31,7 @@ void Mat8UC3toMat16UC1(cv::Mat& inMat, cv::Mat& outMat)
         for( LONG x = 0; x < inMat.size().width; ++x )
         {
             uchar* value = inMat.ptr<uchar>(y,x);
-            pColorRow[x] = ((short)value[0] << 8 | (short)value[1]);
+            pColorRow[x] = (short)(value[0]<<8 | value[1]);
         }
     }
 }
@@ -39,33 +39,92 @@ void Mat8UC3toMat16UC1(cv::Mat& inMat, cv::Mat& outMat)
 int main()
 {
     KinectSensor kinect;
-    cv::Mat mat_cvt2RGB;
-    cv::Mat mat_cvt2D16;
+    LONG framecount=0;
+    cv::Mat firstColorFrame;
+    cv::Mat firstDepthFrame;
+    cv::Mat converted;
 
-    kinect.InitialKinect();
+    kinect.InitialKinect();/*
+    cv::namedWindow("KinectColor", cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("KinectDepth",cv::WINDOW_AUTOSIZE);
+
+    cv::namedWindow("ConvertedDepth",cv::WINDOW_AUTOSIZE);
+*/
+    //cv::namedWindow("firstColorFrame", cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("firstDepthFrame", cv::WINDOW_AUTOSIZE);
+
+    //cv::VideoWriter colorWriter;
+    cv::VideoWriter depthWriter;
+
+    //colorWriter.open("ColorChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(640,480));
+    //depthWriter.open("DepthChannel.avi",-1,30,cv::Size(640,480));
+    depthWriter.open("DepthChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(640,480));
+    if(/*!colorWriter.isOpened()||*/!depthWriter.isOpened()){
+        cout<<"Cannot open video file to write."<<endl;
+        exit(1);
+    }
+
 
     while('q'!=cv::waitKey(1)){
         kinect.UpdateMats( true );
         if( kinect.m_bUpdated ){
-            cv::imshow( "KinectDepth", kinect.m_matDepth );
-            Mat16UC1toMat8UC3( kinect.m_matDepth, mat_cvt2RGB );
-            cv::imshow( "mat_cvt2RGBDepth", mat_cvt2RGB );
-            Mat8UC3toMat16UC1( mat_cvt2RGB, mat_cvt2D16 );
-            cv::imshow( "mat_cvt2D16", mat_cvt2D16 );
-            cv::Mat diff = kinect.m_matDepth - mat_cvt2D16;
-
-            double min=0,max=0;
-            cv::Point minloc;
-            cv::Point maxloc;
-            cv::minMaxLoc( kinect.m_matDepth, &min, &max, &minloc, &maxloc );
-
-            cout << "colorFrame:  min:" << min << "; max:" << max << endl;
-            cv::circle( kinect.m_matDepth, maxloc, 8, cv::Scalar( 255, 255, 255 ), 3 );
-            cv::circle( kinect.m_matDepth, minloc, 4, cv::Scalar( 255, 255, 0 ) );
-            //cv::imshow( "difference", diff);
+            cv::Mat getMat;
+            kinect.m_matDepth.copyTo(getMat);
+            if( framecount == 0 ){
+                //firstColorFrame = kinect.m_matColor;
+                firstDepthFrame = getMat;
+                //cv::imshow( "firstColorFrame", firstColorFrame );
+                cv::imshow( "firstDepthFrame", firstDepthFrame );
+            }
+            Mat16UC1toMat8UC3( getMat, converted );
+            cv::imshow( "ConvertedDepth", converted );
+            //cv::imshow( "KinectColor", kinect.m_matColor );
+            //colorWriter << kinect.m_matColor;
+            depthWriter << converted;
+            //depthWriter << kinect.m_matDepth;
+            framecount++;
         }
+        //double min, max;
+        //cv::minMaxLoc(kinect.m_matDepth,&min,&max);
+        //cout<<"min:"<<min<<"; max:"<<max<<endl;
     }
-    cv::waitKey(0);
+    //colorWriter.release();
+    depthWriter.release();
+
+    //cv::VideoCapture colorCap("ColorChannel.avi");
+    cv::VideoCapture depthCap("DepthChannel.avi");
+
+    //depthCap.get(CV_CAP_PROP_FORMAT);
+    //cv::Mat firstColorCaptured;
+    cv::Mat firstDepthCaptured;
+    cv::Mat convertedC;
+    //colorCap>>firstColorCaptured;
+    depthCap>>firstDepthCaptured;
+
+    Mat8UC3toMat16UC1(firstDepthCaptured,convertedC);
     
+    cv::imshow("VDepthRGB",firstDepthCaptured);
+    cv::imshow("VDepth16",convertedC);
+
+    cv::Mat diff;
+    absdiff(convertedC, firstDepthFrame,diff);
+    double min=0,max=0;
+    cv::Point minloc;
+    cv::Point maxloc;
+    cv::minMaxLoc(diff,&min,&max,&minloc,&maxloc);
+
+    cout<<"diffFrame:  min:"<<min<<"; max:"<<max<<endl;
+    cv::circle(firstDepthCaptured,maxloc,8,cv::Scalar(255,255,255),3);
+    cv::circle(firstDepthCaptured,minloc,4,cv::Scalar(255,255,0));
+    cv::imshow("Vdiff",diff);
+    /*
+    diff = firstDepthCaptured - firstDepthFrame;
+    cv::minMaxLoc(diff,&min,&max);
+    cout<<"depthFrame:  min:"<<min<<"; max:"<<max<<endl;*/
+
+    cv::waitKey(0);
+
+
+
     return 0;
 }
