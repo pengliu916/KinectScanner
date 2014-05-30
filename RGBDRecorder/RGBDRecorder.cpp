@@ -57,12 +57,12 @@ int main()
             double min=0,max=0;
             cv::Point minloc;
             cv::Point maxloc;
-            cv::minMaxLoc( diff, &min, &max, &minloc, &maxloc );
+            cv::minMaxLoc( kinect.m_matDepth, &min, &max, &minloc, &maxloc );
 
             cout << "colorFrame:  min:" << min << "; max:" << max << endl;
-            cv::circle( diff, maxloc, 8, cv::Scalar( 255, 255, 255 ), 3 );
-            cv::circle( diff, minloc, 4, cv::Scalar( 255, 255, 0 ) );
-            cv::imshow( "difference", diff);
+            cv::circle( kinect.m_matDepth, maxloc, 8, cv::Scalar( 255, 255, 255 ), 3 );
+            cv::circle( kinect.m_matDepth, minloc, 4, cv::Scalar( 255, 255, 0 ) );
+            //cv::imshow( "difference", diff);
         }
     }
     cv::waitKey(0);
