@@ -15,9 +15,10 @@
 #include "NormalGenerator.h"
 
 #if USING_KINECT
-#include "Scanner.h"
-
+//#include "Scanner.h"
+#include "KinectLib\KinectLib.h"
 #endif
+using namespace KinectLib;
 
 class FilteredPCL
 {
@@ -38,7 +39,8 @@ public:
 
 	D3D11_VIEWPORT					m_Viewport;
 
-	Scanner							m_kinect;
+	KinectSensor					m_kinect;
+	//Scanner							m_kinect;
 
 #endif
 	RGBBilateralFilter				m_bilateralFilter;
@@ -208,7 +210,8 @@ public:
 	void Render(ID3D11DeviceContext* pd3dimmediateContext)
 	{
 #if USING_KINECT
-		m_kinect.UpdateDepthTexture(pd3dimmediateContext);
+		m_kinect.UpdateTextures(pd3dimmediateContext);
+		//m_kinect.UpdateDepthTexture(pd3dimmediateContext);
 		m_bUpdated = m_kinect.m_bDepthReceived;
 
 		if(m_bUpdated)

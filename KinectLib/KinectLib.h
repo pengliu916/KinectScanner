@@ -78,4 +78,4 @@ namespace KinectLib{
         void    KINECTLIB_API Release();
 
     };
-};
+}

@@ -403,7 +403,7 @@ HRESULT KinectSensor::MapColorToDepth( ID3D11DeviceContext* pd3dimmediateContext
 HRESULT KinectSensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, bool defaultReg ){
     HRESULT hr = S_OK;
     m_bUpdated = false;
-    if( m_bPaused )return;
+    if( m_bPaused )return hr;
     bool needToMapColorToDepth = false;
 
     if( WAIT_OBJECT_0 == WaitForSingleObject( m_hNextDepthFrameEvent, 0 )){
