@@ -1,6 +1,8 @@
 #pragma once
 
 #include <opencv2/core/core.hpp>
+#include <Windows.h>
+#include <Ole2.h>
 #include "NuiApi.h"
 
 

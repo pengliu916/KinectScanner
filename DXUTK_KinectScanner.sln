@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30324.0
+VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTK_Desktop_2012", "DirectXTK\DirectXTK_Desktop_2012.vcxproj", "{E0B52AE7-E160-4D32-BF3F-910B785E5A8E}"
 EndProject
@@ -26,6 +26,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KinectCalibration", "Kinect
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGBDRecorder", "RGBDRecorder\RGBDRecorder.vcxproj", "{E9632C8A-D6F7-451C-B526-855E44F42BF1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KinectLib", "KinectLib\KinectLib.vcxproj", "{DAE89479-C7B7-4315-AA58-03F10F6F3C82}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -163,6 +165,22 @@ Global
 		{E9632C8A-D6F7-451C-B526-855E44F42BF1}.Release|Win32.Build.0 = Release|Win32
 		{E9632C8A-D6F7-451C-B526-855E44F42BF1}.Release|x64.ActiveCfg = Release|x64
 		{E9632C8A-D6F7-451C-B526-855E44F42BF1}.Release|x64.Build.0 = Release|x64
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Debug|Win32.Build.0 = Debug|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Debug|x64.ActiveCfg = Debug|x64
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Debug|x64.Build.0 = Debug|x64
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Profile|Mixed Platforms.ActiveCfg = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Profile|Mixed Platforms.Build.0 = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Profile|Win32.ActiveCfg = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Profile|Win32.Build.0 = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Profile|x64.ActiveCfg = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Release|Win32.ActiveCfg = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Release|Win32.Build.0 = Release|Win32
+		{DAE89479-C7B7-4315-AA58-03F10F6F3C82}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

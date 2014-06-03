@@ -3,10 +3,11 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/video/video.hpp"
 #include <iostream>
-#include <windows.h>
-#include "KinectForOpencv.h"
+#include "KinectLib\KinectLib.h"
+//#include "KinectForOpencv.h"
 
 using namespace std;
+using namespace KinectLib;
 
 void Mat16UC1toMat8UC3(cv::Mat& inMat, cv::Mat& outMat)
 {
