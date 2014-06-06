@@ -85,7 +85,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)build\include;\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -110,7 +110,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)build\include;\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,7 +137,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)build\include;\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -166,7 +166,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)build\include;\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -196,8 +196,8 @@
     <ProjectReference Include="..\DXUT\Optional\DXUTOpt_DirectXTK_2012.vcxproj">
       <Project>{61b333c2-c4f7-4cc1-a9bf-83f6d95588eb}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\KinectLib\KinectLib.vcxproj">
-      <Project>{dae89479-c7b7-4315-aa58-03f10f6f3c82}</Project>
+    <ProjectReference Include="..\RGBDStreamDLL\RGBDStreamDLL.vcxproj">
+      <Project>{c77a879a-9986-4c4d-857c-184c07e1d663}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

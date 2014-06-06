@@ -78,4 +78,67 @@ namespace KinectLib{
         void    KINECTLIB_API Release();
 
     };
+
+    //class Foo {
+    //public:
+    //    Foo() { }
+    //    virtual ~Foo() { }
+
+    //    void doStuff() { }
+
+    //private:
+    //    cv::Mat b;
+    //};
+
+    //// instead ....
+
+    //// in header
+    //class IDepthCamera {
+    //public:
+    //    virtual ~IDepthCamera() { }
+    //    virtual void doStuff() = 0;
+    //};
+
+
+    //enum class CameraType {
+    //    KINECT,
+    //    PMD,
+    //    INTEL
+    //};
+
+    //class DepthCameraFactory {
+    //public:
+    //    IDepthCamera * create(CameraType type, IDB * myDB);
+    //};
+
+    //// in cpp
+    //class KinectCamera : public IDepthCamera {
+    //public:
+    //    KinectCamera(int ax) : x(ax) { }
+    //    virtual ~KinectCamera() { }
+
+    //    virtual void doStuff() override { }
+
+    //    int x;
+
+    //private:
+    //    cv::Mat b;
+    //};
+
+    //IDepthCamera * DepthCameraFactory::create(CameraType type) {
+    //    switch (type) {
+    //    case CameraType::KINECT: return new KinectCamera(); break;
+    //    }
+    //}
+
+    //std::vector<int> A(10);
+
+    //std::vector<int> A({1, 2, 3, 4, 5});
+
+    //class Foo {
+    //public:
+    //    Foo(const Foo&& other) {
+
+    //    }
+    //};
 }

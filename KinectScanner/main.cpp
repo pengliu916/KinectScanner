@@ -113,7 +113,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( multiTexture.CreateResource( pd3dDevice, 
         //poseEstimator.m_pSumOfCoordSRV,
         poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,
-        &pointCloud.m_kinect.m_pColorSRV,
+        pointCloud.m_ppColorSRV,
         //poseEstimator.m_pTsdfTPC->ppMeshRGBZTexSRV,
         //poseEstimator.m_pTsdfTPC->ppMeshNormalTexSRV,
         &tsdfImgs.m_pFreeCamOutSRV,
