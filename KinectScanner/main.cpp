@@ -19,7 +19,8 @@ wchar_t                         g_debugLine3[100];
 
 MultiTexturePresenter           multiTexture = MultiTexturePresenter( 4, true, SUB_TEXTUREWIDTH, SUB_TEXTUREHEIGHT );
 FilteredPCL                     pointCloud = FilteredPCL();
-VolumeTSDF                      meshVolume  = VolumeTSDF( 0.0075f, 384, 384, 384);
+VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
+//VolumeTSDF                      meshVolume = VolumeTSDF(0.0075f, 384, 384, 384);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
 PoseEstimator                   poseEstimator = PoseEstimator();
 

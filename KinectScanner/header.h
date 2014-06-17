@@ -1,4 +1,4 @@
-#define USING_KINECT 1
+#define USING_KINECT 1 // Set to 0 will instead use prerecorded RGBD video as input
 #define Z_OFFSET -1.0
 
 #define SMALL_OFFSET 0.03 // 3 centimeter
@@ -11,10 +11,10 @@
 
 #define EPSILON 1e-8
 
-#define SUB_TEXTUREWIDTH 640
-#define SUB_TEXTUREHEIGHT 480
+#define SUB_TEXTUREWIDTH 600
+#define SUB_TEXTUREHEIGHT 450
 
-#define VOXEL_SIZE  0.01
+#define VOXEL_SIZE  0.0075
 #define VOXEL_NUM_X 384
 #define VOXEL_NUM_Y 384
 #define VOXEL_NUM_Z 384

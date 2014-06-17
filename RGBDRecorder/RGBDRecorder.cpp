@@ -14,7 +14,7 @@ using namespace std;
 
 void Mat16UC1toMat8UC3(cv::Mat& inMat, cv::Mat& outMat)
 {
-    outMat.create( inMat.size(), CV_8UC3 );
+    //outMat.create( inMat.size(), CV_8UC3 );
     for( unsigned int y = 0; y < inMat.size().height; ++y )
     {
         cv::Vec3b* pColorRow = outMat.ptr<cv::Vec3b>( y );
@@ -26,9 +26,23 @@ void Mat16UC1toMat8UC3(cv::Mat& inMat, cv::Mat& outMat)
     }
 }
 
+void Mat8UC3toMat8UC4(cv::Mat& inMat, cv::Mat& outMat)
+{
+    //outMat.create( inMat.size(), CV_8UC4 );
+    for( unsigned int y = 0; y < inMat.size().height; ++y )
+    {
+        cv::Vec4b* pColorRow = outMat.ptr<cv::Vec4b>( y );
+        for( unsigned int x = 0; x < inMat.size().width; ++x )
+        {
+            uchar* value = inMat.ptr<uchar>(y,x);
+            pColorRow[x] = cv::Vec4b(value[0],value[1],value[2],0);
+        }
+    }
+}
+
 void Mat8UC3toMat16UC1(cv::Mat& inMat, cv::Mat& outMat)
 {
-    outMat.create( inMat.size(), CV_16UC1 );
+    //outMat.create( inMat.size(), CV_16UC1 );
     for( unsigned int y = 0; y < inMat.size().height; ++y )
     {
         short* pColorRow = outMat.ptr<short>( y );
@@ -42,7 +56,7 @@ void Mat8UC3toMat16UC1(cv::Mat& inMat, cv::Mat& outMat)
 
 int main()
 {
-    IRGBDStreamForOpenCV* kinect=OpenCVStreamFactory::create();
+    /*IRGBDStreamForOpenCV* kinect=OpenCVStreamFactory::create();
     cv::Mat matColor;
     cv::Mat matDepth;
     cv::Mat converted;
@@ -51,34 +65,35 @@ int main()
         cout<<"Cannot initialize kinect."<<endl;
         exit(1);
     }
+*/
+    //cv::VideoWriter colorWriter;
+    //cv::VideoWriter depthWriter;
 
-    cv::VideoWriter colorWriter;
-    cv::VideoWriter depthWriter;
-
-    colorWriter.open("ColorChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(640,480));
-    depthWriter.open("DepthChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(640,480));
-    if(!colorWriter.isOpened()||!depthWriter.isOpened()){
-        cout<<"Cannot open video file to write."<<endl;
-        exit(1);
-    }
+    //colorWriter.open("ColorChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(640,480));
+    //depthWriter.open("DepthChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(640,480));
+    //if(!colorWriter.isOpened()||!depthWriter.isOpened()){
+    //    cout<<"Cannot open video file to write."<<endl;
+    //    exit(1);
+    //}
 
 
-    while('q'!=cv::waitKey(1)){
-        if( kinect->UpdateMats()){
-            kinect->GetDepthMat(matDepth);
-            kinect->GetColorMat(matColor);
-            Mat16UC1toMat8UC3(matDepth, converted);
-            cv::imshow( "ConvertedDepth", converted );
-            cv::imshow( "KinectColor", matColor);
-            colorWriter << matColor;
-            depthWriter << converted;
-        }
-    }
-    colorWriter.release();
-    depthWriter.release();
+    //while('q'!=cv::waitKey(1)){
+    //    if( kinect->UpdateMats()){
+    //        kinect->GetDepthMat(matDepth);
+    //        kinect->GetColorMat(matColor);
+    //        Mat16UC1toMat8UC3(matDepth, converted);
+    //        //cv::imshow( "ConvertedDepth", converted );
+    //        cv::imshow( "KinectColor", matColor);
+    //        colorWriter << matColor;
+    //        depthWriter << converted;
+    //    }
+    //}
+    //colorWriter.release();
+    //depthWriter.release();
 
     cout<<"Play? y"<<endl;
-    if('y'==cv::waitKey()){
+    //if('y'==cv::waitKey()){
+    {
         //Playback
         cv::VideoCapture colorCap("ColorChannel.avi");
         cv::VideoCapture depthCap("DepthChannel.avi");
@@ -97,14 +112,26 @@ int main()
 
         cv::Mat color;
         cv::Mat depth;
+        cv::Mat depthDecoded;
+        cv::Mat color4C;
+
+        color4C.create( cv::Size(width,height), CV_8UC4 );
+        depthDecoded.create( cv::Size(width,height), CV_16UC1 );
         while(1){
+            double t = (double)cv::getTickCount();
             colorCap>>color;
             depthCap>>depth;
             if(!color.data ||!depth.data) break;
-            cv::imshow("colorVideo", color);
-            cv::imshow("depthVideo", depth);
-            char input=cv::waitKey(33);
+            //cv::imshow("colorVideo", color);
+            //cv::imshow("depthVideo", depth);
+            //Mat8UC3toMat16UC1(depth,depthDecoded);
+            Mat8UC3toMat8UC4(color,color4C);
+            cv::imshow("colorC4",color4C);
+            //cv::imshow("depthDecoded",depthDecoded);
+            char input=cv::waitKey(1);
             if('q'==input) break;
+            t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();// elapsed time in ms
+            std::cout << "I am working at " << 1.0/t << " FPS" << std::endl;
         }
     }
 

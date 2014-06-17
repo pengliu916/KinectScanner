@@ -6,5 +6,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KinectSensor.h" />
+    <ClCompile Include="KinectVideos.h" />
   </ItemGroup>
 </Project>

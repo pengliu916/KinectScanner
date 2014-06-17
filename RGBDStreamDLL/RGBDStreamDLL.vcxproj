@@ -153,6 +153,7 @@
   <ItemGroup>
     <ClInclude Include="IRGBDStreamForDirectX.h" />
     <ClInclude Include="IRGBDStreamForOpenCV.h" />
+    <ClCompile Include="KinectVideos.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KinectSensor.h" />

@@ -494,7 +494,7 @@ bool KinectSensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, bo
     m_bUpdated = true;
 
     if (m_bPaused) return false;
-    bool needToMapColorToDepth = false;
+    bool needToMapColorToDepth = true;
     if (depth){
         if (WAIT_OBJECT_0 == WaitForSingleObject(m_hNextDepthFrameEvent, 0)){
             // if we have received any valid new depth data we may need to draw
@@ -515,8 +515,8 @@ bool KinectSensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, bo
         needToMapColorToDepth = false;
     }
 
-    if (needToMapColorToDepth && defaultReg){
-        MapColorToDepth();
+    if (defaultReg && needToMapColorToDepth){
+        MapColorToDepth(pd3dimmediateContext);
     }
     return m_bUpdated;
 }

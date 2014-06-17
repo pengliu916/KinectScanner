@@ -27,4 +27,5 @@ public:
 class RGBDSTREAMDLL_API DirectXStreamFactory{
 public:
     static IRGBDStreamForDirectX* create();
+    static IRGBDStreamForDirectX* createFromVideo();
 };

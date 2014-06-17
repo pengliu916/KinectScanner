@@ -14,17 +14,13 @@
 #include "RGBBilateralFilter.h"
 #include "NormalGenerator.h"
 
-#if USING_KINECT
-//#include "Scanner.h"
-//#include "KinectLib\KinectLib.h"
 #include "RGBDStreamDLL\IRGBDStreamForDirectX.h"
-#endif
 //using namespace KinectLib;
 
 class FilteredPCL
 {
 public:
-#if USING_KINECT
+
     ID3D11VertexShader*				m_pPassVS;
     ID3D11PixelShader*				m_pPS;
     ID3D11GeometryShader*			m_pScreenQuadGS;
@@ -41,10 +37,6 @@ public:
     D3D11_VIEWPORT					m_Viewport;
 
     IRGBDStreamForDirectX*          m_kinect;
-    //KinectSensor					m_kinect;
-    //Scanner							m_kinect;
-
-#endif
     RGBBilateralFilter				m_bilateralFilter;
     NormalGenerator					m_normalGenerator;
 
@@ -62,15 +54,17 @@ public:
 
         m_uRTwidth = width;
         m_uRTheight = height;
+#if USING_KINECT
         m_kinect = DirectXStreamFactory::create();
+#else
+        m_kinect = DirectXStreamFactory::createFromVideo();
+#endif
     }
 
     HRESULT Initial()
     {
         HRESULT hr=S_OK;
-#if USING_KINECT
         hr = m_kinect->Initialize();
-#endif
         return hr;
     }
 
@@ -78,7 +72,6 @@ public:
     {
         HRESULT hr=S_OK;
 
-#if USING_KINECT
         V_RETURN(m_kinect->CreateResource(pd3dDevice));
         m_ppDepthSRV=m_kinect->getDepth_ppSRV();
         m_ppColorSRV=m_kinect->getColor_ppSRV();
@@ -177,10 +170,6 @@ public:
         SAFE_RELEASE(pState);
         SAFE_RELEASE(immediateContext);
 
-#else
-        V_RETURN(D3DX11CreateShaderResourceViewFromFile( pd3dDevice, L"1TURN2.dds", NULL, NULL, &m_pOutSRV, NULL ));
-
-#endif	
         m_bilateralFilter.CreateResource(pd3dDevice,&m_pOutSRV);
         m_normalGenerator.CreateResource(pd3dDevice,&m_bilateralFilter.m_pOutSRV);
 
@@ -194,7 +183,6 @@ public:
 
     void SetupPipeline(ID3D11DeviceContext* pd3dImmediateContext)
     {
-#if USING_KINECT
         pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
         pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
         UINT stride = 0;
@@ -207,12 +195,10 @@ public:
         pd3dImmediateContext->PSSetShaderResources(1, 1, m_ppColorSRV);
         pd3dImmediateContext->RSSetViewports(1, &m_Viewport);
         pd3dImmediateContext->OMSetRenderTargets(1,&m_pOutRTV,NULL);
-#endif
     }
 
     void Render(ID3D11DeviceContext* pd3dimmediateContext)
     {
-#if USING_KINECT
         m_bUpdated = m_kinect->UpdateTextures(pd3dimmediateContext);
         //m_kinect.UpdateDepthTexture(pd3dimmediateContext);
         //m_bUpdated = m_kinect.m_bDepthReceived;
@@ -234,17 +220,10 @@ public:
             m_bilateralFilter.ProcessImage(pd3dimmediateContext);
             m_normalGenerator.ProcessImage(pd3dimmediateContext);
         }
-
-#else
-        m_bUpdated = true;
-        m_bilateralFilter.ProcessImage(pd3dimmediateContext);
-        m_normalGenerator.ProcessImage(pd3dimmediateContext);
-#endif
     }
 
     void Release()
     {
-#if USING_KINECT
         m_kinect->Release();
         SAFE_RELEASE(m_pOutTex);
         SAFE_RELEASE(m_pOutRTV);
@@ -254,7 +233,7 @@ public:
         SAFE_RELEASE(m_pScreenQuadGS);
         SAFE_RELEASE(m_pScreenQuadIL);
         SAFE_RELEASE(m_pScreenQuadVB);
-#endif
+
         m_normalGenerator.Release();
         m_bilateralFilter.Release();
         
@@ -263,10 +242,8 @@ public:
 
     LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
-#if USING_KINECT
         m_kinect->HandleMessages(hWnd,uMsg,wParam,lParam);
         m_bilateralFilter.HandleMessages(hWnd,uMsg,wParam,lParam);
-#endif
         switch(uMsg)
         {
         case WM_KEYDOWN:
@@ -332,21 +309,6 @@ public:
                 {
                     m_TransformedPC.reset();
                 }
-#if !USING_KINECT
-                else if (nKey == 'R')
-                {
-                    m_TransformedPC.reset();
-                    m_TransformedPC.mModelM_now._41 = 0.2f*rand()/RAND_MAX-0.1;
-                    m_TransformedPC.mModelM_now._42 = 0.2f*rand()/RAND_MAX-0.1;
-                    m_TransformedPC.mModelM_now._43 = 0.2f*rand()/RAND_MAX-0.1;
-
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationY( 0.2f*rand()/RAND_MAX-0.1));
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationX( 0.2f*rand()/RAND_MAX-0.1));
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationZ( 0.2f*rand()/RAND_MAX-0.1));
-
-                    m_TransformedPC.mModelM_pre = m_TransformedPC.mModelM_now;
-                }
-#endif
                 break;
             }
         }
