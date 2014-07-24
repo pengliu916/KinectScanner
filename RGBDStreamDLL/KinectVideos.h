@@ -13,15 +13,19 @@
 class KinectVideos : public IRGBDStreamForDirectX{
 public:
     KinectVideos();
-    virtual HRESULT Initialize();
-    virtual HRESULT CreateResource( ID3D11Device* pd3dDevice);
+	virtual HRESULT Initialize();
+	virtual void GetColorReso( int& iColorWidth, int& iColorHeight );
+	virtual void GetDepthReso( int& iDepthWidth, int& iDepthHeight );
+	virtual void GetInfraredReso(int& iInfraredWidth, int& iInfraredHeight);
+	virtual HRESULT CreateResource(ID3D11Device* pd3dDevice);
     virtual bool UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext,
-                               bool defaultReg, bool color, bool depth);
+                               bool defaultReg, bool color, bool depth, bool infrared);
     virtual void Release();
     virtual LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     virtual ID3D11ShaderResourceView** getColor_ppSRV();
     virtual ID3D11ShaderResourceView** getDepth_ppSRV();
-    virtual ~KinectVideos();
+	virtual ID3D11ShaderResourceView** getInfrared_ppSRV();
+	virtual ~KinectVideos();
 
 private:
     void Play();// Work in other stread as video stream
@@ -75,15 +79,33 @@ HRESULT KinectVideos::Initialize(){
     _depthCap.open("..\\RGBDRecorder\\DepthChannel.avi");
     if( !_colorCap.isOpened() || !_depthCap.isOpened()) return (HRESULT)-1L;
 
-    _depthWidth = _depthCap.get(CV_CAP_PROP_FRAME_WIDTH);
-    _depthHeight = _depthCap.get(CV_CAP_PROP_FRAME_HEIGHT);
-    _colorWidth = _colorCap.get(CV_CAP_PROP_FRAME_WIDTH);
-    _colorHeight = _colorCap.get(CV_CAP_PROP_FRAME_HEIGHT);
+    _depthWidth = (UINT)_depthCap.get(CV_CAP_PROP_FRAME_WIDTH);
+    _depthHeight = (UINT)_depthCap.get(CV_CAP_PROP_FRAME_HEIGHT);
+    _colorWidth = (UINT)_colorCap.get(CV_CAP_PROP_FRAME_WIDTH);
+    _colorHeight = (UINT)_colorCap.get(CV_CAP_PROP_FRAME_HEIGHT);
 
     _matColor.create(_colorHeight,_colorWidth,CV_8UC3);
     _matDepth.create(_depthHeight,_depthWidth,CV_16UC1);
     _matDepthEncoded.create(_depthHeight,_depthWidth,CV_8UC3);
     return hr;
+}
+
+void KinectVideos::GetColorReso( int& iColorWidth, int& iColorHeight )
+{
+	iColorWidth = _colorWidth;
+	iColorHeight = _colorHeight;
+}
+
+void KinectVideos::GetDepthReso( int& iDepthWidth, int& iDepthHeight )
+{
+	iDepthWidth = _depthWidth;
+	iDepthHeight = _depthHeight;
+}
+
+void KinectVideos::GetInfraredReso(int& iInfraredWidth, int& iInfraredHeight)
+{
+	iInfraredWidth = _depthWidth;
+	iInfraredHeight = _depthHeight;
 }
 
 HRESULT KinectVideos::CreateResource(ID3D11Device* pd3dDevice){
@@ -167,10 +189,10 @@ void KinectVideos::Play(){
 void KinectVideos::Mat8UC3toMat16UC1(cv::Mat& inMat, cv::Mat& outMat)
 {
     //outMat.create( inMat.size(), CV_16UC1 );
-    for( unsigned int y = 0; y < inMat.size().height; ++y )
+    for(  int y = 0; y < inMat.size().height; ++y )
     {
         short* pColorRow = outMat.ptr<short>( y );
-        for( unsigned int x = 0; x < inMat.size().width; ++x )
+        for(  int x = 0; x < inMat.size().width; ++x )
         {
             uchar* value = inMat.ptr<uchar>(y,x);
             pColorRow[x] = (short)(value[0]<<8 | value[1]);
@@ -216,7 +238,7 @@ HRESULT KinectVideos::ProcessDepth( ID3D11DeviceContext* pd3dimmediateContext){
 }
 
 bool KinectVideos::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext,
-                               bool defaultReg, bool color, bool depth){
+                               bool defaultReg, bool color, bool depth, bool infrared){
     
     if(_bPaused) return false;
     if(color){
@@ -252,6 +274,10 @@ ID3D11ShaderResourceView** KinectVideos::getColor_ppSRV(){
 
 ID3D11ShaderResourceView** KinectVideos::getDepth_ppSRV(){
     return &_pDepthSRV;
+}
+
+ID3D11ShaderResourceView** KinectVideos::getInfrared_ppSRV(){
+	return &_pDepthSRV;
 }
 
 KinectVideos::~KinectVideos(){

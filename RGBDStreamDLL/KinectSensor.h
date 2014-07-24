@@ -54,15 +54,19 @@ public:
 
     KinectSensor();
     virtual HRESULT Initialize();
-    HRESULT ToggleNearMode();
-    // For OpenCV
+	HRESULT ToggleNearMode();
+	virtual void GetColorReso( int& iColorWidth, int& iColorHeight );
+	virtual void GetDepthReso( int& iDepthWidth, int& iDepthHeight );
+	virtual void GetInfraredReso(int& iInfraredWidth, int& iInfraredHeight);
+	// For OpenCV
     HRESULT ProcessDepth();
     HRESULT ProcessColor();
     HRESULT MapColorToDepth();
     // For OpenCV interface
     virtual void GetColorMat(cv::Mat& out);
     virtual void GetDepthMat(cv::Mat& out);
-    virtual bool UpdateMats(bool defaultReg, bool color, bool depth);
+	virtual void GetInfraredMat(cv::Mat& out);
+	virtual bool UpdateMats(bool defaultReg, bool color, bool depth, bool infrared);
     
     // For DirectX
     HRESULT ProcessDepth( ID3D11DeviceContext* pd3dimmediateContext );
@@ -71,11 +75,12 @@ public:
     // For DirectX interface
     virtual HRESULT CreateResource(ID3D11Device*);
     virtual bool UpdateTextures( ID3D11DeviceContext*,
-                                 bool defaultReg, bool color, bool depth );
+                                 bool defaultReg, bool color, bool depth, bool infrared );
     virtual void Release();
     virtual LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     virtual ID3D11ShaderResourceView** getColor_ppSRV();
     virtual ID3D11ShaderResourceView** getDepth_ppSRV();
+	virtual ID3D11ShaderResourceView** getInfrared_ppSRV();
 
     virtual ~KinectSensor();
 
@@ -185,6 +190,21 @@ HRESULT KinectSensor::Initialize(){
     return hr;
 }
 
+void KinectSensor::GetColorReso( int& iColorWidth, int& iColorHeight )
+{
+	iColorWidth = m_colorWidth;
+	iColorHeight = m_colorHeight;
+}
+
+void KinectSensor::GetDepthReso( int& iDepthWidth, int& iDepthHeight )
+{
+	iDepthWidth = m_depthWidth;
+	iDepthHeight = m_depthHeight;
+}
+
+void KinectSensor::GetInfraredReso(int& iInfraredWidth, int& iInfraredHeight)
+{
+}
 
 HRESULT KinectSensor::ToggleNearMode()
 {
@@ -218,10 +238,10 @@ HRESULT KinectSensor::ProcessDepth()
 
     hr = m_pNuiSensor->NuiImageStreamReleaseFrame(m_pDepthStreamHandle, &imageFrame);
 
-    for (UINT y = 0; y < m_colorHeight; ++y){
+    for (int y = 0; y < m_colorHeight; ++y){
         // Get row pointer for depth Mat
         USHORT* pDepthRow = m_matDepth.ptr<USHORT>(y);
-        for (UINT x = 0; x < m_colorWidth; ++x){
+        for (int x = 0; x < m_colorWidth; ++x){
             pDepthRow[x] = m_depthD16[y * m_colorWidth + x];
         }
     }
@@ -261,9 +281,9 @@ HRESULT KinectSensor::ProcessColor()
 
     hr = m_pNuiSensor->NuiImageStreamReleaseFrame(m_pColorStreamHandle, &imageFrame);
 
-    for (UINT y = 0; y < m_colorHeight; ++y){
+    for (int y = 0; y < m_colorHeight; ++y){
         cv::Vec3b* pColorRow = m_matColor.ptr<cv::Vec3b>(y);
-        for (UINT x = 0; x < m_colorWidth; ++x){
+        for (int x = 0; x < m_colorWidth; ++x){
             pColorRow[x] = cv::Vec3b(m_colorRGBX[y*m_colorWidth*cBytesPerPixel + x * 4 + 0],
                                      m_colorRGBX[y*m_colorWidth*cBytesPerPixel + x * 4 + 1],
                                      m_colorRGBX[y*m_colorWidth*cBytesPerPixel + x * 4 + 2]);
@@ -307,7 +327,7 @@ HRESULT KinectSensor::MapColorToDepth()
     return hr;
 }
 
-bool KinectSensor::UpdateMats(bool defaultReg=true, bool color=true, bool depth=true)
+bool KinectSensor::UpdateMats(bool defaultReg=true, bool color=true, bool depth=true, bool infrared = false)
 {
     m_bUpdated = true;
 
@@ -345,6 +365,10 @@ void KinectSensor::GetDepthMat(cv::Mat& out){
 
 void KinectSensor::GetColorMat(cv::Mat& out){
     m_matColor.copyTo(out);
+}
+
+void KinectSensor::GetInfraredMat( cv::Mat& out ){
+	m_matDepth.copyTo( out );
 }
 
 HRESULT KinectSensor::CreateResource(ID3D11Device* pd3dDevice){
@@ -490,7 +514,7 @@ HRESULT KinectSensor::MapColorToDepth( ID3D11DeviceContext* pd3dimmediateContext
     return hr;
 }
 
-bool KinectSensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, bool defaultReg=true, bool color=true, bool depth=true ){
+bool KinectSensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, bool defaultReg=true, bool color=true, bool depth=true, bool infrared = false ){
     m_bUpdated = true;
 
     if (m_bPaused) return false;
@@ -560,10 +584,14 @@ ID3D11ShaderResourceView** KinectSensor::getDepth_ppSRV(){
     return &m_pDepthSRV;
 }
 
-IRGBDStreamForOpenCV* OpenCVStreamFactory::create(){
+ID3D11ShaderResourceView** KinectSensor::getInfrared_ppSRV(){
+	return &m_pDepthSRV;
+}
+
+IRGBDStreamForOpenCV* OpenCVStreamFactory::createFromKinect(){
     return new KinectSensor();
 }
 
-IRGBDStreamForDirectX* DirectXStreamFactory::create(){
+IRGBDStreamForDirectX* DirectXStreamFactory::createFromKinect(){
     return new KinectSensor();
 }

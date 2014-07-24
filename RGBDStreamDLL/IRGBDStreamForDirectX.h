@@ -16,16 +16,21 @@ public:
     virtual ~IRGBDStreamForDirectX(){}
     virtual HRESULT Initialize()=0;
     virtual HRESULT CreateResource(ID3D11Device* pd3dDevice) = 0;
-    virtual bool UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, 
-                                 bool defaultReg=true , bool bColor=true, bool bDepth=true ) = 0;
+	virtual void GetColorReso( int& iColorWidth, int& iColorHeight ) = 0;
+	virtual void GetDepthReso( int& iDepthWidth, int& iDepthHeight ) = 0;
+	virtual void GetInfraredReso(int& iInfraredWidth, int& iInfraredHeight) = 0;
+	virtual bool UpdateTextures(ID3D11DeviceContext* pd3dimmediateContext,
+                                 bool defaultReg=true , bool bColor=true, bool bDepth=true, bool bInfrared=true ) = 0;
     virtual void Release() = 0;
     virtual LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)=0;
     virtual ID3D11ShaderResourceView** getColor_ppSRV() = 0;
     virtual ID3D11ShaderResourceView** getDepth_ppSRV() = 0;
+	virtual ID3D11ShaderResourceView** getInfrared_ppSRV() = 0;
 };
 
 class RGBDSTREAMDLL_API DirectXStreamFactory{
 public:
-    static IRGBDStreamForDirectX* create();
+    static IRGBDStreamForDirectX* createFromKinect();
+	static IRGBDStreamForDirectX* createFromKinect2();
     static IRGBDStreamForDirectX* createFromVideo();
 };
