@@ -26,11 +26,23 @@ public:
 	// Current Kinect
 	IKinectSensor*                      m_pKinect2Sensor;
 	ICoordinateMapper*                  m_pCoordinateMapper;
-	ColorSpacePoint*                    m_pColorCoordinates;
 
 	// Frame reader
 	IMultiSourceFrameReader*            m_pMultiSourceFrameReader;
 
+
+
+	UINT16*                             m_pDepthBuffer;
+	UINT                                m_uDepthBufferSize;
+	BYTE*                               m_pColorBuffer;
+	UINT                                m_uColorBufferSize;
+	UINT16*                             m_pInfraredBuffer;
+	UINT                                m_pInfraredBufferSize;
+
+	bool                                m_bLongExposureInfrared;
+	bool                                m_bUpdated;
+
+	// For OpenCV Interface
 	cv::Mat                             m_matColor;
 	cv::Mat                             m_matDepth;
 	cv::Mat                             m_matInfrared;
@@ -45,16 +57,8 @@ public:
 	ID3D11Texture2D*                    m_pInfraredTex;
 	ID3D11ShaderResourceView*           m_pInfraredSRV;
 
-	UINT16*                             m_pDepthBuffer;
-	UINT                                m_uDepthBufferSize;
-	BYTE*                               m_pColorBuffer;
-	UINT                                m_uColorBufferSize;
-	UINT16*                             m_pInfraredBuffer;
-	UINT                                m_pInfraredBufferSize;
-
-	bool                                m_bLongExposureInfrared;
-	bool                                m_bUpdated;
-
+	ID3D11Texture2D*                    m_pColLookupForDetphTex;
+	ID3D11ShaderResourceView*           m_pColLookupForDetphSRV;
 
 	Kinect2Sensor();
 	virtual HRESULT Initialize();
@@ -89,6 +93,12 @@ public:
 
 	virtual ~Kinect2Sensor();
 
+
+	// For Testing not in the IRGBDStreamForDirectX
+	ColorSpacePoint*                    m_pColorCoordinates;
+	virtual ID3D11ShaderResourceView** getColorLookup_ppSRV();
+	HRESULT ProcessDepthColorMap(ID3D11DeviceContext* pd3dimmediatecontext, const ColorSpacePoint* pMapBuffer, int iMapBufferSize);
+
 };
 
 Kinect2Sensor::Kinect2Sensor(){
@@ -117,7 +127,6 @@ Kinect2Sensor::Kinect2Sensor(){
 
 	m_bLongExposureInfrared = false;
 }
-
 Kinect2Sensor::~Kinect2Sensor(){
 	if( m_pColorCoordinates ){
 		delete[] m_pColorCoordinates;
@@ -173,19 +182,16 @@ HRESULT Kinect2Sensor::Initialize(){
 
 	return hr;
 }
-
 void Kinect2Sensor::GetColorReso( int& iColorWidth, int& iColorHeight )
 {
 	iColorWidth = m_cColorWidth;
 	iColorHeight = m_cColorHeight;
 }
-
 void Kinect2Sensor::GetDepthReso( int& iDepthWidth, int& iDepthHeight )
 {
 	iDepthWidth = m_cDepthWidth;
 	iDepthHeight = m_cDepthHeight;
 }
-
 void Kinect2Sensor::GetInfraredReso(int& iInfraredWidth, int& iInfraredHeight)
 {
 	iInfraredWidth = m_cDepthWidth;
@@ -205,7 +211,6 @@ HRESULT Kinect2Sensor::ProcessDepth(const UINT16* pDepthBuffer, int iDepthBuffer
 	}
 	return hr;
 }
-
 HRESULT Kinect2Sensor::ProcessColor(const BYTE* pColorBuffer, int iColorBufferSize)
 {
 	HRESULT hr = S_OK;
@@ -219,7 +224,6 @@ HRESULT Kinect2Sensor::ProcessColor(const BYTE* pColorBuffer, int iColorBufferSi
 	}
 	return hr;
 }
-
 HRESULT Kinect2Sensor::ProcessInfrared(const UINT16* pInfraredBuffer, int iInfraredBufferSize)
 {
 	HRESULT hr = S_OK;
@@ -237,8 +241,7 @@ HRESULT Kinect2Sensor::MapColorToDepth()
 	HRESULT hr = S_OK;
 	return hr;
 }
-
-bool Kinect2Sensor::UpdateMats( bool defaultReg = true, bool color = true, bool depth = true, bool infrared = false )
+bool Kinect2Sensor::UpdateMats( bool defaultReg = true, bool color = true, bool depth = true, bool infrared = true )
 {
 	m_bUpdated = true;
 	bool needToMapColorToDepth = true;
@@ -363,15 +366,12 @@ bool Kinect2Sensor::UpdateMats( bool defaultReg = true, bool color = true, bool 
 	}
 	return m_bUpdated;
 }
-
 void Kinect2Sensor::GetDepthMat( cv::Mat& out ){
 	m_matDepth.copyTo( out );
 }
-
 void Kinect2Sensor::GetColorMat( cv::Mat& out ){
 	m_matColor.copyTo( out );
 }
-
 void Kinect2Sensor::GetInfraredMat( cv::Mat& out ){
 	m_matInfrared.copyTo( out );
 }
@@ -427,10 +427,24 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	V_RETURN( pd3dDevice->CreateTexture2D( &infraredTexDesc, NULL, &m_pInfraredTex ) );
 	V_RETURN( pd3dDevice->CreateShaderResourceView( m_pInfraredTex, NULL, &m_pInfraredSRV ) );
 
+	// Create depth color mapping texture and its resource view
+	D3D11_TEXTURE2D_DESC depthColorMappingDesc = {0};
+	depthColorMappingDesc.Width = m_cDepthWidth;
+	depthColorMappingDesc.Height = m_cDepthHeight;
+	depthColorMappingDesc.MipLevels = 1;
+	depthColorMappingDesc.ArraySize = 1;
+	depthColorMappingDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
+	depthColorMappingDesc.SampleDesc.Count = 1;
+	depthColorMappingDesc.SampleDesc.Quality = 0;
+	depthColorMappingDesc.Usage = D3D11_USAGE_DYNAMIC;
+	depthColorMappingDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	depthColorMappingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	depthColorMappingDesc.MiscFlags = 0;
+	V_RETURN( pd3dDevice->CreateTexture2D( &depthColorMappingDesc, NULL, &m_pColLookupForDetphTex));
+	V_RETURN( pd3dDevice->CreateShaderResourceView( m_pColLookupForDetphTex, NULL,&m_pColLookupForDetphSRV));
+
 	return hr;
 }
-
-
 void Kinect2Sensor::Release(){
 	SAFE_RELEASE( m_pDepthTex );
 	SAFE_RELEASE( m_pDepthSRV );
@@ -438,8 +452,9 @@ void Kinect2Sensor::Release(){
 	SAFE_RELEASE( m_pColorSRV );
 	SAFE_RELEASE( m_pInfraredTex );
 	SAFE_RELEASE( m_pInfraredSRV );
+	SAFE_RELEASE( m_pColLookupForDetphTex );
+	SAFE_RELEASE( m_pColLookupForDetphSRV );
 }
-
 HRESULT Kinect2Sensor::ProcessDepth( ID3D11DeviceContext* pd3dimmediateContext, const UINT16* pDepthBuffer, int iDepthBufferSize ){
 	HRESULT hr = S_OK;
 	D3D11_MAPPED_SUBRESOURCE msT;
@@ -451,7 +466,6 @@ HRESULT Kinect2Sensor::ProcessDepth( ID3D11DeviceContext* pd3dimmediateContext, 
 
 	return hr;
 }
-
 HRESULT Kinect2Sensor::ProcessColor( ID3D11DeviceContext* pd3dimmediateContext, const BYTE* pColorBuffer, int iColorBufferSize ){
 	HRESULT hr = S_OK;
 	D3D11_MAPPED_SUBRESOURCE msT;
@@ -462,7 +476,6 @@ HRESULT Kinect2Sensor::ProcessColor( ID3D11DeviceContext* pd3dimmediateContext, 
 
 	return hr;
 }
-
 HRESULT Kinect2Sensor::ProcessInfrared( ID3D11DeviceContext* pd3dimmediateContext, const UINT16* pInfraredBuffer, int iInfraredBufferSize ){
 	HRESULT hr = S_OK;
 	D3D11_MAPPED_SUBRESOURCE msT;
@@ -474,14 +487,12 @@ HRESULT Kinect2Sensor::ProcessInfrared( ID3D11DeviceContext* pd3dimmediateContex
 
 	return hr;
 }
-
 HRESULT Kinect2Sensor::MapColorToDepth( ID3D11DeviceContext* pd3dimmediateContext ){
 	HRESULT hr = S_OK;
 	
 	return hr;
 }
-
-bool Kinect2Sensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, bool defaultReg = true, bool color = true, bool depth = true, bool infrared = false ){
+bool Kinect2Sensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, bool defaultReg = true, bool color = true, bool depth = true, bool infrared = true ){
 	m_bUpdated = true;
 	bool needToMapColorToDepth = true;
 	if (!m_pMultiSourceFrameReader)
@@ -515,13 +526,26 @@ bool Kinect2Sensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, b
 	}
 	if( SUCCEEDED( hr ) )
 	{
-		if( depth ){
-			IFrameDescription* pDepthFrameDescription = NULL;
-			int nDepthWidth = 0;
-			int nDepthHeight = 0;
-			UINT nDepthBufferSize = 0;
-			UINT16 *pDepthBuffer = NULL;
+		IFrameDescription* pDepthFrameDescription = NULL;
+		int nDepthWidth = 0;
+		int nDepthHeight = 0;
+		UINT nDepthBufferSize = 0;
+		UINT16 *pDepthBuffer = NULL;
 
+		IFrameDescription* pColorFrameDescription = NULL;
+		int nColorWidth = 0;
+		int nColorHeight = 0;
+		ColorImageFormat imageFormat = ColorImageFormat_None;
+		UINT nColorBufferSize = 0;
+		BYTE *pColorBuffer = NULL;
+
+		IFrameDescription* pInfraredFrameDescription = NULL;
+		int nInfraredWidth = 0;
+		int nInfraredHeight = 0;
+		UINT nInfraredBufferSize = 0;
+		UINT16 *pInfraredBuffer = NULL;
+
+		if( depth ){
 			// get depth frame data
 			if( SUCCEEDED( hr ) ) hr = pDepthFrame->get_FrameDescription( &pDepthFrameDescription );
 			if( SUCCEEDED( hr ) ) hr = pDepthFrameDescription->get_Width( &nDepthWidth );
@@ -531,20 +555,12 @@ bool Kinect2Sensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, b
 			SafeRelease( pDepthFrameDescription );
 		}
 		if( color ){
-			IFrameDescription* pColorFrameDescription = NULL;
-			int nColorWidth = 0;
-			int nColorHeight = 0;
-			ColorImageFormat imageFormat = ColorImageFormat_None;
-			UINT nColorBufferSize = 0;
-			BYTE *pColorBuffer = NULL;
-
 			// get color frame data
 			if( SUCCEEDED( hr ) ) hr = pColorFrame->get_FrameDescription( &pColorFrameDescription );
 			if( SUCCEEDED( hr ) ) hr = pColorFrameDescription->get_Width( &nColorWidth );
 			if( SUCCEEDED( hr ) ) hr = pColorFrameDescription->get_Height( &nColorHeight );
 			if( SUCCEEDED( hr ) ) hr = pColorFrame->get_RawColorImageFormat( &imageFormat );
-			if( SUCCEEDED( hr ) )
-			{
+			if( SUCCEEDED( hr ) ){
 				if( imageFormat == ColorImageFormat_Bgra ){
 					hr = pColorFrame->AccessRawUnderlyingBuffer( &nColorBufferSize, &pColorBuffer );
 				} else if( m_pColorBuffer ){
@@ -559,12 +575,6 @@ bool Kinect2Sensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, b
 			SafeRelease( pColorFrameDescription );
 		}
 		if( infrared ){
-			IFrameDescription* pInfraredFrameDescription = NULL;
-			int nInfraredWidth = 0;
-			int nInfraredHeight = 0;
-			UINT nInfraredBufferSize = 0;
-			UINT16 *pInfraredBuffer = NULL;
-
 			// get Infrared frame data
 			if( SUCCEEDED( hr ) ) hr = pInfraredFrame->get_FrameDescription( &pInfraredFrameDescription );
 			if( SUCCEEDED( hr ) ) hr = pInfraredFrameDescription->get_Width( &nInfraredWidth );
@@ -572,6 +582,12 @@ bool Kinect2Sensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, b
 			if( SUCCEEDED( hr ) ) hr = pInfraredFrame->AccessUnderlyingBuffer( &nInfraredBufferSize, &pInfraredBuffer );
 			if( SUCCEEDED( hr ) ) ProcessInfrared( pd3dimmediateContext, pInfraredBuffer, nInfraredBufferSize );
 			SafeRelease( pInfraredFrameDescription );
+		}
+		if( defaultReg && m_pCoordinateMapper && 
+			pDepthBuffer && nDepthHeight == m_cDepthHeight && nDepthWidth == m_cDepthWidth &&
+			pColorBuffer && nColorHeight == m_cColorHeight && nColorWidth == m_cColorWidth){
+			hr = m_pCoordinateMapper->MapDepthFrameToColorSpace( nDepthHeight*nDepthWidth, pDepthBuffer, nDepthHeight*nDepthWidth, m_pColorCoordinates );
+			if(SUCCEEDED(hr)) ProcessDepthColorMap(pd3dimmediateContext,m_pColorCoordinates,m_cDepthHeight*m_cDepthWidth);
 		}
 	}
 
@@ -589,8 +605,6 @@ bool Kinect2Sensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, b
 	}
 	return m_bUpdated;
 }
-
-
 LRESULT Kinect2Sensor::HandleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
 	UNREFERENCED_PARAMETER( lParam );
@@ -604,23 +618,31 @@ LRESULT Kinect2Sensor::HandleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	}
 	return 0;
 }
-
 ID3D11ShaderResourceView** Kinect2Sensor::getColor_ppSRV(){
 	return &m_pColorSRV;
 }
-
 ID3D11ShaderResourceView** Kinect2Sensor::getDepth_ppSRV(){
 	return &m_pDepthSRV;
 }
-
 ID3D11ShaderResourceView** Kinect2Sensor::getInfrared_ppSRV(){
 	return &m_pInfraredSRV;
 }
 
+// For testing
+ID3D11ShaderResourceView** Kinect2Sensor::getColorLookup_ppSRV(){
+	return &m_pColLookupForDetphSRV;
+}
+HRESULT Kinect2Sensor::ProcessDepthColorMap(ID3D11DeviceContext* pd3dimmediatecontext, const ColorSpacePoint* pMapBuffer, int iMapBufferSize){
+	HRESULT hr = S_OK;
+	D3D11_MAPPED_SUBRESOURCE msT;
+	hr = pd3dimmediatecontext->Map( m_pColLookupForDetphTex, NULL, D3D11_MAP_WRITE_DISCARD,NULL,&msT);
+	memcpy( msT.pData,pMapBuffer,iMapBufferSize*sizeof(ColorSpacePoint));
+	pd3dimmediatecontext->Unmap(m_pColLookupForDetphTex,NULL);
+	return hr;
+}
 IRGBDStreamForOpenCV* OpenCVStreamFactory::createFromKinect2(){
 	return new Kinect2Sensor();
 }
-
 IRGBDStreamForDirectX* DirectXStreamFactory::createFromKinect2(){
 	return new Kinect2Sensor();
 }

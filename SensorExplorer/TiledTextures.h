@@ -91,11 +91,11 @@ public:
 		float tileRatio_hv = screenAspectRatio / normalTileAspectRatio;
 		float fTileNum_h = sqrt(tileRatio_hv*tileRatio_hv*m_vecTiledObjs.size());
 		float fTileNum_v = fTileNum_h / tileRatio_hv/tileRatio_hv;
-		int tileNum_h = floor(fTileNum_h);
-		if( tileNum_h > m_vecTiledObjs.size()) tileNum_h = m_vecTiledObjs.size();
+		int tileNum_h = (int)floor(fTileNum_h);
+		if( tileNum_h > (int)m_vecTiledObjs.size()) tileNum_h = (int)m_vecTiledObjs.size();
 		if( tileNum_h==0) tileNum_h=1;
-		int tileNum_v = floor(fTileNum_v);
-		if( tileNum_v > m_vecTiledObjs.size()) tileNum_v = m_vecTiledObjs.size();
+		int tileNum_v = (int)floor(fTileNum_v);
+		if( tileNum_v > (int)m_vecTiledObjs.size()) tileNum_v = (int)m_vecTiledObjs.size();
 		if( tileNum_v==0) tileNum_v=1;
 		while( tileNum_v*tileNum_h < m_vecTiledObjs.size()){
 			if(fTileNum_h-tileNum_h <= fTileNum_v-tileNum_v) tileNum_v++;
@@ -144,8 +144,8 @@ public:
         shaderCode << "struct GS_INPUT{};\n";
         shaderCode << "struct PS_INPUT{float4 Pos:SV_POSITION;float2 Tex:TEXCOORD0;uint PrimID:SV_PrimitiveID;};\n";
         shaderCode << "GS_INPUT VS(){GS_INPUT output=(GS_INPUT)0;return output;}\n";
-        m_uTileCount_x = ceil( sqrt( m_vecTiledObjs.size() ) );// Tile count along horizontal axis
-        m_uTileCount_y = ceil( m_vecTiledObjs.size() / ( float )m_uTileCount_x );// Tile count along vertical axis
+        m_uTileCount_x = (UINT)ceil( sqrt( m_vecTiledObjs.size() ) );// Tile count along horizontal axis
+        m_uTileCount_y = (UINT)ceil( m_vecTiledObjs.size() / ( float )m_uTileCount_x );// Tile count along vertical axis
         float subScreen_x = 2.0f / m_uTileCount_x;// The dimension of tile container in screen space, x axis;
         float subScreen_y = 2.0f / m_uTileCount_y;// The dimension of tile container in screen space, y axis;
 
@@ -246,7 +246,7 @@ public:
 		cbDesc.CPUAccessFlags = 0;
 		//cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		cbDesc.MiscFlags = 0;
-		cbDesc.ByteWidth = m_vecTiledObjs.size() * sizeof( XMFLOAT4 );
+		cbDesc.ByteWidth = (UINT)m_vecTiledObjs.size() * sizeof( XMFLOAT4 );
 		V_RETURN( pd3dDevice->CreateBuffer( &cbDesc, NULL, &m_pCBTileLocation ) );
 
         string shaderCode = GenerateShaderCode();
@@ -326,21 +326,21 @@ public:
         D3D11_SAMPLER_DESC sampDesc;
         ZeroMemory( &sampDesc, sizeof( sampDesc ) );
         sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-        sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-        sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
         sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
         sampDesc.MinLOD = 0;
         sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
         V_RETURN( pd3dDevice->CreateSamplerState( &sampDesc, &m_pSS ) );
         DXUT_SetDebugName( m_pSS, "m_pSS" );
 
-        m_uTexCount = m_vecTiledObjs.size();
+        m_uTexCount = (UINT)m_vecTiledObjs.size();
 
         m_ppInputSRVs = new ID3D11ShaderResourceView*[m_uTexCount];
         m_ppNullSRVs = new ID3D11ShaderResourceView*[m_uTexCount];
 
-        for(int i=0;i<m_uTexCount;i++)
+        for(UINT i=0;i<m_uTexCount;i++)
             m_ppNullSRVs[i] = NULL;
 
         return hr;
@@ -363,12 +363,12 @@ public:
         for(auto item : m_vecTiledObjs)
             m_ppInputSRVs[idx++] = item.ppInputSRV ? *item.ppInputSRV : NULL;
 
-        pd3dImmediateContext->PSSetShaderResources( 0, m_vecTiledObjs.size(), m_ppInputSRVs );
+        pd3dImmediateContext->PSSetShaderResources( 0, (UINT)m_vecTiledObjs.size(), m_ppInputSRVs );
         pd3dImmediateContext->PSSetSamplers( 0, 1, &m_pSS );
         pd3dImmediateContext->RSSetViewports( 1, &m_RTviewport );
 
         float ClearColor[4] = { 0.2f, 0.2f, 0.2f, 0.0f };
-        pd3dImmediateContext->ClearRenderTargetView( m_pOutRTV, ClearColor );
+        //pd3dImmediateContext->ClearRenderTargetView( m_pOutRTV, ClearColor );
     }
 
     void Resize( const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc)
@@ -377,8 +377,8 @@ public:
         int winHeight = pBackBufferSurfaceDesc->Height;
 		ComputeTileLocation(winWidth,winHeight);
 
-		m_RTviewport.Width = m_uTextureWidth*m_uTileCount_x;
-		m_RTviewport.Height = m_uTextureHeight*m_uTileCount_y;
+		m_RTviewport.Width = (float)m_uTextureWidth*m_uTileCount_x;
+		m_RTviewport.Height = (float)m_uTextureHeight*m_uTileCount_y;
 		m_RTviewport.MinDepth = 0.0f;
 		m_RTviewport.MaxDepth = 1.0f;
 		m_RTviewport.TopLeftX = 0;
@@ -389,11 +389,11 @@ public:
         float winAspectRatio = (float)winWidth/(float)winHeight;
 
         if( winAspectRatio > m_fRTaspectRatio){
-            m_RTviewport.Height = winHeight;
-            m_RTviewport.Width = winHeight*m_fRTaspectRatio;
+            m_RTviewport.Height = (float)winHeight;
+            m_RTviewport.Width = (float)winHeight*m_fRTaspectRatio;
         }else{
-            m_RTviewport.Width = winWidth;
-            m_RTviewport.Height = winWidth / m_fRTaspectRatio;
+            m_RTviewport.Width = (float)winWidth;
+            m_RTviewport.Height = (float)winWidth / m_fRTaspectRatio;
         }
 
         m_RTviewport.TopLeftX = (winWidth - m_RTviewport.Width)/2.f;

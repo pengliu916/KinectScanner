@@ -7,11 +7,13 @@
 #include "TiledTextures.h"
 
 #include "IRGBDStreamForDirectX.h"
+#include "Kinect2Sensor.h"
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
 TiledTextures				multiTexture = TiledTextures();
-IRGBDStreamForDirectX*		kinect = DirectXStreamFactory::createFromKinect2();
+IRGBDStreamForDirectX*		sensor = DirectXStreamFactory::createFromKinect2();
+Kinect2Sensor*				kinect = dynamic_cast<Kinect2Sensor*>(sensor);
 //--------------------------------------------------------------------------------------
 // Initialization
 //--------------------------------------------------------------------------------------
@@ -19,7 +21,7 @@ HRESULT Initial()
 {
 	HRESULT hr = S_OK;
 	V_RETURN(multiTexture.Initial());
-	V_RETURN(kinect->Initialize());
+	V_RETURN(sensor->Initialize());
 	multiTexture.AddTexture(kinect->getColor_ppSRV(), 1920, 1080);
 	multiTexture.AddTexture(kinect->getDepth_ppSRV(), 512, 424, "int2 texCoord=input.Tex*float2(512,424);\n\
 														   	uint depth=texture.Load(int3(texCoord,0));\n\
@@ -29,6 +31,9 @@ HRESULT Initial()
 															uint infrared=texture.Load(int3(texCoord,0));\n\
 															float norInfrared = pow(infrared/65535.f,0.32);\n\
 															return float4(norInfrared,norInfrared,norInfrared,0);", "<uint>" );
+	multiTexture.AddTexture( kinect->getColorLookup_ppSRV(), 512, 424,"float2 rawData = texture.Sample(samColor,input.Tex)/float2(1920,1080);\n\
+																	   float4 eecolor = textures_0.SampleLevel(samColor,rawData,0);\n\
+																	   return eecolor;","<float2>");
 	return hr;
 }
 
@@ -59,7 +64,7 @@ HRESULT CALLBACK OnD3D11CreateDevice(ID3D11Device* pd3dDevice, const DXGI_SURFAC
 									 void* pUserContext)
 {
 	HRESULT hr = S_OK;
-	V_RETURN(kinect->CreateResource(pd3dDevice));
+	V_RETURN(sensor->CreateResource(pd3dDevice));
 	
 	V_RETURN(multiTexture.CreateResource(pd3dDevice));
 	return S_OK;
@@ -111,7 +116,7 @@ void CALLBACK OnD3D11ReleasingSwapChain(void* pUserContext)
 void CALLBACK OnD3D11DestroyDevice(void* pUserContext)
 {
 	multiTexture.Release();
-	kinect->Release();
+	sensor->Release();
 }
 
 

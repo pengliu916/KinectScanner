@@ -3,10 +3,10 @@
   <ItemGroup>
     <ClInclude Include="IRGBDStreamForDirectX.h" />
     <ClInclude Include="IRGBDStreamForOpenCV.h" />
-    <ClInclude Include="Kinect2Sensor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KinectSensor.h" />
     <ClCompile Include="KinectVideos.h" />
+    <ClCompile Include="Kinect2Sensor.h" />
   </ItemGroup>
 </Project>

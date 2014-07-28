@@ -4,9 +4,6 @@
     <ClCompile Include="SensorExplorer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="TiledTextures.fx" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="TiledTextures.h" />
   </ItemGroup>
 </Project>
