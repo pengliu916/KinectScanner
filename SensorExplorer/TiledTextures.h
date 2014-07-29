@@ -130,7 +130,7 @@ public:
 
     string GenerateShaderCode()
     {
-        ostringstream  shaderCode;
+        stringstream  shaderCode;
         for( int i = 0; i < m_vecTiledObjs.size(); i++ ){
             shaderCode << "Texture2D" << m_vecTiledObjs[i].strTexFormat << " textures_" << i << ";\n";
         }
@@ -179,7 +179,7 @@ public:
 
         size_t index;
         for( int i = 0; i < m_vecTiledObjs.size(); i++ ){
-            ostringstream replace;
+            stringstream replace;
             string replacement;
             replace << "textures_" << i<<".";
             replacement = replace.str();

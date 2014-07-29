@@ -22,18 +22,30 @@ HRESULT Initial()
 	HRESULT hr = S_OK;
 	V_RETURN(multiTexture.Initial());
 	V_RETURN(sensor->Initialize());
-	multiTexture.AddTexture(kinect->getColor_ppSRV(), 1920, 1080);
-	multiTexture.AddTexture(kinect->getDepth_ppSRV(), 512, 424, "int2 texCoord=input.Tex*float2(512,424);\n\
-														   	uint depth=texture.Load(int3(texCoord,0));\n\
-															uint codedDepth = depth%512;\n\
-															return float4(0,codedDepth/512.f,0,0);","<uint>");
-	multiTexture.AddTexture( kinect->getInfrared_ppSRV(), 512, 424, "int2 texCoord=input.Tex*float2(512,424);\n\
-															uint infrared=texture.Load(int3(texCoord,0));\n\
-															float norInfrared = pow(infrared/65535.f,0.32);\n\
-															return float4(norInfrared,norInfrared,norInfrared,0);", "<uint>" );
-	multiTexture.AddTexture( kinect->getColorLookup_ppSRV(), 512, 424,"float2 rawData = texture.Sample(samColor,input.Tex)/float2(1920,1080);\n\
-																	   float4 eecolor = textures_0.SampleLevel(samColor,rawData,0);\n\
-																	   return eecolor;","<float2>");
+	string strPScode;
+	multiTexture.AddTexture(sensor->getColor_ppSRV(), 1920, 1080);
+
+	strPScode = "\
+		int2 texCoord=input.Tex*float2(512,424);\n\
+		uint depth=texture.Load(int3(texCoord,0));\n\
+		uint codedDepth = depth%512;\n\
+		return float4(0,codedDepth/512.f,0,0);";
+	multiTexture.AddTexture(sensor->getDepth_ppSRV(), 512, 424, strPScode,"<uint>");
+
+	strPScode = "\
+		int2 texCoord=input.Tex*float2(512,424);\n\
+		uint infrared=texture.Load(int3(texCoord,0));\n\
+		float norInfrared = pow(infrared/65535.f,0.32);\n\
+		return float4(norInfrared,norInfrared,norInfrared,0);";
+	multiTexture.AddTexture( sensor->getInfrared_ppSRV(), 512, 424, strPScode, "<uint>" );
+	
+	strPScode = "\
+		float2 rawData = texture.Sample(samColor,input.Tex)/float2(1920,1080);\n\
+		return textures_0.SampleLevel(samColor,rawData,0);\n\
+		//return float4(rawData,0,0);";
+	multiTexture.AddTexture( kinect->getColorLookup_ppSRV(), 512, 424,strPScode,"<float2>");
+
+	multiTexture.AddTexture( &kinect->m_pUndsitortedRGBDSRV, 512, 424);
 	return hr;
 }
 
@@ -97,7 +109,8 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext,
 								 double fTime, float fElapsedTime, void* pUserContext)
 {
-	kinect->UpdateTextures(pd3dImmediateContext);
+	sensor->UpdateTextures(pd3dImmediateContext);
+	kinect->ProcessUndistortedRGBD(pd3dImmediateContext);
 	multiTexture.Render(pd3dImmediateContext);
 }
 

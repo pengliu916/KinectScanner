@@ -168,8 +168,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Calibrate.cpp" />
-    <None Include="calibration.cpp" />
+    <None Include="Calibrate.cpp" />
+    <ClCompile Include="calibration.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

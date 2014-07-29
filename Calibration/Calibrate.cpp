@@ -70,6 +70,10 @@ int main()
 			exit( 1 );
 		}
 
+		bool chessboard = true;
+		cout<<"chessboard pattern?(y/n):";
+		userInput =waitKey(0);
+		if(userInput=='n') chessboard = false;
 		cout<<"\n 'a' for accept image, 'q' for exiting image aquaring stage"<<endl;
 
 		int iInfraredWidth, iInfraredHeight;
@@ -101,12 +105,18 @@ int main()
 				infrared8U = infrared8U * 256;
 				infrared8U.convertTo( infrared8U, CV_8UC1 );
 
-				patternFound = findChessboardCorners( infrared8U, Size( 9, 6 ), corners,
-													  CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
-				if( patternFound ) cornerSubPix( infrared8U, corners, Size( 11, 11 ), Size( -1, -1 ),
-												 TermCriteria( CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1 ) );
-				cvtColor( infrared8U, infraredWithPattern, CV_GRAY2RGB );
-				drawChessboardCorners( infraredWithPattern, Size( 9, 6 ), Mat( corners ), patternFound );
+				if (chessboard){
+					patternFound = findChessboardCorners(infrared8U, Size(9, 6), corners,
+														  CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
+					if (patternFound) cornerSubPix(infrared8U, corners, Size(11, 11), Size(-1, -1),
+													 TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+					cvtColor(infrared8U, infraredWithPattern, CV_GRAY2RGB);
+					drawChessboardCorners(infraredWithPattern, Size(9, 6), Mat(corners), patternFound);
+				}else{
+					patternFound = findCirclesGrid(infrared8U, Size(4, 11), corners, CALIB_CB_ASYMMETRIC_GRID);
+					cvtColor(infrared8U, infraredWithPattern, CV_GRAY2RGB);
+					drawChessboardCorners(infraredWithPattern, Size(4, 11), Mat(corners), patternFound);
+				}
 				imshow( "WithPattern", infraredWithPattern );
 			}
 		}

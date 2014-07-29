@@ -2,9 +2,14 @@
 #include <opencv2\core\core.hpp>
 #include <d3d11.h>
 #include "DXUT.h"
+#include "SDKmisc.h"
 #include <Kinect.h>
+#include <iostream>
 #include "IRGBDStreamForOpenCV.h"
 #include "IRGBDStreamForDirectX.h"
+
+#define COMPILE_FLAG D3DCOMPILE_ENABLE_STRICTNESS
+using namespace std;
 
 // Safe release for interfaces
 template<class Interface>
@@ -22,6 +27,9 @@ class Kinect2Sensor : public IRGBDStreamForOpenCV, public IRGBDStreamForDirectX{
 	static const int        m_cDepthHeight = 424;
 	static const int        m_cColorWidth = 1920;
 	static const int        m_cColorHeight = 1080;
+
+	static const float      m_fDistorParams[5];
+
 public:
 	// Current Kinect
 	IKinectSensor*                      m_pKinect2Sensor;
@@ -58,7 +66,25 @@ public:
 	ID3D11ShaderResourceView*           m_pInfraredSRV;
 
 	ID3D11Texture2D*                    m_pColLookupForDetphTex;
-	ID3D11ShaderResourceView*           m_pColLookupForDetphSRV;
+	ID3D11ShaderResourceView*           m_pColLookupForDepthSRV;
+
+	ID3D11Texture2D*                    m_pUndsitortedRGBDTex;
+	ID3D11ShaderResourceView*           m_pUndsitortedRGBDSRV;
+	ID3D11RenderTargetView*             m_pUndsitortedRGBDRTV;
+
+	// DirectX resource for undistorted rgbd texture
+	ID3D11VertexShader*                 m_pPassVS;
+	ID3D11GeometryShader*               m_pQuadGS;
+	ID3D11PixelShader*                  m_pTexPS;
+	ID3D11InputLayout*                  m_pPassIL;
+	ID3D11Buffer*                       m_pPassVB;
+	ID3D11SamplerState*                 m_pNearestNeighborSS;
+	D3D11_VIEWPORT                      m_RTviewport;
+
+	ID3D11ShaderResourceView**          m_ppInputSRV;
+	ID3D11ShaderResourceView**          m_ppNullSRV;
+
+	string                              m_strShaderCode;
 
 	Kinect2Sensor();
 	virtual HRESULT Initialize();
@@ -98,9 +124,13 @@ public:
 	ColorSpacePoint*                    m_pColorCoordinates;
 	virtual ID3D11ShaderResourceView** getColorLookup_ppSRV();
 	HRESULT ProcessDepthColorMap(ID3D11DeviceContext* pd3dimmediatecontext, const ColorSpacePoint* pMapBuffer, int iMapBufferSize);
+	string GenShaderCode();
+	void ProcessUndistortedRGBD(ID3D11DeviceContext* pd3dimmediatecontext);
 
 };
-
+const float Kinect2Sensor::m_fDistorParams[]= { 8.5154194367447283e-002, -2.6706920315697513e-001,
+												3.0158565240179448e-003, -1.3463984002856915e-003,
+												9.9116038520186175e-002 };
 Kinect2Sensor::Kinect2Sensor(){
 	DWORD width = 0;
 	DWORD height = 0;
@@ -151,6 +181,13 @@ Kinect2Sensor::~Kinect2Sensor(){
 	SafeRelease( m_pKinect2Sensor );
 }
 
+// General interface
+IRGBDStreamForOpenCV* OpenCVStreamFactory::createFromKinect2(){
+	return new Kinect2Sensor();
+}
+IRGBDStreamForDirectX* DirectXStreamFactory::createFromKinect2(){
+	return new Kinect2Sensor();
+}
 
 HRESULT Kinect2Sensor::Initialize(){
 
@@ -198,7 +235,7 @@ void Kinect2Sensor::GetInfraredReso(int& iInfraredWidth, int& iInfraredHeight)
 	iInfraredHeight = m_cDepthHeight;
 }
 
-// For OpenCV code
+// For OpenCV interface
 HRESULT Kinect2Sensor::ProcessDepth(const UINT16* pDepthBuffer, int iDepthBufferSize)
 {
 	HRESULT hr = S_OK;
@@ -376,8 +413,48 @@ void Kinect2Sensor::GetInfraredMat( cv::Mat& out ){
 	m_matInfrared.copyTo( out );
 }
 
+// For DirectX interface
 HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	HRESULT hr = S_OK;
+
+
+
+	ID3DBlob* pVSBlob = NULL;
+	wstring filename = L"..\\RGBDStreamDLL\\UndistortedMerge.fx";
+
+	V_RETURN( DXUTCompileFromFile( filename.c_str(), nullptr, "VS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob ) );
+	V_RETURN( pd3dDevice->CreateVertexShader( pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &m_pPassVS ) );
+	DXUT_SetDebugName( m_pPassVS, "m_pPassVS" );
+
+	ID3DBlob* pGSBlob = NULL;
+	V_RETURN( DXUTCompileFromFile( filename.c_str(), nullptr, "GS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob ) );
+	V_RETURN( pd3dDevice->CreateGeometryShader( pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pQuadGS ) );
+	DXUT_SetDebugName( m_pQuadGS, "m_pQuadGS" );
+	pGSBlob->Release();
+
+	ID3DBlob* pPSBlob = NULL;
+	V_RETURN( DXUTCompileFromFile( filename.c_str(), nullptr, "PS", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob ) );
+	V_RETURN( pd3dDevice->CreatePixelShader( pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pTexPS ) );
+	DXUT_SetDebugName( m_pTexPS, "m_pTexPS" );
+	pPSBlob->Release();
+
+	D3D11_INPUT_ELEMENT_DESC layout[] = { { "POSITION", 0, DXGI_FORMAT_R16_SINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 } };
+	V_RETURN( pd3dDevice->CreateInputLayout( layout, ARRAYSIZE( layout ), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_pPassIL ) );
+	DXUT_SetDebugName( m_pPassIL, "m_pPassIL" );
+	pVSBlob->Release();
+
+	// Create the vertex buffer
+	D3D11_BUFFER_DESC bd = { 0 };
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof( short );
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+	V_RETURN( pd3dDevice->CreateBuffer( &bd, NULL, &m_pPassVB ) );
+	DXUT_SetDebugName( m_pPassVB, "m_pPassVB" );
+
+
+
+
 
 	// Create depth texture and its resource view
 	D3D11_TEXTURE2D_DESC depthTexDesc = { 0 };
@@ -394,6 +471,8 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	depthTexDesc.MiscFlags = 0;
 	V_RETURN( pd3dDevice->CreateTexture2D( &depthTexDesc, NULL, &m_pDepthTex ) );
 	V_RETURN( pd3dDevice->CreateShaderResourceView( m_pDepthTex, NULL, &m_pDepthSRV ) );
+	DXUT_SetDebugName( m_pDepthTex, "m_pDepthTex" );
+	DXUT_SetDebugName( m_pDepthSRV, "m_pDepthSRV" );
 
 	// Create color texture and its resource view
 	D3D11_TEXTURE2D_DESC colorTexDesc = { 0 };
@@ -410,6 +489,8 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	colorTexDesc.MiscFlags = 0;
 	V_RETURN( pd3dDevice->CreateTexture2D( &colorTexDesc, NULL, &m_pColorTex ) );
 	V_RETURN( pd3dDevice->CreateShaderResourceView( m_pColorTex, NULL, &m_pColorSRV ) );
+	DXUT_SetDebugName( m_pColorTex, "m_pColorTex" );
+	DXUT_SetDebugName( m_pColorSRV, "m_pColorSRV" );
 
 	// Create infrared texture and its resource view
 	D3D11_TEXTURE2D_DESC infraredTexDesc = { 0 };
@@ -426,6 +507,8 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	infraredTexDesc.MiscFlags = 0;
 	V_RETURN( pd3dDevice->CreateTexture2D( &infraredTexDesc, NULL, &m_pInfraredTex ) );
 	V_RETURN( pd3dDevice->CreateShaderResourceView( m_pInfraredTex, NULL, &m_pInfraredSRV ) );
+	DXUT_SetDebugName( m_pInfraredTex, "m_pInfraredTex" );
+	DXUT_SetDebugName( m_pInfraredSRV, "m_pInfraredSRV" );
 
 	// Create depth color mapping texture and its resource view
 	D3D11_TEXTURE2D_DESC depthColorMappingDesc = {0};
@@ -441,7 +524,59 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	depthColorMappingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	depthColorMappingDesc.MiscFlags = 0;
 	V_RETURN( pd3dDevice->CreateTexture2D( &depthColorMappingDesc, NULL, &m_pColLookupForDetphTex));
-	V_RETURN( pd3dDevice->CreateShaderResourceView( m_pColLookupForDetphTex, NULL,&m_pColLookupForDetphSRV));
+	V_RETURN( pd3dDevice->CreateShaderResourceView( m_pColLookupForDetphTex, NULL,&m_pColLookupForDepthSRV));
+	DXUT_SetDebugName( m_pColLookupForDetphTex, "m_pColLookupForDetphTex" );
+	DXUT_SetDebugName( m_pColLookupForDepthSRV, "m_pColLookupForDepthSRV" );
+
+	// Create depth color mapping texture and its resource view
+	D3D11_TEXTURE2D_DESC undistortedRGBDDesc = { 0 };
+	undistortedRGBDDesc.Width = m_cDepthWidth;
+	undistortedRGBDDesc.Height = m_cDepthHeight;
+	undistortedRGBDDesc.MipLevels = 1;
+	undistortedRGBDDesc.ArraySize = 1;
+	undistortedRGBDDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	undistortedRGBDDesc.SampleDesc.Count = 1;
+	undistortedRGBDDesc.SampleDesc.Quality = 0;
+	undistortedRGBDDesc.Usage = D3D11_USAGE_DEFAULT;
+	undistortedRGBDDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	undistortedRGBDDesc.CPUAccessFlags = 0;
+	undistortedRGBDDesc.MiscFlags = 0;
+	V_RETURN( pd3dDevice->CreateTexture2D( &undistortedRGBDDesc, NULL, &m_pUndsitortedRGBDTex ) );
+	V_RETURN( pd3dDevice->CreateShaderResourceView( m_pUndsitortedRGBDTex, NULL, &m_pUndsitortedRGBDSRV ) );
+	V_RETURN( pd3dDevice->CreateRenderTargetView( m_pUndsitortedRGBDTex, NULL, &m_pUndsitortedRGBDRTV ) );
+	DXUT_SetDebugName( m_pUndsitortedRGBDTex, "m_pUndsitortedRGBDTex" );
+	DXUT_SetDebugName( m_pUndsitortedRGBDSRV, "m_pUndsitortedRGBDSRV" );
+	DXUT_SetDebugName( m_pUndsitortedRGBDRTV, "m_pUndsitortedRGBDRTV" );
+
+
+	m_RTviewport.Width = ( float )m_cDepthWidth;
+	m_RTviewport.Height = ( float )m_cDepthHeight;
+	m_RTviewport.MinDepth = 0.0f;
+	m_RTviewport.MaxDepth = 1.0f;
+	m_RTviewport.TopLeftX = 0;
+	m_RTviewport.TopLeftY = 0;
+
+	// Create the sample state
+	D3D11_SAMPLER_DESC sampDesc;
+	ZeroMemory( &sampDesc, sizeof( sampDesc ) );
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	V_RETURN( pd3dDevice->CreateSamplerState( &sampDesc, &m_pNearestNeighborSS ) );
+	DXUT_SetDebugName( m_pNearestNeighborSS, "m_pNearestNeighborSS" );
+
+
+
+	m_ppInputSRV = new ID3D11ShaderResourceView*[4];
+	m_ppNullSRV = new ID3D11ShaderResourceView*[4];
+
+	for( UINT i = 0; i < 4; i++ )
+		m_ppNullSRV[i] = NULL;
+
 
 	return hr;
 }
@@ -453,7 +588,20 @@ void Kinect2Sensor::Release(){
 	SAFE_RELEASE( m_pInfraredTex );
 	SAFE_RELEASE( m_pInfraredSRV );
 	SAFE_RELEASE( m_pColLookupForDetphTex );
-	SAFE_RELEASE( m_pColLookupForDetphSRV );
+	SAFE_RELEASE( m_pColLookupForDepthSRV );
+
+	SAFE_RELEASE( m_pUndsitortedRGBDTex );
+	SAFE_RELEASE( m_pUndsitortedRGBDSRV );
+	SAFE_RELEASE( m_pUndsitortedRGBDRTV );
+	SAFE_RELEASE( m_pPassVS );
+	SAFE_RELEASE( m_pQuadGS );
+	SAFE_RELEASE( m_pTexPS );
+	SAFE_RELEASE( m_pPassIL );
+	SAFE_RELEASE( m_pPassVB );
+	SAFE_RELEASE( m_pNearestNeighborSS );
+	delete[] m_ppInputSRV;
+	delete[] m_ppNullSRV;
+
 }
 HRESULT Kinect2Sensor::ProcessDepth( ID3D11DeviceContext* pd3dimmediateContext, const UINT16* pDepthBuffer, int iDepthBufferSize ){
 	HRESULT hr = S_OK;
@@ -630,7 +778,7 @@ ID3D11ShaderResourceView** Kinect2Sensor::getInfrared_ppSRV(){
 
 // For testing
 ID3D11ShaderResourceView** Kinect2Sensor::getColorLookup_ppSRV(){
-	return &m_pColLookupForDetphSRV;
+	return &m_pColLookupForDepthSRV;
 }
 HRESULT Kinect2Sensor::ProcessDepthColorMap(ID3D11DeviceContext* pd3dimmediatecontext, const ColorSpacePoint* pMapBuffer, int iMapBufferSize){
 	HRESULT hr = S_OK;
@@ -640,9 +788,63 @@ HRESULT Kinect2Sensor::ProcessDepthColorMap(ID3D11DeviceContext* pd3dimmediateco
 	pd3dimmediatecontext->Unmap(m_pColLookupForDetphTex,NULL);
 	return hr;
 }
-IRGBDStreamForOpenCV* OpenCVStreamFactory::createFromKinect2(){
-	return new Kinect2Sensor();
+string Kinect2Sensor::GenShaderCode(){
+	string shaderCode="\
+Texture2D<float4> colorTex;\n\
+Texture2D<uint> depthTex;\n\
+Texture2D<uint> mapTex;\n\
+SamplerState samColor : register(s0);\n\
+struct GS_INPUT{};\n\
+struct PS_INPUT{\n\
+	float4 Pos : SV_POSITION;\n\
+	float2 Tex : TEXCOORD0;\n\
+}\n\
+GS_INPUT VS(){\n\
+	GS_INPUT output = (GS_INPUT)0;\n\
+	return output;\n\
+}\n\
+[maxvertexcount(4)]\n\
+void GS( point GS_INPUT particles[1], inout TriangleStream<PS_INPUT> triStream ){\n\
+	PS_INPUT output;\n\
+	output.Pos = float4( -1.0f, 1.0f, 0.01f, 1.0f );\n\
+	output.Tex = float2( 0.0f, 0.0f );\n\
+	triStream.Append( output );\n\
+	output.Pos = float4( -1.0f, -1.0f, 0.01f, 1.0f );\n\
+	output.Tex = float2( 0.0f, 1.0f );\n\
+	triStream.Append( output );\n\
+	output.Pos = float4( 1.0f, 1.0f, 0.01f, 1.0f );\n\
+	output.Tex = float2( 1.0f, 0.0f );\n\
+	triStream.Append( output );\n\
+	output.Pos = float4( 1.0f, -1.0f, 0.01f, 1.0f );\n\
+	output.Tex = float2( 1.0f, 1.0f );\n\
+	triStream.Append( output );\n\
+}\n\
+float4 PS(PS_INPUT input) : SV_Target{\n\
+	float4 color = colorTex.Sample(samColor,input.Tex);\n\
+	return color;\n\
+}\n";
+	return shaderCode;
 }
-IRGBDStreamForDirectX* DirectXStreamFactory::createFromKinect2(){
-	return new Kinect2Sensor();
+void Kinect2Sensor::ProcessUndistortedRGBD(ID3D11DeviceContext* pd3dimmediatecontext){
+	pd3dimmediatecontext->OMSetRenderTargets( 1, &m_pUndsitortedRGBDRTV, NULL );
+	pd3dimmediatecontext->IASetInputLayout( m_pPassIL );
+	pd3dimmediatecontext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST );
+	UINT stride = 0;
+	UINT offset = 0;
+	pd3dimmediatecontext->IASetVertexBuffers( 0, 1, &m_pPassVB, &stride, &offset );
+	pd3dimmediatecontext->VSSetShader( m_pPassVS, NULL, 0 );
+	pd3dimmediatecontext->GSSetShader( m_pQuadGS, NULL, 0 );
+	pd3dimmediatecontext->PSSetShader( m_pTexPS, NULL, 0 );
+
+	m_ppInputSRV[0] = m_pColorSRV;
+	m_ppInputSRV[1] = m_pColLookupForDepthSRV;
+	m_ppInputSRV[2] = m_pDepthSRV;
+	m_ppInputSRV[3] = m_pInfraredSRV;
+
+	pd3dimmediatecontext->PSSetShaderResources( 0, 4, m_ppInputSRV );
+	pd3dimmediatecontext->PSSetSamplers( 0, 1, &m_pNearestNeighborSS );
+	pd3dimmediatecontext->RSSetViewports( 1, &m_RTviewport );
+
+	pd3dimmediatecontext->Draw(1,0);
+	pd3dimmediatecontext->PSSetShaderResources( 0, 4, m_ppNullSRV );
 }

@@ -9,4 +9,7 @@
     <ClCompile Include="KinectVideos.h" />
     <ClCompile Include="Kinect2Sensor.h" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="UndistortedMerge.fx" />
+  </ItemGroup>
 </Project>
