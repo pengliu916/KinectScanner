@@ -4,14 +4,14 @@ Texture2D<uint> depthTex : register(t2);
 Texture2D<uint> infraredTex : register(t3);
 SamplerState samColor : register(s0);
 
-static const float k1 = 8.5154194367447283e-002;
-static const float k2 = -2.6706920315697513e-001;
-static const float k3 = 9.9116038520186175e-002;
-static const float p1 = 3.0158565240179448e-003;
-static const float p2 = -1.3463984002856915e-003;
+static const float k1 = 8.8504301548577566e-002;
+static const float k2 = -2.6814754071676628e-001;
+static const float k3 = 9.5216047737553558e-002;
+static const float p1 = 1.0645764349016512e-003;
+static const float p2 = 6.1595302794893606e-005;
 
-static const float fx = 3.6297160236896798e+002;
-static const float fy = 3.6380609025908501e+002;
+static const float fx = 3.6348896584809120e+002;
+static const float fy = 3.6307313033832008e+002;
 static const float cx = 2.5550000000000000e+002;
 static const float cy = 2.1150000000000000e+002;
 

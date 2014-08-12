@@ -1,3 +1,8 @@
+/* Helper class for Kinect2, include functions to communicate
+ * with DirectX and OpenCV.
+ * Requires DirectX11 OpenCV 1.x
+ * author Peng Liu <peng.liu916@gmail.com>
+ */
 #pragma once
 #include <opencv2\core\core.hpp>
 #include <d3d11.h>
@@ -401,7 +406,7 @@ bool Kinect2Sensor::UpdateMats( bool defaultReg = true, bool color = true, bool 
 	if( defaultReg && needToMapColorToDepth ){
 		MapColorToDepth( );
 	}
-	return m_bUpdated;
+	return SUCCEEDED( hr );
 }
 void Kinect2Sensor::GetDepthMat( cv::Mat& out ){
 	m_matDepth.copyTo( out );

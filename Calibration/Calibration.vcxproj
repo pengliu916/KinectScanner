@@ -109,7 +109,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_core249d.lib;opencv_imgproc249d.lib;opencv_highgui249d.lib;opencv_calib3d249d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core249d.lib;opencv_imgproc249d.lib;opencv_highgui249d.lib;opencv_calib3d249d.lib;opencv_features2d249d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OPENCV_DIR)\build\x64\vc12\lib\;</AdditionalLibraryDirectories>
     </Link>
     <ProjectReference>
@@ -168,8 +168,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Calibrate.cpp" />
-    <ClCompile Include="calibration.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Calibration.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Calibration.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
