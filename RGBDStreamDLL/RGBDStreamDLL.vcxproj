@@ -160,12 +160,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="PointCloudVisualizer.cpp" />
+    <ClCompile Include="Undistortion.cpp" />
     <ClInclude Include="IRGBDStreamForDirectX.h" />
     <ClInclude Include="IRGBDStreamForOpenCV.h" />
     <ClCompile Include="Kinect2Sensor.cpp" />
     <ClCompile Include="KinectVideos.h" />
     <ClInclude Include="Kinect2Sensor.h" />
     <ClInclude Include="PointCloudVisualizer.h" />
+    <ClInclude Include="Undistortion.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KinectSensor.h" />

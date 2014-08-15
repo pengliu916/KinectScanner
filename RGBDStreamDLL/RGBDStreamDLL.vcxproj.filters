@@ -5,12 +5,14 @@
     <ClInclude Include="IRGBDStreamForOpenCV.h" />
     <ClInclude Include="Kinect2Sensor.h" />
     <ClInclude Include="PointCloudVisualizer.h" />
+    <ClInclude Include="Undistortion.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KinectSensor.h" />
     <ClCompile Include="KinectVideos.h" />
     <ClCompile Include="Kinect2Sensor.cpp" />
     <ClCompile Include="PointCloudVisualizer.cpp" />
+    <ClCompile Include="Undistortion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="UndistortedMerge.fx" />
