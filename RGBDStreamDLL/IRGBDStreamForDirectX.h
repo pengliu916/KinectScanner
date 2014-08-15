@@ -1,3 +1,9 @@
+/* RGB Depth sensor interface for DirectX 
+ * Requires DirectX11
+ * author: Peng Liu <peng.liu916@gmail.com>
+ * version: July 2014
+ */
+
 #pragma once
 
 #ifdef RGBDSTREAMDLL_EXPORTS

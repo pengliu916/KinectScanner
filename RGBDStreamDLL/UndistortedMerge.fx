@@ -27,7 +27,7 @@ GS_INPUT VS(){
 [maxvertexcount(4)]
 void GS( point GS_INPUT particles[1], inout TriangleStream<PS_INPUT> triStream ){
 	PS_INPUT output;
-	float scaler = 1.2f;
+	float scaler = 1.0f;
 	output.Pos = float4( -1.0f, 1.0f, 0.01f, 1.0f );
 	output.Tex = float2( 0.5f, 0.5f ) + float2( -0.5f, -0.5f ) * scaler;
 	triStream.Append( output );

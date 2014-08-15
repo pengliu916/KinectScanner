@@ -228,7 +228,7 @@
     <FxCompile Include="PoseEstimator.fx" />
     <FxCompile Include="RayCast.fx" />
     <FxCompile Include="Reduction.fx" />
-    <FxCompile Include="RGBBilateralFilter.fx" />
+    <FxCompile Include="RGBDBilateralFilter.fx" />
     <FxCompile Include="TSDFImages.fx" />
     <FxCompile Include="VolumeTSDF.fx" />
   </ItemGroup>
@@ -241,7 +241,7 @@
     <ClInclude Include="PoseEstimator.h" />
     <ClInclude Include="RayCast.h" />
     <ClInclude Include="Reduction.h" />
-    <ClInclude Include="RGBBilateralFilter.h" />
+    <ClInclude Include="RGBDBilateralFilter.h" />
     <ClInclude Include="Scanner.h" />
     <ClInclude Include="TransPCLs.h" />
     <ClInclude Include="TSDFImages.h" />

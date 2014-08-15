@@ -7,13 +7,20 @@
 #include "TiledTextures.h"
 
 #include "IRGBDStreamForDirectX.h"
-#include "Kinect2Sensor.h"
+#include "RGBDStreamDLL\Kinect2Sensor.h"
+
+
+#include "PointCloudVisualizer.h"
+using namespace std::placeholders;
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
 TiledTextures				multiTexture = TiledTextures();
 IRGBDStreamForDirectX*		sensor = DirectXStreamFactory::createFromKinect2();
 Kinect2Sensor*				kinect = dynamic_cast<Kinect2Sensor*>(sensor);
+
+PointCloudVisualizer		PCVisual = PointCloudVisualizer();
+PointCloudVisualizer		PCVisual1 = PointCloudVisualizer();
 //--------------------------------------------------------------------------------------
 // Initialization
 //--------------------------------------------------------------------------------------
@@ -23,29 +30,37 @@ HRESULT Initial()
 	V_RETURN(multiTexture.Initial());
 	V_RETURN(sensor->Initialize());
 	string strPScode;
-	multiTexture.AddTexture(sensor->getColor_ppSRV(), 1920, 1080);
+	//multiTexture.AddTexture(sensor->getColor_ppSRV(), 1920, 1080);
 
-	strPScode = "\
-		int2 texCoord=input.Tex*float2(512,424);\n\
-		uint depth=texture.Load(int3(texCoord,0));\n\
-		uint codedDepth = depth%512;\n\
-		return float4(0,codedDepth/512.f,0,0);";
-	multiTexture.AddTexture(sensor->getDepth_ppSRV(), 512, 424, strPScode,"<uint>");
+	//strPScode = "\
+	//	int2 texCoord=input.Tex*float2(512,424);\n\
+	//	uint depth=texture.Load(int3(texCoord,0));\n\
+	//	uint codedDepth = depth%512;\n\
+	//	return float4(0,codedDepth/512.f,0,0);";
+	//multiTexture.AddTexture(sensor->getDepth_ppSRV(), 512, 424, strPScode,"<uint>");
 
-	strPScode = "\
-		int2 texCoord=input.Tex*float2(512,424);\n\
-		uint infrared=texture.Load(int3(texCoord,0));\n\
-		float norInfrared = pow(infrared/65535.f,0.32);\n\
-		return float4(norInfrared,norInfrared,norInfrared,0);";
-	multiTexture.AddTexture( sensor->getInfrared_ppSRV(), 512, 424, strPScode, "<uint>" );
-	
-	strPScode = "\
-		float2 rawData = texture.Sample(samColor,input.Tex)/float2(1920,1080);\n\
-		return textures_0.SampleLevel(samColor,rawData,0);\n\
-		//return float4(rawData,0,0);";
-	multiTexture.AddTexture( kinect->getColorLookup_ppSRV(), 512, 424,strPScode,"<float2>");
+	//strPScode = "\
+	//	int2 texCoord=input.Tex*float2(512,424);\n\
+	//	uint infrared=texture.Load(int3(texCoord,0));\n\
+	//	float norInfrared = pow(infrared/65535.f,0.32);\n\
+	//	return float4(norInfrared,norInfrared,norInfrared,0);";
+	//multiTexture.AddTexture( sensor->getInfrared_ppSRV(), 512, 424, strPScode, "<uint>" );
+	//
+	//strPScode = "\
+	//	float2 rawData = texture.Sample(samColor,input.Tex)/float2(1920,1080);\n\
+	//	return textures_0.SampleLevel(samColor,rawData,0);\n\
+	//	//return float4(rawData,0,0);";
+	//multiTexture.AddTexture( kinect->getColorLookup_ppSRV(), 512, 424,strPScode,"<float2>");
 
-	multiTexture.AddTexture( &kinect->m_pUndsitortedRGBDSRV, 512, 424);
+	//multiTexture.AddTexture( &kinect->m_pUndsitortedRGBDSRV, 512, 424);
+
+	multiTexture.AddTexture(&PCVisual.m_pOutSRV, 640, 480, "", "<float4>", 
+							std::bind(&PointCloudVisualizer::Resize,&PCVisual,_1,_2,_3),
+							std::bind(&PointCloudVisualizer::HandleMessages,&PCVisual,_1,_2,_3,_4));
+
+	multiTexture.AddTexture(&PCVisual1.m_pOutSRV, 640, 480, "", "<float4>",
+							std::bind(&PointCloudVisualizer::Resize, &PCVisual1, _1, _2, _3),
+							std::bind(&PointCloudVisualizer::HandleMessages, &PCVisual1, _1, _2, _3, _4));
 	return hr;
 }
 
@@ -79,6 +94,14 @@ HRESULT CALLBACK OnD3D11CreateDevice(ID3D11Device* pd3dDevice, const DXGI_SURFAC
 	V_RETURN(sensor->CreateResource(pd3dDevice));
 	
 	V_RETURN(multiTexture.CreateResource(pd3dDevice));
+
+	V_RETURN(PCVisual.CreateResource(pd3dDevice,sensor->getDepth_ppSRV(),512,424, false,
+										XMFLOAT2(-3.6172484623525816e+002, -3.6121411187495357e+002),
+										XMFLOAT2(2.5681568188916287e+002, 2.0554866916495337e+002)));
+	V_RETURN(PCVisual1.CreateResource(	pd3dDevice, &kinect->m_pUndsitortedRGBDSRV, 
+										512, 424, true,
+										XMFLOAT2(-3.6172484623525816e+002, -3.6121411187495357e+002),
+										XMFLOAT2(2.5681568188916287e+002, 2.0554866916495337e+002)));
 	return S_OK;
 }
 
@@ -90,7 +113,8 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain(ID3D11Device* pd3dDevice, IDXGISwapChai
 										 const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc, void* pUserContext)
 {
 	HRESULT hr = S_OK;
-	multiTexture.Resize(pBackBufferSurfaceDesc);
+	multiTexture.Resize(pd3dDevice,pBackBufferSurfaceDesc);
+	//PCVisual.Resize(pd3dDevice, multiTexture.m_vecTiledObjs[5].iOutWidth, multiTexture.m_vecTiledObjs[5].iOutHeight);
 	return S_OK;
 }
 
@@ -100,6 +124,8 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain(ID3D11Device* pd3dDevice, IDXGISwapChai
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 {
+	PCVisual.Update(fElapsedTime);
+	PCVisual1.Update(fElapsedTime);
 }
 
 
@@ -111,6 +137,11 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 {
 	sensor->UpdateTextures(pd3dImmediateContext);
 	kinect->ProcessUndistortedRGBD(pd3dImmediateContext);
+
+	PCVisual.Render(pd3dImmediateContext);
+	PCVisual1.Render(pd3dImmediateContext);
+
+
 	multiTexture.Render(pd3dImmediateContext);
 }
 
@@ -120,6 +151,8 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D11ReleasingSwapChain(void* pUserContext)
 {
+	PCVisual.Release();
+	PCVisual1.Release();
 }
 
 
@@ -130,6 +163,9 @@ void CALLBACK OnD3D11DestroyDevice(void* pUserContext)
 {
 	multiTexture.Release();
 	sensor->Release();
+
+	PCVisual.Destory();
+	PCVisual1.Destory();
 }
 
 

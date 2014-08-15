@@ -6,7 +6,6 @@
   <ItemGroup>
     <FxCompile Include="MultiTexturePresenter.fx" />
     <FxCompile Include="NormalGenerator.fx" />
-    <FxCompile Include="RGBBilateralFilter.fx" />
     <FxCompile Include="FilteredPCL.fx" />
     <FxCompile Include="VolumeTSDF.fx" />
     <FxCompile Include="RayCast.fx" />
@@ -14,13 +13,13 @@
     <FxCompile Include="Reduction.fx" />
     <FxCompile Include="PoseEstimator.fx" />
     <FxCompile Include="HistoPyramidMC.fx" />
+    <FxCompile Include="RGBDBilateralFilter.fx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MultiTexturePresenter.h" />
     <ClInclude Include="Scanner.h" />
     <ClInclude Include="FilteredPCL.h" />
     <ClInclude Include="NormalGenerator.h" />
-    <ClInclude Include="RGBBilateralFilter.h" />
     <ClInclude Include="TransPCLs.h" />
     <ClInclude Include="header.h" />
     <ClInclude Include="VolumeTSDF.h" />
@@ -29,8 +28,14 @@
     <ClInclude Include="Reduction.h" />
     <ClInclude Include="PoseEstimator.h" />
     <ClInclude Include="HistoPyramidMC.h" />
+    <ClInclude Include="RGBDBilateralFilter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="D3DX_DXGIFormatConvert.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{d8840fe0-b06a-4b4f-9ad0-dfbc0c8c16e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -1,3 +1,9 @@
+/* RGB Depth sensor interface for OpenCV
+* Requires OpenCV 2.x (tested with 2.4.9)
+* author: Peng Liu <peng.liu916@gmail.com>
+* version: July 2014
+*/
+
 #pragma once
 
 #ifdef RGBDSTREAMDLL_EXPORTS

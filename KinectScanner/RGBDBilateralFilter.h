@@ -7,7 +7,7 @@
 #include <iostream>
 
 using namespace std;
-class RGBBilateralFilter
+class RGBDBilateralFilter
 {
 public:
 	ID3D11VertexShader*				m_pPassVS;
@@ -34,7 +34,7 @@ public:
 
 	bool			m_bWorking;
 
-	RGBBilateralFilter( UINT width = DEPTH_WIDTH, UINT height = DEPTH_HEIGHT )
+	RGBDBilateralFilter( UINT width = DEPTH_WIDTH, UINT height = DEPTH_HEIGHT )
 	{
 		m_uRTWidth = width;
 		m_uRTHeight = height;
@@ -58,21 +58,21 @@ public:
 		HRESULT hr = S_OK;
 
 		ID3DBlob* pVSBlob = NULL;
-		V_RETURN(DXUTCompileFromFile(L"RGBBilateralFilter.fx", nullptr, "VS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob));
+		V_RETURN(DXUTCompileFromFile(L"RGBDBilateralFilter.fx", nullptr, "VS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob));
 		V_RETURN(pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(),pVSBlob->GetBufferSize(),NULL,&m_pPassVS));
 		DXUT_SetDebugName(m_pPassVS,"m_pPassVS");
 
 		ID3DBlob* pGSBlob = NULL;
-		V_RETURN(DXUTCompileFromFile(L"RGBBilateralFilter.fx", nullptr, "GS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
+		V_RETURN(DXUTCompileFromFile(L"RGBDBilateralFilter.fx", nullptr, "GS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
 		V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pScreenQuadGS));
 		DXUT_SetDebugName(m_pScreenQuadGS, "m_pScreenQuadGS");
 		pGSBlob->Release();
 
 		ID3DBlob* pPSBlob = NULL;
-		V_RETURN(DXUTCompileFromFile(L"RGBBilateralFilter.fx", nullptr, "PS_Bilateral_Filter_H", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
+		V_RETURN(DXUTCompileFromFile(L"RGBDBilateralFilter.fx", nullptr, "PS_Bilateral_Filter_H", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
 		V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPS_H));
 		DXUT_SetDebugName(m_pPS_H, "m_pPS_H");
-		V_RETURN(DXUTCompileFromFile(L"RGBBilateralFilter.fx", nullptr, "PS_Bilateral_Filter_V", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
+		V_RETURN(DXUTCompileFromFile(L"RGBDBilateralFilter.fx", nullptr, "PS_Bilateral_Filter_V", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
 		V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPS_V));
 		DXUT_SetDebugName(m_pPS_V, "m_pPS_V");
 		pPSBlob->Release();
@@ -136,7 +136,7 @@ public:
 		return hr;
 	}
 
-	~RGBBilateralFilter()
+	~RGBDBilateralFilter()
 	{
 
 	}

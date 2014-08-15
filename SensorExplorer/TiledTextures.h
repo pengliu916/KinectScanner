@@ -7,6 +7,7 @@
 #include "SDKmisc.h"
 #include <iostream>
 #include <vector>
+#include <functional>
 
 #ifndef COMPILE_FLAG
 #define COMPILE_FLAG D3DCOMPILE_ENABLE_STRICTNESS
@@ -47,6 +48,17 @@ struct TiledTexObj{
     string                          strPScode;
 	int                             iResWidth;
 	int                             iResHeight;
+	int								iOutWidth;	// This will be computed by TiledTexture
+	int								iOutHeight;	// This will be computed by TiledTexture
+	int								iLTcorner_x;
+	int								iLTcorner_y;
+	function<HRESULT(ID3D11Device*, int, int)> resizeFunc;
+	function<LRESULT(HWND, UINT, WPARAM, LPARAM)> msgFunc;
+	TiledTexObj(){
+		ppInputSRV = NULL;
+		resizeFunc = nullptr;
+		msgFunc = nullptr;
+	}
 };
 
 class TiledTextures
@@ -125,6 +137,8 @@ public:
 											 tileCenterPos_y + halfTileOffset_y,
 											 tileCenterPos_x + halfTileOffset_x,
 											 tileCenterPos_y - halfTileOffset_y);
+			m_vecTiledObjs[i].iLTcorner_x = (i % tileNum_h) ;
+			m_vecTiledObjs[i].iLTcorner_y = (i / tileNum_h) ;
 		}
 	}
 
@@ -213,7 +227,12 @@ public:
         pDeviceSettings->d3d11.sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     }
 
-    void AddTexture( ID3D11ShaderResourceView** ppInputSRV, int _iResWidth=640, int _iResHeight=480, string strPScode = "", string strFormat = "<float4>" )
+    void AddTexture( ID3D11ShaderResourceView** ppInputSRV, 
+					int _iResWidth=640, int _iResHeight=480, 
+					string strPScode = "", 
+					string strFormat = "<float4>",
+					function<HRESULT(ID3D11Device*, int, int)> _resizeFunc = nullptr,
+					function<LRESULT(HWND,UINT,WPARAM,LPARAM)> _msgFunc = nullptr)
     {
         TiledTexObj texObj;
         string defaultPScode;
@@ -229,6 +248,8 @@ public:
 		}
         texObj.ppInputSRV = ppInputSRV;
         texObj.strPScode = strPScode.empty() ? defaultPScode : strPScode;
+		texObj.resizeFunc = _resizeFunc;
+		texObj.msgFunc = _msgFunc;
         m_vecTiledObjs.push_back(texObj);
     }
 
@@ -371,7 +392,7 @@ public:
         //pd3dImmediateContext->ClearRenderTargetView( m_pOutRTV, ClearColor );
     }
 
-    void Resize( const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc)
+	void Resize(ID3D11Device* pd3dDevice, const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc)
     {
         int winWidth = pBackBufferSurfaceDesc->Width;
         int winHeight = pBackBufferSurfaceDesc->Height;
@@ -403,10 +424,28 @@ public:
             m_pOutRTV = DXUTGetD3D11RenderTargetView();
         }
 
+		// Update the real resolution of each subtexture
+		int subWidth = m_RTviewport.Width / m_uTileCount_x;
+		int subHeight = m_RTviewport.Height / m_uTileCount_y;
+		for( int i=0; i<m_vecTiledObjs.size(); i++){
+			m_vecTiledObjs[i].iOutWidth = subWidth;
+			m_vecTiledObjs[i].iOutHeight = subHeight;
+			m_vecTiledObjs[i].iLTcorner_x *= subWidth;
+			m_vecTiledObjs[i].iLTcorner_y *= subHeight;
+			m_vecTiledObjs[i].iLTcorner_x += m_RTviewport.TopLeftX;
+			m_vecTiledObjs[i].iLTcorner_y += m_RTviewport.TopLeftY;
+		}
+
 		// Updating constant buffer
 		ID3D11DeviceContext* pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 		pd3dImmediateContext->UpdateSubresource( m_pCBTileLocation, 0, NULL, m_pf4TileLocation, 0, 0 );
 
+		// Call tile objects' resize function
+		for(int i=0; i<m_vecTiledObjs.size(); i++){
+			if(m_vecTiledObjs[i].resizeFunc!=nullptr){
+				m_vecTiledObjs[i].resizeFunc(pd3dDevice,m_vecTiledObjs[i].iOutWidth, m_vecTiledObjs[i].iOutHeight );
+			}
+		}
     }
 
     void Update()
@@ -441,11 +480,31 @@ public:
 		delete m_pf4TileLocation;
     }
 
-    LRESULT HandleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
-    {
-        UNREFERENCED_PARAMETER( lParam );
-        UNREFERENCED_PARAMETER( hWnd );
+	LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		short curse_x, curse_y;
+		POINT cursorPos;
+		GetCursorPos(&cursorPos);
+		ScreenToClient(hWnd,&cursorPos);
+		curse_x = cursorPos.x;
+		curse_y = cursorPos.y;
 
-        return 0;
-    }
+		LPARAM nlParam = lParam;
+		for (int i = 0; i<m_vecTiledObjs.size(); i++){
+			if (m_vecTiledObjs[i].msgFunc != nullptr){
+
+				if (curse_x > m_vecTiledObjs[i].iLTcorner_x &&
+					curse_x < m_vecTiledObjs[i].iLTcorner_x + m_vecTiledObjs[i].iOutWidth &&
+					curse_y > m_vecTiledObjs[i].iLTcorner_y &&
+					curse_y < m_vecTiledObjs[i].iLTcorner_y + m_vecTiledObjs[i].iOutHeight){
+					short new_x = curse_x - m_vecTiledObjs[i].iLTcorner_x;
+					short new_y = curse_y - m_vecTiledObjs[i].iLTcorner_y;
+					nlParam = ((long)new_y << 16) | (long)new_x;
+					m_vecTiledObjs[i].msgFunc(hWnd, uMsg, wParam, nlParam);
+				}
+
+			}
+		}
+		return 0;
+	}
 };

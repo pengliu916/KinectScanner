@@ -11,7 +11,7 @@
 #include "header.h"
 
 #include "TransPCLs.h"
-#include "RGBBilateralFilter.h"
+#include "RGBDBilateralFilter.h"
 #include "NormalGenerator.h"
 
 #include "RGBDStreamDLL\IRGBDStreamForDirectX.h"
@@ -37,7 +37,7 @@ public:
     D3D11_VIEWPORT					m_Viewport;
 
     IRGBDStreamForDirectX*          m_kinect;
-    RGBBilateralFilter				m_bilateralFilter;
+    RGBDBilateralFilter				m_bilateralFilter;
     NormalGenerator					m_normalGenerator;
 
     ID3D11ShaderResourceView*		m_pOutSRV;
@@ -55,7 +55,7 @@ public:
         m_uRTwidth = width;
         m_uRTheight = height;
 #if USING_KINECT
-        m_kinect = DirectXStreamFactory::create();
+		m_kinect = DirectXStreamFactory::createFromKinect();
 #else
         m_kinect = DirectXStreamFactory::createFromVideo();
 #endif

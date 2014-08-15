@@ -159,10 +159,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="PointCloudVisualizer.cpp" />
     <ClInclude Include="IRGBDStreamForDirectX.h" />
     <ClInclude Include="IRGBDStreamForOpenCV.h" />
+    <ClCompile Include="Kinect2Sensor.cpp" />
     <ClCompile Include="KinectVideos.h" />
-    <ClCompile Include="Kinect2Sensor.h" />
+    <ClInclude Include="Kinect2Sensor.h" />
+    <ClInclude Include="PointCloudVisualizer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KinectSensor.h" />
