@@ -302,10 +302,22 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	DXUT_SetDebugName(m_pQuadGS, "m_pQuadGS");
 	pGSBlob->Release();
 
+	pGSBlob = NULL;
+	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "AddDepthGS", "gs_5_0", m_uCompileFlag, 0, &pGSBlob));
+	V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pAddDepthGS));
+	DXUT_SetDebugName(m_pAddDepthGS, "m_pAddDepthGS");
+	pGSBlob->Release();
+
 	ID3DBlob* pPSBlob = NULL;
 	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "PS", "ps_5_0", m_uCompileFlag, 0, &pPSBlob));
 	V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pFinalizedRGBDPS));
 	DXUT_SetDebugName(m_pFinalizedRGBDPS, "m_pFinalizedRGBDPS");
+	pPSBlob->Release();
+
+	pPSBlob = NULL;
+	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "AddDepthPS", "ps_5_0", m_uCompileFlag, 0, &pPSBlob));
+	V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pAddDepthPS));
+	DXUT_SetDebugName(m_pAddDepthPS, "m_pAddDepthPS");
 	pPSBlob->Release();
 
 	D3D11_INPUT_ELEMENT_DESC layout[] = { { "POSITION", 0, DXGI_FORMAT_R16_SINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 } };
@@ -434,6 +446,34 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	V_RETURN(pd3dDevice->CreateRenderTargetView(m_pFinalizedRGBDTex, NULL, &m_pFinalizedRGBDRTV));
 	DXUT_SetDebugName(m_pFinalizedRGBDRTV, "m_pFinalizedRGBDRTV");
 
+	// Create rendertarget resource for addDepth
+	RTtextureDesc.Width = m_cColorWidth;
+	RTtextureDesc.Height = m_cColorHeight;
+	V_RETURN(pd3dDevice->CreateTexture2D(&RTtextureDesc, NULL, &m_pAddDepthTex));
+	DXUT_SetDebugName(m_pAddDepthTex, "m_pAddDepthTex");
+	V_RETURN(pd3dDevice->CreateShaderResourceView(m_pAddDepthTex, NULL, &m_pAddDepthSRV));
+	DXUT_SetDebugName(m_pAddDepthSRV, "m_pAddDepthSRV");
+	V_RETURN(pd3dDevice->CreateRenderTargetView(m_pAddDepthTex, NULL, &m_pAddDepthRTV));
+	DXUT_SetDebugName(m_pAddDepthRTV, "m_pAddDepthRTV");
+	//Create DepthStencil buffer and view
+	D3D11_TEXTURE2D_DESC descDepth = { 0 };
+	descDepth.Width = m_cDepthWidth / 2;
+	descDepth.Height = m_cDepthHeight / 2;
+	descDepth.MipLevels = 1;
+	descDepth.ArraySize = 1;
+	descDepth.Format = DXGI_FORMAT_D16_UNORM;
+	descDepth.SampleDesc.Count = 1;
+	descDepth.SampleDesc.Quality = 0;
+	descDepth.Usage = D3D11_USAGE_DEFAULT;
+	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	descDepth.CPUAccessFlags = 0;
+	descDepth.MiscFlags = 0;
+	V_RETURN(pd3dDevice->CreateTexture2D(&descDepth, NULL, &m_pAddDepthDSTex));
+	DXUT_SetDebugName(m_pAddDepthDSTex, "m_pAddDepthDSTex");
+	V_RETURN(pd3dDevice->CreateDepthStencilView(m_pAddDepthDSTex, NULL, &m_pAddDepthDSSRV));  // [out] Depth stencil view
+	DXUT_SetDebugName(m_pAddDepthDSSRV, "m_pAddDepthDSSRV");
+
+
 	m_ppInputSRV = new ID3D11ShaderResourceView*[3];
 	m_ppNullSRV = new ID3D11ShaderResourceView*[3];
 
@@ -461,6 +501,15 @@ void Kinect2Sensor::Release(){
 	SAFE_RELEASE( m_pPassIL );
 	SAFE_RELEASE( m_pPassVB );
 	SAFE_RELEASE( m_pNearestNeighborSS );
+
+	SAFE_RELEASE(m_pAddDepthTex);
+	SAFE_RELEASE(m_pAddDepthSRV);
+	SAFE_RELEASE(m_pAddDepthRTV);
+	SAFE_RELEASE(m_pAddDepthDSTex);
+	SAFE_RELEASE(m_pAddDepthDSSRV);
+	SAFE_RELEASE(m_pAddDepthGS);
+	SAFE_RELEASE(m_pAddDepthPS);
+
 	delete[] m_ppInputSRV;
 	delete[] m_ppNullSRV;
 
@@ -655,6 +704,7 @@ void Kinect2Sensor::GenShaderCode(){
 	shaderCode << "static const float2 f =" << KINECT2_DEPTH_F << ";\n";
 	shaderCode << "static const float2 c =" << KINECT2_DEPTH_C << ";\n";
 	shaderCode << "static const float2 reso =float2(" << m_cDepthWidth << "," << m_cDepthHeight << ");\n";
+	shaderCode << "static const matrix e =" << KINECT2_DEPTH2COL_M << ";\n";
 	shaderCode << "struct GS_INPUT{};\n";
 	shaderCode << "struct PS_INPUT{   \n";
 	shaderCode << "	float4 Pos : SV_POSITION;\n";
@@ -680,6 +730,15 @@ void Kinect2Sensor::GenShaderCode(){
 	shaderCode << "	output.Tex = reso;\n";
 	shaderCode << "	triStream.Append(output);\n";
 	shaderCode << "}\n";
+
+	shaderCode << "[maxvertexcount(1)]\n";
+	shaderCode << "void AddDepthGS(point GS_INPUT particles[1], uint primID : SV_PrimitiveID, inout PointStream<PS_INPUT> triStream){   \n";
+	shaderCode << "	PS_INPUT output;\n";
+	shaderCode << "	output.Pos = float4(-1.0f, 1.0f, 0.01f, 1.0f);   \n";
+	shaderCode << "	output.Tex = float2(0,0);\n";
+	shaderCode << "	triStream.Append(output);\n";
+	shaderCode << "}\n";
+
 	shaderCode << "float4 PS(PS_INPUT input) : SV_Target{ \n";
 	shaderCode << "	float2 idx = (input.Tex - c)/f;   \n";
 	shaderCode << "   \n";
@@ -688,6 +747,24 @@ void Kinect2Sensor::GenShaderCode(){
 	shaderCode << "	float r6 = r2 * r4;\n";
 	shaderCode << "   \n";
 	shaderCode << "	float2 nidx = idx*(1.f + k.x*r2 + k.y*r4 +k.z*r6) + 2.f*p*idx.x*idx.y + p.yx*(r2 + 2.f*idx*idx); \n";
+	shaderCode << "	nidx = nidx * f + c;   \n";
+	shaderCode << " float2 mappedIdx = txMap.Load(int3(nidx,0));\n";
+	shaderCode << " //float2 mappedIdx = txMap.Sample(samColor,nidx / float2(512,424))/float2(1920,1080);\n";
+	shaderCode << "	float4 col = txColor.Load(int3(mappedIdx,0));\n";
+	shaderCode << "	//float4 col = txColor.Sample(samColor, mappedIdx);\n";
+	shaderCode << " col.w = txDepth.Load( int3(nidx,0) ) / 1000.f;\n";
+	shaderCode << " return col;\n";
+	shaderCode << "}\n";
+	shaderCode << "// PS for add depth to color texture to avoid color contamination\n";
+	shaderCode << "float4 AddDepthPS(PS_INPUT input) : SV_Target{ \n";
+	shaderCode << "	float2 idx = (input.Tex - c)/f;   \n";
+	shaderCode << "   \n";
+	shaderCode << "	float r2 = dot(idx, idx);\n";
+	shaderCode << "	float r4 = r2 * r2;\n";
+	shaderCode << "	float r6 = r2 * r4;\n";
+	shaderCode << "   \n";
+	shaderCode << "	float2 nidx = idx*(1.f + k.x*r2 + k.y*r4 +k.z*r6) + 2.f*p*idx.x*idx.y + p.yx*(r2 + 2.f*idx*idx); \n";
+	shaderCode << "	//float4 pos = \n";
 	shaderCode << "	nidx = nidx * f + c;   \n";
 	shaderCode << " float2 mappedIdx = txMap.Load(int3(nidx,0));\n";
 	shaderCode << " //float2 mappedIdx = txMap.Sample(samColor,nidx / float2(512,424))/float2(1920,1080);\n";
