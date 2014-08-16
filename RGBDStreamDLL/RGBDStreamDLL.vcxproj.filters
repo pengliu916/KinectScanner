@@ -4,17 +4,33 @@
     <ClInclude Include="IRGBDStreamForDirectX.h" />
     <ClInclude Include="IRGBDStreamForOpenCV.h" />
     <ClInclude Include="Kinect2Sensor.h" />
-    <ClInclude Include="PointCloudVisualizer.h" />
-    <ClInclude Include="Undistortion.h" />
+    <ClInclude Include="PointCloudVisualizer.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Undistortion.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="DepthColorRegistration.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KinectSensor.h" />
     <ClCompile Include="KinectVideos.h" />
     <ClCompile Include="Kinect2Sensor.cpp" />
-    <ClCompile Include="PointCloudVisualizer.cpp" />
-    <ClCompile Include="Undistortion.cpp" />
+    <ClCompile Include="PointCloudVisualizer.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Undistortion.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="DepthColorRegistration.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="UndistortedMerge.fx" />
+    <Filter Include="Utility">
+      <UniqueIdentifier>{3b79eb03-0824-4fc2-9308-241131a7ac2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

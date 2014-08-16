@@ -8,13 +8,14 @@
 #include "RGBDStreamDLL/IRGBDStreamForOpenCV.h"
 #include "Calibration.h"
 
-#define IMG_ACQUISITION 0
-#define IMG_SAVING 0
+#define IMG_ACQUISITION 1
+#define IMG_SAVING 1
 #define IMG_LOADING 1
-#define IMG_DSIPLAY 0
+#define IMG_DSIPLAY 1
 #define CALIBRATION 1
 
-const string strImgFolder = "TestImgs_home";
+
+const string strImgFolder = "Kinect2CircleGridImgs_home";
 
 using namespace std;
 using namespace cv;
@@ -35,7 +36,7 @@ int main()
 		exit( 1 );
 	}
 
-	imgList = Calibration::ImagesAcquisition( 2, Calibration::ASYMMETRIC_CIRCLES_GRID, Size( 4, 11 ), [&kinect2,&kinect]( vector<Mat>& imgs )->bool{
+	imgList = Calibration::ImagesAcquisition( 2,[&kinect2,&kinect]( vector<Mat>& imgs )->bool{
 		bool succeed;
 		succeed = kinect2->UpdateMats();
 		Mat img;

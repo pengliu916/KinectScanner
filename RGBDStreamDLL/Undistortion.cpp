@@ -75,16 +75,9 @@ void Undistortion::GenerateShaderStr(bool hasColor)
 	shaderCode << "	float r6 = r2 * r4;\n";
 	shaderCode << "   \n";
 	shaderCode << "	float2 nidx = idx*(1.f + k.x*r2 + k.y*r4 +k.z*r6) + 2.f*p*idx.x*idx.y + p.yx*(r2 + 2.f*idx*idx); \n";
-	shaderCode << "	//nidx.x = idx.x*(1.f + k1*r2 + k2*r4 + k3*r6) + 2.f*p1*idx.x*idx.y + p2*(r2 + 2.f*idx.x*idx.x)\n";
-	shaderCode << "	//nidx.y = idx.y*(1.f + k1*r2 + k2*r4 + k3*r6) + 2.f*p2*idx.x*idx.y + p1*(r2 + 2.f*idx.y*idx.y)\n";
-	shaderCode << "   \n";
 	shaderCode << "	nidx = nidx * f + c;   \n";
-	shaderCode << "	//nidx.x = nidx.x * fx + cx;   \n";
-	shaderCode << "	//nidx.y = nidx.y * fy + cy;   \n";
 	shaderCode << "   \n";
-	shaderCode << "	//return idx.y*65535;//txInput.Load(int3(nidx,0));\n";
 	shaderCode << "	return txInput.Load(int3(nidx,0));\n";
-	shaderCode << "	//return txInput.Load(int3(input.Tex,0));\n";
 	shaderCode << "}\n";
 	m_strShader = shaderCode.str();
 

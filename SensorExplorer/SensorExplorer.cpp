@@ -12,6 +12,7 @@
 
 #include "PointCloudVisualizer.h"
 #include "Undistortion.h"
+#include "DepthColorRegistration.h"
 
 using namespace std::placeholders;
 //--------------------------------------------------------------------------------------
@@ -22,7 +23,9 @@ IRGBDStreamForDirectX*		sensor = DirectXStreamFactory::createFromKinect2();
 Kinect2Sensor*				kinect = dynamic_cast<Kinect2Sensor*>(sensor);
 
 PointCloudVisualizer		PCVisual = PointCloudVisualizer();
-Undistortion				Undistort = Undistortion();
+Undistortion				UndistortDepth = Undistortion();
+Undistortion				UndistortColor = Undistortion();
+DepthColorRegistration		Register = DepthColorRegistration();
 //--------------------------------------------------------------------------------------
 // Initialization
 //--------------------------------------------------------------------------------------
@@ -33,33 +36,34 @@ HRESULT Initial()
 	V_RETURN(sensor->Initialize());
 	string strPScode;
 	// Original color img
-	multiTexture.AddTexture(sensor->getColor_ppSRV(), 1920, 1080);
+	/*multiTexture.AddTexture(sensor->getColor_ppSRV(), 1920, 1080);*/
 
 	// Undistort color img
-	multiTexture.AddTexture(&Undistort.m_pOutSRV, 1920, 1080);
+	/*multiTexture.AddTexture(&UndistortColor.m_pOutSRV, 1920, 1080);*/
 
-	//strPScode = "\
-	//	int2 texCoord=input.Tex*float2(512,424);\n\
-	//	uint depth=texture.Load(int3(texCoord,0));\n\
-	//	uint codedDepth = depth%512;\n\
-	//	return float4(0,codedDepth/512.f,0,0);";
-	//multiTexture.AddTexture(sensor->getDepth_ppSRV(), 512, 424, strPScode,"<uint>");
+	// Original depth img
+	/*strPScode = "\
+		int2 texCoord=input.Tex*float2(512,424);\n\
+		uint depth=texture.Load(int3(texCoord,0));\n\
+		uint codedDepth = depth%512;\n\
+		return float4(0,codedDepth/512.f,0,0);";
+	multiTexture.AddTexture(sensor->getDepth_ppSRV(), 512, 424, strPScode,"<uint>");*/
 
-	//// Original infrared img
-	//strPScode = "\
-	//	int2 texCoord=input.Tex*float2(512,424);\n\
-	//	uint infrared=texture.Load(int3(texCoord,0));\n\
-	//	float norInfrared = pow(infrared/65535.f,0.32);\n\
-	//	return float4(norInfrared,norInfrared,norInfrared,0);";
-	//multiTexture.AddTexture( sensor->getInfrared_ppSRV(), 512, 424, strPScode, "<uint>" );
+	// Original infrared img
+	/*strPScode = "\
+		int2 texCoord=input.Tex*float2(512,424);\n\
+		uint infrared=texture.Load(int3(texCoord,0));\n\
+		float norInfrared = pow(infrared/65535.f,0.32);\n\
+		return float4(norInfrared,norInfrared,norInfrared,0);";
+	multiTexture.AddTexture( sensor->getInfrared_ppSRV(), 512, 424, strPScode, "<uint>" );*/
 	
-	//// Undistort infrared img
-	//strPScode = "\
-	//	int2 texCoord=input.Tex*float2(512,424);\n\
-	//	uint infrared=texture.Load(int3(texCoord,0));\n\
-	//	float norInfrared = pow(infrared/65535.f,0.32);\n\
-	//	return float4(norInfrared,norInfrared,norInfrared,0);";
-	//multiTexture.AddTexture(&Undistort.m_pOutSRV, 512, 424, strPScode, "<uint>");
+	// Undistort infrared img
+	/*strPScode = "\
+		int2 texCoord=input.Tex*float2(512,424);\n\
+		uint infrared=texture.Load(int3(texCoord,0));\n\
+		float norInfrared = pow(infrared/65535.f,0.32);\n\
+		return float4(norInfrared,norInfrared,norInfrared,0);";
+	multiTexture.AddTexture(&UndistortDepth.m_pOutSRV, 512, 424, strPScode, "<uint>");*/
 	
 	// Temp factory depth rgb look up table
 	//strPScode = "\
@@ -68,12 +72,20 @@ HRESULT Initial()
 	//	//return float4(rawData,0,0);";
 	//multiTexture.AddTexture( kinect->getColorLookup_ppSRV(), 512, 424,strPScode,"<float2>");
 
-	//multiTexture.AddTexture( &kinect->m_pUndsitortedRGBDSRV, 512, 424);
+	// Undistorted RGBD with factory registration
+	multiTexture.AddTexture(&kinect->m_pFinalizedRGBDSRV, 512, 424);
 
-	// 
-	//multiTexture.AddTexture(&PCVisual.m_pOutSRV, 640, 480, "", "<float4>", 
-	//						std::bind(&PointCloudVisualizer::Resize,&PCVisual,_1,_2,_3),
-	//						std::bind(&PointCloudVisualizer::HandleMessages,&PCVisual,_1,_2,_3,_4));
+	//// Undistorted RGBD
+	//multiTexture.AddTexture( &Register.m_pOutSRV, 512,424);
+
+	//// Temp difference of kinect->m_pUndistortedRGBDSRV and Register.m_pOutSRV
+	//strPScode = "\
+	//	return abs(textures_0.SampleLevel(samColor,input.Tex,0) - textures_1.SampleLevel(samColor,input.Tex,0));";
+	//multiTexture.AddTexture(nullptr, 512, 424, strPScode, "<float4>");
+	 
+	multiTexture.AddTexture(&PCVisual.m_pOutSRV, 640, 480, "", "<float4>", 
+							std::bind(&PointCloudVisualizer::Resize,&PCVisual,_1,_2,_3),
+							std::bind(&PointCloudVisualizer::HandleMessages,&PCVisual,_1,_2,_3,_4));
 
 	return hr;
 }
@@ -109,23 +121,45 @@ HRESULT CALLBACK OnD3D11CreateDevice(ID3D11Device* pd3dDevice, const DXGI_SURFAC
 	
 	V_RETURN(multiTexture.CreateResource(pd3dDevice));
 
-	// Undistort infrared img
-	V_RETURN(Undistort.CreateResource(pd3dDevice,sensor->getColor_ppSRV(),1920,1080,true,
-		XMFLOAT4(3.6544660501191997e-002, -4.0396988083370507e-002, -3.7317470747517489e-004, 0),
-		XMFLOAT2(-1.8854329047101378e-003, -9.4736354256989353e-004),
-		XMFLOAT2(-1.0445762291264687e+003, -1.0431358406353502e+003),
-		XMFLOAT2(9.6773564641816870e+002, 5.4625864676602384e+002)));
+	//// Undistort color img
+	//V_RETURN(UndistortColor.CreateResource(pd3dDevice,sensor->getColor_ppSRV(),1920,1080,true,
+	//	XMFLOAT4(3.6544660501191997e-002, -4.0396988083370507e-002, -3.7317470747517489e-004, 0),
+	//	XMFLOAT2(-1.8854329047101378e-003, -9.4736354256989353e-004),
+	//	XMFLOAT2(-1.0445762291264687e+003, -1.0431358406353502e+003),
+	//	XMFLOAT2(9.6773564641816870e+002, 5.4625864676602384e+002)));
 
 	//// Undistort infrared img
-	//V_RETURN(Undistort.CreateResource(pd3dDevice, sensor->getInfrared_ppSRV(), 512, 424, false,
+	//V_RETURN(UndistortDepth.CreateResource(pd3dDevice, sensor->getDepth_ppSRV(), 512, 424, false,
 	//	XMFLOAT4(8.5760834831004232e-002, -2.5095061439661859e-001, 7.7320261202870319e-002, 0),
 	//	XMFLOAT2(-1.2027173455808845e-003, -3.0661909113997252e-004),
 	//	XMFLOAT2(-3.6172484623525816e+002, -3.6121411187495357e+002),
 	//	XMFLOAT2(2.5681568188916287e+002, 2.0554866916495337e+002)));
 
-	/*V_RETURN(PCVisual.CreateResource(pd3dDevice,sensor->getDepth_ppSRV(),512,424, false,
+	/*V_RETURN(Register.CreateResource(pd3dDevice,sensor->getDepth_ppSRV(),XMUINT2(512,424),
 										XMFLOAT2(-3.6172484623525816e+002, -3.6121411187495357e+002),
-										XMFLOAT2(2.5681568188916287e+002, 2.0554866916495337e+002)));*/
+										XMFLOAT2(2.5681568188916287e+002, 2.0554866916495337e+002),
+										sensor->getColor_ppSRV(),XMUINT2(1920,1080),
+										XMFLOAT2(-1.0445762291264687e+003, -1.0431358406353502e+003),
+										XMFLOAT2(9.6773564641816870e+002, 5.4625864676602384e+002),
+										XMMATRIX(9.9999873760963776e-001, -1.4388716022985504e-003, -6.7411248534099118e-004,0,
+												1.4410927879956242e-003, 9.9999349625375888e-001, 3.3061611817869897e-003, 0,
+												6.6935095964733239e-004, -3.3071284667619051e-003, 9.9999430741909578e-001, 0,
+												5.2117998649087637e-002, -5.5534117814779317e-004, -2.4816473876739821e-004, 1)));
+*/
+	/*V_RETURN(Register.CreateResource(pd3dDevice, &UndistortDepth.m_pOutSRV, XMUINT2(512, 424),
+		XMFLOAT2(-3.6172484623525816e+002, -3.6121411187495357e+002),
+		XMFLOAT2(2.5681568188916287e+002, 2.0554866916495337e+002),
+		&UndistortColor.m_pOutSRV, XMUINT2(1920, 1080),
+		XMFLOAT2(-1.0445762291264687e+003, -1.0431358406353502e+003),
+		XMFLOAT2(9.6773564641816870e+002, 5.4625864676602384e+002),
+		XMMATRIX(9.9999873760963776e-001, -1.4388716022985504e-003, -6.7411248534099118e-004, 0,
+		1.4410927879956242e-003, 9.9999349625375888e-001, 3.3061611817869897e-003, 0,
+		6.6935095964733239e-004, -3.3071284667619051e-003, 9.9999430741909578e-001, 0,
+		5.2117998649087637e-002, -5.5534117814779317e-004, -2.4816473876739821e-004, 1)));*/
+
+	V_RETURN(PCVisual.CreateResource(pd3dDevice, &kinect->m_pFinalizedRGBDSRV, 512, 424, true,
+										XMFLOAT2(-3.6172484623525816e+002, -3.6121411187495357e+002),
+										XMFLOAT2(2.5681568188916287e+002, 2.0554866916495337e+002)));
 	return S_OK;
 }
 
@@ -147,7 +181,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain(ID3D11Device* pd3dDevice, IDXGISwapChai
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 {
-	//PCVisual.Update(fElapsedTime);
+	PCVisual.Update(fElapsedTime);
 }
 
 
@@ -158,9 +192,11 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 								 double fTime, float fElapsedTime, void* pUserContext)
 {
 	sensor->UpdateTextures(pd3dImmediateContext);
-	kinect->ProcessUndistortedRGBD(pd3dImmediateContext);
-	Undistort.Render(pd3dImmediateContext);
-	//PCVisual.Render(pd3dImmediateContext);
+	kinect->ProcessFinalizedRGBD(pd3dImmediateContext);
+	//UndistortDepth.Render(pd3dImmediateContext);
+	//UndistortColor.Render(pd3dImmediateContext);
+	//Register.Render(pd3dImmediateContext);
+	PCVisual.Render(pd3dImmediateContext);
 
 
 	multiTexture.Render(pd3dImmediateContext);
@@ -172,6 +208,7 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D11ReleasingSwapChain(void* pUserContext)
 {
+	
 	PCVisual.Release();
 }
 
@@ -183,9 +220,10 @@ void CALLBACK OnD3D11DestroyDevice(void* pUserContext)
 {
 	multiTexture.Release();
 	sensor->Release();
-	Undistort.Destory();
-
-	//PCVisual.Destory();
+	//UndistortDepth.Destory();
+	//UndistortColor.Destory();
+	//Register.Destory();
+	PCVisual.Destory();
 }
 
 

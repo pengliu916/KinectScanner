@@ -82,6 +82,7 @@ public:
 	void Render(ID3D11DeviceContext* pd3dImmediateContext);
 	void Release();
 	void Destory();
+
 	~Undistortion();
 };
 
