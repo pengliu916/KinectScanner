@@ -32,6 +32,7 @@ public:
     virtual ID3D11ShaderResourceView** getColor_ppSRV() = 0;
     virtual ID3D11ShaderResourceView** getDepth_ppSRV() = 0;
 	virtual ID3D11ShaderResourceView** getInfrared_ppSRV() = 0;
+	//virtual ID3D11ShaderResourceView** getRGBD_ppSRV() = 0;
 };
 
 class RGBDSTREAMDLL_API DirectXStreamFactory{

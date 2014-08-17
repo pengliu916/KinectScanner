@@ -28,11 +28,17 @@ using namespace std;
 #define KINECT2_DEPTH_F "float2(-3.6172484623525816e+002, -3.6121411187495357e+002)"
 #define KINECT2_DEPTH_C "float2(2.5681568188916287e+002, 2.0554866916495337e+002)"
 // inverse of the opencv calibration output transformation matrix
+//#define KINECT2_DEPTH2COL_M "\
+//matrix(9.9999873760963776e-001, -1.4388716022985504e-003, -6.7411248534099118e-004,0,\
+//1.4410927879956242e-003, 9.9999349625375888e-001, 3.3061611817869897e-003, 0,\
+//6.6935095964733239e-004, -3.3071284667619051e-003, 9.9999430741909578e-001, 0,\
+//5.2117998649087637e-002, -5.5534117814779317e-004, -2.4816473876739821e-004, 1)"
+
 #define KINECT2_DEPTH2COL_M "\
-matrix(	9.9999873760963776e-001,1.4410927879956242e-003,6.6935095964733239e-004,-5.2117998649087637e-002,\
-		-1.4388716022985504e-003,9.9999349625375888e-001,-3.3071284667619051e-003, 5.5534117814779317e-004,\
-		-6.7411248534099118e-004,3.3061611817869897e-003,9.9999430741909578e-001,2.4816473876739821e-004,\
-		0,0,0,1)"
+matrix(9.9999873760963776e-001, 1.4410927879956242e-003, 6.6935095964733239e-004,0,\
+-1.4388716022985504e-003, 9.9999349625375888e-001, -3.3071284667619051e-003, 0,\
+-6.7411248534099118e-004, 3.3061611817869897e-003, 9.9999430741909578e-001, 0,\
+-5.2117998649087637e-002, 5.5534117814779317e-004, 2.4816473876739821e-004, 1)"
 class RGBDSTREAMDLL_API Kinect2Sensor : public IRGBDStreamForOpenCV, public IRGBDStreamForDirectX{
 	static const int        m_cDepthWidth = 512;
 	static const int        m_cDepthHeight = 424;
@@ -81,14 +87,14 @@ public:
 	// DirectX resource for finalized RGBD texture
 	ID3D11VertexShader*                 m_pPassVS;
 	ID3D11GeometryShader*               m_pQuadGS;
-	ID3D11PixelShader*                  m_pFinalizedRGBDPS;
+	ID3D11PixelShader*                  m_pUndistortRegisteredRGBDPS;
 	ID3D11InputLayout*                  m_pPassIL;
 	ID3D11Buffer*                       m_pPassVB;
 	ID3D11SamplerState*                 m_pNearestNeighborSS;
 	// output data
-	ID3D11Texture2D*					m_pFinalizedRGBDTex;
-	ID3D11ShaderResourceView*			m_pFinalizedRGBDSRV;
-	ID3D11RenderTargetView*				m_pFinalizedRGBDRTV;
+	ID3D11Texture2D*					m_pUndistortRegisteredRGBDTex;
+	ID3D11ShaderResourceView*			m_pUndistortRegisteredRGBDSRV;
+	ID3D11RenderTargetView*				m_pUndistortRegisteredRGBDRTV;
 	
 	// DirectX resource for add depth info to color tex
 	// to avoid color contamination
@@ -101,6 +107,13 @@ public:
 	ID3D11RenderTargetView*				m_pAddDepthRTV;
 	ID3D11Texture2D*					m_pAddDepthDSTex;
 	ID3D11DepthStencilView*				m_pAddDepthDSSRV;
+
+	// DirectX resource for final pass
+	ID3D11PixelShader*					m_pColRemovalPS;
+	// output data
+	ID3D11Texture2D*					m_pColRemovalRGBDTex;
+	ID3D11ShaderResourceView*			m_pColRemovalRGBDSRV;
+	ID3D11RenderTargetView*				m_pColRemovalRGBDRTV;
 
 	// flag for shader compile
 	const UINT					m_uCompileFlag;
@@ -143,6 +156,7 @@ public:
 	virtual ID3D11ShaderResourceView** getColor_ppSRV();
 	virtual ID3D11ShaderResourceView** getDepth_ppSRV();
 	virtual ID3D11ShaderResourceView** getInfrared_ppSRV();
+	virtual ID3D11ShaderResourceView** getRGBD_ppSRV();
 
 	virtual ~Kinect2Sensor();
 

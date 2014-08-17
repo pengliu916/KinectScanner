@@ -310,14 +310,20 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 
 	ID3DBlob* pPSBlob = NULL;
 	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "PS", "ps_5_0", m_uCompileFlag, 0, &pPSBlob));
-	V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pFinalizedRGBDPS));
-	DXUT_SetDebugName(m_pFinalizedRGBDPS, "m_pFinalizedRGBDPS");
+	V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pUndistortRegisteredRGBDPS));
+	DXUT_SetDebugName(m_pUndistortRegisteredRGBDPS, "m_pUndistortRegisteredRGBDPS");
 	pPSBlob->Release();
 
 	pPSBlob = NULL;
 	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "AddDepthPS", "ps_5_0", m_uCompileFlag, 0, &pPSBlob));
 	V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pAddDepthPS));
 	DXUT_SetDebugName(m_pAddDepthPS, "m_pAddDepthPS");
+	pPSBlob->Release();
+
+	pPSBlob = NULL;
+	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "ColRemovalPS", "ps_5_0", m_uCompileFlag, 0, &pPSBlob));
+	V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pColRemovalPS));
+	DXUT_SetDebugName(m_pColRemovalPS, "m_pColRemovalPS");
 	pPSBlob->Release();
 
 	D3D11_INPUT_ELEMENT_DESC layout[] = { { "POSITION", 0, DXGI_FORMAT_R16_SINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 } };
@@ -439,26 +445,37 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	RTtextureDesc.CPUAccessFlags = 0;
 	RTtextureDesc.MiscFlags = 0;
 
-	V_RETURN(pd3dDevice->CreateTexture2D(&RTtextureDesc, NULL, &m_pFinalizedRGBDTex));
-	DXUT_SetDebugName(m_pFinalizedRGBDTex, "m_pFinalizedRGBDTex");
-	V_RETURN(pd3dDevice->CreateShaderResourceView(m_pFinalizedRGBDTex, NULL, &m_pFinalizedRGBDSRV));
-	DXUT_SetDebugName(m_pFinalizedRGBDSRV, "m_pFinalizedRGBDSRV");
-	V_RETURN(pd3dDevice->CreateRenderTargetView(m_pFinalizedRGBDTex, NULL, &m_pFinalizedRGBDRTV));
-	DXUT_SetDebugName(m_pFinalizedRGBDRTV, "m_pFinalizedRGBDRTV");
+	V_RETURN(pd3dDevice->CreateTexture2D(&RTtextureDesc, NULL, &m_pUndistortRegisteredRGBDTex));
+	DXUT_SetDebugName(m_pUndistortRegisteredRGBDTex, "m_pUndistortRegisteredRGBDTex");
+	V_RETURN(pd3dDevice->CreateShaderResourceView(m_pUndistortRegisteredRGBDTex, NULL, &m_pUndistortRegisteredRGBDSRV));
+	DXUT_SetDebugName(m_pUndistortRegisteredRGBDSRV, "m_pUndistortRegisteredRGBDSRV");
+	V_RETURN(pd3dDevice->CreateRenderTargetView(m_pUndistortRegisteredRGBDTex, NULL, &m_pUndistortRegisteredRGBDRTV));
+	DXUT_SetDebugName(m_pUndistortRegisteredRGBDRTV, "m_pUndistortRegisteredRGBDRTV");
 
 	// Create rendertarget resource for addDepth
-	RTtextureDesc.Width = m_cColorWidth;
-	RTtextureDesc.Height = m_cColorHeight;
+	RTtextureDesc.Width = m_cDepthWidth;
+	RTtextureDesc.Height = m_cDepthHeight;
 	V_RETURN(pd3dDevice->CreateTexture2D(&RTtextureDesc, NULL, &m_pAddDepthTex));
 	DXUT_SetDebugName(m_pAddDepthTex, "m_pAddDepthTex");
 	V_RETURN(pd3dDevice->CreateShaderResourceView(m_pAddDepthTex, NULL, &m_pAddDepthSRV));
 	DXUT_SetDebugName(m_pAddDepthSRV, "m_pAddDepthSRV");
 	V_RETURN(pd3dDevice->CreateRenderTargetView(m_pAddDepthTex, NULL, &m_pAddDepthRTV));
 	DXUT_SetDebugName(m_pAddDepthRTV, "m_pAddDepthRTV");
+
+	// Create rendertarget resource for Incorrect Color Removal
+	RTtextureDesc.Width = m_cDepthWidth;
+	RTtextureDesc.Height = m_cDepthHeight;
+	V_RETURN(pd3dDevice->CreateTexture2D(&RTtextureDesc, NULL, &m_pColRemovalRGBDTex));
+	DXUT_SetDebugName(m_pColRemovalRGBDTex, "m_pColRemovalRGBDTex");
+	V_RETURN(pd3dDevice->CreateShaderResourceView(m_pColRemovalRGBDTex, NULL, &m_pColRemovalRGBDSRV));
+	DXUT_SetDebugName(m_pColRemovalRGBDSRV, "m_pColRemovalRGBDSRV");
+	V_RETURN(pd3dDevice->CreateRenderTargetView(m_pColRemovalRGBDTex, NULL, &m_pColRemovalRGBDRTV));
+	DXUT_SetDebugName(m_pColRemovalRGBDRTV, "m_pColRemovalRGBDRTV");
+
 	//Create DepthStencil buffer and view
 	D3D11_TEXTURE2D_DESC descDepth = { 0 };
-	descDepth.Width = m_cDepthWidth / 2;
-	descDepth.Height = m_cDepthHeight / 2;
+	descDepth.Width = m_cDepthWidth ;
+	descDepth.Height = m_cDepthHeight;
 	descDepth.MipLevels = 1;
 	descDepth.ArraySize = 1;
 	descDepth.Format = DXGI_FORMAT_D16_UNORM;
@@ -474,10 +491,10 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	DXUT_SetDebugName(m_pAddDepthDSSRV, "m_pAddDepthDSSRV");
 
 
-	m_ppInputSRV = new ID3D11ShaderResourceView*[3];
-	m_ppNullSRV = new ID3D11ShaderResourceView*[3];
+	m_ppInputSRV = new ID3D11ShaderResourceView*[5];
+	m_ppNullSRV = new ID3D11ShaderResourceView*[5];
 
-	for( UINT i = 0; i < 3; i++ )
+	for( UINT i = 0; i < 5; i++ )
 		m_ppNullSRV[i] = NULL;
 
 	return hr;
@@ -492,12 +509,12 @@ void Kinect2Sensor::Release(){
 	SAFE_RELEASE( m_pColLookupForDetphTex );
 	SAFE_RELEASE( m_pColLookupForDepthSRV );
 
-	SAFE_RELEASE(m_pFinalizedRGBDTex);
-	SAFE_RELEASE(m_pFinalizedRGBDSRV);
-	SAFE_RELEASE(m_pFinalizedRGBDRTV);
+	SAFE_RELEASE(m_pUndistortRegisteredRGBDTex);
+	SAFE_RELEASE(m_pUndistortRegisteredRGBDSRV);
+	SAFE_RELEASE(m_pUndistortRegisteredRGBDRTV);
 	SAFE_RELEASE( m_pPassVS );
 	SAFE_RELEASE( m_pQuadGS );
-	SAFE_RELEASE(m_pFinalizedRGBDPS);
+	SAFE_RELEASE(m_pUndistortRegisteredRGBDPS);
 	SAFE_RELEASE( m_pPassIL );
 	SAFE_RELEASE( m_pPassVB );
 	SAFE_RELEASE( m_pNearestNeighborSS );
@@ -509,6 +526,11 @@ void Kinect2Sensor::Release(){
 	SAFE_RELEASE(m_pAddDepthDSSRV);
 	SAFE_RELEASE(m_pAddDepthGS);
 	SAFE_RELEASE(m_pAddDepthPS);
+
+	SAFE_RELEASE(m_pColRemovalRGBDTex);
+	SAFE_RELEASE(m_pColRemovalRGBDSRV);
+	SAFE_RELEASE(m_pColRemovalRGBDRTV);
+	SAFE_RELEASE(m_pColRemovalPS);
 
 	delete[] m_ppInputSRV;
 	delete[] m_ppNullSRV;
@@ -652,6 +674,7 @@ bool Kinect2Sensor::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext, b
 			pColorBuffer && nColorHeight == m_cColorHeight && nColorWidth == m_cColorWidth){
 			hr = m_pCoordinateMapper->MapDepthFrameToColorSpace( nDepthHeight*nDepthWidth, pDepthBuffer, nDepthHeight*nDepthWidth, m_pColorCoordinates );
 			if(SUCCEEDED(hr)) ProcessDepthColorMap(pd3dimmediateContext,m_pColorCoordinates,m_cDepthHeight*m_cDepthWidth);
+			ProcessFinalizedRGBD(pd3dimmediateContext);
 		}
 	}
 
@@ -688,7 +711,9 @@ ID3D11ShaderResourceView** Kinect2Sensor::getDepth_ppSRV(){
 ID3D11ShaderResourceView** Kinect2Sensor::getInfrared_ppSRV(){
 	return &m_pInfraredSRV;
 }
-
+ID3D11ShaderResourceView** Kinect2Sensor::getRGBD_ppSRV(){
+	return &m_pAddDepthSRV;
+}
 // For testing
 ID3D11ShaderResourceView** Kinect2Sensor::getColorLookup_ppSRV(){
 	return &m_pColLookupForDepthSRV;
@@ -698,6 +723,8 @@ void Kinect2Sensor::GenShaderCode(){
 	shaderCode << "Texture2D<float4> txColor : register( t0 );\n";
 	shaderCode << "Texture2D<uint> txDepth : register( t1 );\n";
 	shaderCode << "Texture2D<float2> txMap : register( t2 );\n";
+	shaderCode << "Texture2D<float4> txRGBD : register( t3 );\n";
+	shaderCode << "Texture2D<float4> txDepthCheck : register( t4 );\n";
 	shaderCode << "SamplerState samColor : register( s0 );\n";
 	shaderCode << "static const float4 k =" << KINECT2_DEPTH_K << ";\n";
 	shaderCode << "static const float2 p =" << KINECT2_DEPTH_P << ";\n";
@@ -710,10 +737,20 @@ void Kinect2Sensor::GenShaderCode(){
 	shaderCode << "	float4 Pos : SV_POSITION;\n";
 	shaderCode << "	float2 Tex : TEXCOORD0;   \n";
 	shaderCode << "};\n";
+	shaderCode << "struct PS_INPUT1{   \n";
+	shaderCode << "	float4 Pos : SV_POSITION;\n";
+	shaderCode << "	float4 Col : COLOR;   \n";
+	shaderCode << "};\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Pass Through Vertex Shader, used in pass 0, pass 1 and pass 2\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
 	shaderCode << "GS_INPUT VS(){   \n";
 	shaderCode << "	GS_INPUT output = (GS_INPUT)0;   \n";
 	shaderCode << "	return output;   \n";
 	shaderCode << "}\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Quad Geometry Shader, used in pass 0 and pass 2\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
 	shaderCode << "[maxvertexcount(4)]\n";
 	shaderCode << "void GS(point GS_INPUT particles[1], inout TriangleStream<PS_INPUT> triStream){   \n";
 	shaderCode << "	PS_INPUT output;\n";
@@ -730,15 +767,29 @@ void Kinect2Sensor::GenShaderCode(){
 	shaderCode << "	output.Tex = reso;\n";
 	shaderCode << "	triStream.Append(output);\n";
 	shaderCode << "}\n";
-
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Point Cloud Geometry Shader, \n";
+	shaderCode << "// generate point cloud and project onto color cam used in pass 1\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
 	shaderCode << "[maxvertexcount(1)]\n";
-	shaderCode << "void AddDepthGS(point GS_INPUT particles[1], uint primID : SV_PrimitiveID, inout PointStream<PS_INPUT> triStream){   \n";
-	shaderCode << "	PS_INPUT output;\n";
-	shaderCode << "	output.Pos = float4(-1.0f, 1.0f, 0.01f, 1.0f);   \n";
-	shaderCode << "	output.Tex = float2(0,0);\n";
+	shaderCode << "void AddDepthGS(point GS_INPUT particles[1], uint primID : SV_PrimitiveID, inout PointStream<PS_INPUT1> triStream){   \n";
+	shaderCode << "	PS_INPUT1 output;\n";
+	shaderCode << "	int3 idx = int3(primID % reso.x, primID / reso.x,0); \n";
+	shaderCode << "	float4 rgbd = txRGBD.Load(idx); \n";
+	shaderCode << "	float4 pos = float4( idx.xy, rgbd.w, 1); \n";
+	shaderCode << "	pos.xy = (pos.xy - c) / f * pos.z; \n";
+	shaderCode << "	pos = mul( pos, e ); \n";
+	shaderCode << "	pos.w = pos.z;\n";
+	shaderCode << "	pos.xy = pos.xy * f * float2(2.f,-2.f) / reso;\n";
+	shaderCode << "	pos.z *= 1.f / (-9.9 * pos.z) + 10.f / 9.9f;\n";
+	shaderCode << "	output.Pos = pos;\n";
+	shaderCode << "	output.Col = rgbd;\n";
 	shaderCode << "	triStream.Append(output);\n";
 	shaderCode << "}\n";
-
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Undistorted Merge Pixel Shader, \n";
+	shaderCode << "// generate undistorted RGBD texture, used in pass 0\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
 	shaderCode << "float4 PS(PS_INPUT input) : SV_Target{ \n";
 	shaderCode << "	float2 idx = (input.Tex - c)/f;   \n";
 	shaderCode << "   \n";
@@ -748,30 +799,35 @@ void Kinect2Sensor::GenShaderCode(){
 	shaderCode << "   \n";
 	shaderCode << "	float2 nidx = idx*(1.f + k.x*r2 + k.y*r4 +k.z*r6) + 2.f*p*idx.x*idx.y + p.yx*(r2 + 2.f*idx*idx); \n";
 	shaderCode << "	nidx = nidx * f + c;   \n";
-	shaderCode << " float2 mappedIdx = txMap.Load(int3(nidx,0));\n";
+	shaderCode << " float2 mappedIdx = txMap.Load(int3(nidx+0.5,0));\n";
 	shaderCode << " //float2 mappedIdx = txMap.Sample(samColor,nidx / float2(512,424))/float2(1920,1080);\n";
-	shaderCode << "	float4 col = txColor.Load(int3(mappedIdx,0));\n";
+	shaderCode << "	float4 col = txColor.Load(int3(mappedIdx+0.4,0));\n";
 	shaderCode << "	//float4 col = txColor.Sample(samColor, mappedIdx);\n";
-	shaderCode << " col.w = txDepth.Load( int3(nidx,0) ) / 1000.f;\n";
+	shaderCode << " col.w = txDepth.Load( int3(nidx+0.5,0) ) / 1000.f;\n";
 	shaderCode << " return col;\n";
 	shaderCode << "}\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Pass through Pixel Shader, \n";
+	shaderCode << "// used in pass 1\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
 	shaderCode << "// PS for add depth to color texture to avoid color contamination\n";
-	shaderCode << "float4 AddDepthPS(PS_INPUT input) : SV_Target{ \n";
-	shaderCode << "	float2 idx = (input.Tex - c)/f;   \n";
-	shaderCode << "   \n";
-	shaderCode << "	float r2 = dot(idx, idx);\n";
-	shaderCode << "	float r4 = r2 * r2;\n";
-	shaderCode << "	float r6 = r2 * r4;\n";
-	shaderCode << "   \n";
-	shaderCode << "	float2 nidx = idx*(1.f + k.x*r2 + k.y*r4 +k.z*r6) + 2.f*p*idx.x*idx.y + p.yx*(r2 + 2.f*idx*idx); \n";
-	shaderCode << "	//float4 pos = \n";
-	shaderCode << "	nidx = nidx * f + c;   \n";
-	shaderCode << " float2 mappedIdx = txMap.Load(int3(nidx,0));\n";
-	shaderCode << " //float2 mappedIdx = txMap.Sample(samColor,nidx / float2(512,424))/float2(1920,1080);\n";
-	shaderCode << "	float4 col = txColor.Load(int3(mappedIdx,0));\n";
-	shaderCode << "	//float4 col = txColor.Sample(samColor, mappedIdx);\n";
-	shaderCode << " col.w = txDepth.Load( int3(nidx,0) ) / 1000.f;\n";
-	shaderCode << " return col;\n";
+	shaderCode << "float4 AddDepthPS(PS_INPUT1 input) : SV_Target{ \n";
+	shaderCode << " return input.Col;\n";
+	shaderCode << "}\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Incorrect color removal Pixel Shader, \n";
+	shaderCode << "// used in pass 1\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// PS for add depth to color texture to avoid color contamination\n";
+	shaderCode << "float4 ColRemovalPS(PS_INPUT input) : SV_Target{ \n";
+	shaderCode << "	float4 rgbd = txRGBD.Load(int3(input.Tex,0)); \n";
+	shaderCode << "	float4 pos = float4( input.Tex, rgbd.w, 1); \n";
+	shaderCode << "	pos.xy = (pos.xy - c) / f * pos.z; \n";
+	shaderCode << "	pos = mul( pos, e ); \n";
+	shaderCode << "	pos.xy = pos.xy / pos.z * f + c;\n";
+	shaderCode << " float4 colDepth = txDepthCheck.Load(int3(pos.xy+0.5,0));\n";
+	shaderCode << " if( abs(colDepth.w+1)>0.0001 && abs(colDepth.w - pos.z)>0.1) return float4(0.0,0.3,0.3,0.3);\n";
+	shaderCode << " return rgbd;\n";
 	shaderCode << "}\n";
 	m_strShaderCode = shaderCode.str();
 }
@@ -802,7 +858,8 @@ HRESULT Kinect2Sensor::CompileFormString(string code,
 };
 
 void Kinect2Sensor::ProcessFinalizedRGBD(ID3D11DeviceContext* pd3dimmediatecontext){
-	pd3dimmediatecontext->OMSetRenderTargets(1, &m_pFinalizedRGBDRTV, NULL);
+	// Pass 0: undistort and merge depth and rgb to get registerd RGBD
+	pd3dimmediatecontext->OMSetRenderTargets(1, &m_pUndistortRegisteredRGBDRTV, NULL);
 	pd3dimmediatecontext->IASetInputLayout( m_pPassIL );
 	pd3dimmediatecontext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST );
 	UINT stride = 0;
@@ -810,7 +867,7 @@ void Kinect2Sensor::ProcessFinalizedRGBD(ID3D11DeviceContext* pd3dimmediateconte
 	pd3dimmediatecontext->IASetVertexBuffers( 0, 1, &m_pPassVB, &stride, &offset );
 	pd3dimmediatecontext->VSSetShader( m_pPassVS, NULL, 0 );
 	pd3dimmediatecontext->GSSetShader( m_pQuadGS, NULL, 0 );
-	pd3dimmediatecontext->PSSetShader(m_pFinalizedRGBDPS, NULL, 0);
+	pd3dimmediatecontext->PSSetShader(m_pUndistortRegisteredRGBDPS, NULL, 0);
 
 	m_ppInputSRV[0] = m_pColorSRV;
 	m_ppInputSRV[1] = m_pDepthSRV;
@@ -821,5 +878,32 @@ void Kinect2Sensor::ProcessFinalizedRGBD(ID3D11DeviceContext* pd3dimmediateconte
 	pd3dimmediatecontext->RSSetViewports( 1, &m_RTviewport );
 
 	pd3dimmediatecontext->Draw(1,0);
-	pd3dimmediatecontext->PSSetShaderResources( 0, 3, m_ppNullSRV );
+
+	// Pass 1
+	// Clear the render target
+	float ClearColor[4] = { -1.0f, -1.0f, -1.0f, 0.0f };
+	pd3dimmediatecontext->ClearRenderTargetView(m_pAddDepthRTV, ClearColor);
+	pd3dimmediatecontext->ClearDepthStencilView(m_pAddDepthDSSRV, D3D11_CLEAR_DEPTH, 0.99f, 0);
+	pd3dimmediatecontext->OMSetRenderTargets(1, &m_pAddDepthRTV, m_pAddDepthDSSRV);
+	//pd3dimmediatecontext->OMSetRenderTargets(1, &m_pAddDepthRTV, NULL);
+	pd3dimmediatecontext->GSSetShader( m_pAddDepthGS, NULL, 0);
+	pd3dimmediatecontext->PSSetShader( m_pAddDepthPS, NULL, 0);
+	pd3dimmediatecontext->GSSetShaderResources( 3, 1, &m_pUndistortRegisteredRGBDSRV );
+	pd3dimmediatecontext->Draw(m_cDepthWidth*m_cDepthHeight,0);
+
+	// Pass 2
+	// Pass 2 result have unknown y axis offset which make it worse than the Pass 1 result
+	// So right now I will instead use Pass 1 result as final RGBD tex, as temporary work around
+	// This work around just discard those depth data which gets contaminated by incorrect color
+	//
+	// Fix this later
+
+	/*pd3dimmediatecontext->OMSetRenderTargets(1, &m_pColRemovalRGBDRTV, NULL );
+	pd3dimmediatecontext->GSSetShader( m_pQuadGS,NULL, 0 );
+	pd3dimmediatecontext->PSSetShader( m_pColRemovalPS, NULL, 0);
+	pd3dimmediatecontext->PSSetShaderResources(3, 1, &m_pUndistortRegisteredRGBDSRV);
+	pd3dimmediatecontext->PSSetShaderResources(4, 1, &m_pAddDepthSRV);
+	pd3dimmediatecontext->Draw(1,0);
+*/
+	pd3dimmediatecontext->PSSetShaderResources( 0, 5, m_ppNullSRV );
 }

@@ -36,7 +36,7 @@ HRESULT Initial()
 	V_RETURN(sensor->Initialize());
 	string strPScode;
 	// Original color img
-	/*multiTexture.AddTexture(sensor->getColor_ppSRV(), 1920, 1080);*/
+	//multiTexture.AddTexture(sensor->getColor_ppSRV(), 1920, 1080);
 
 	// Undistort color img
 	/*multiTexture.AddTexture(&UndistortColor.m_pOutSRV, 1920, 1080);*/
@@ -73,7 +73,7 @@ HRESULT Initial()
 	//multiTexture.AddTexture( kinect->getColorLookup_ppSRV(), 512, 424,strPScode,"<float2>");
 
 	// Undistorted RGBD with factory registration
-	//multiTexture.AddTexture(&kinect->m_pFinalizedRGBDSRV, 512, 424);
+	multiTexture.AddTexture(&kinect->m_pUndistortRegisteredRGBDSRV, 512, 424);
 
 	//// Undistorted RGBD
 	//multiTexture.AddTexture( &Register.m_pOutSRV, 512,424);
@@ -83,6 +83,12 @@ HRESULT Initial()
 		return abs(textures_0.SampleLevel(samColor,input.Tex,0) - textures_1.SampleLevel(samColor,input.Tex,0));";
 	multiTexture.AddTexture(nullptr, 512, 424, strPScode, "<float4>");*/
 	 
+	// Color contamination free intermmediate RGBD
+	multiTexture.AddTexture(&kinect->m_pAddDepthSRV,512,424);
+
+	// Color Contamination free RGBD
+	//multiTexture.AddTexture(&kinect->m_pColRemovalRGBDSRV, 512, 424);
+
 	multiTexture.AddTexture(&PCVisual.m_pOutSRV, 640, 480, "", "<float4>", 
 							std::bind(&PointCloudVisualizer::Resize,&PCVisual,_1,_2,_3),
 							std::bind(&PointCloudVisualizer::HandleMessages,&PCVisual,_1,_2,_3,_4));
@@ -157,7 +163,7 @@ HRESULT CALLBACK OnD3D11CreateDevice(ID3D11Device* pd3dDevice, const DXGI_SURFAC
 		6.6935095964733239e-004, -3.3071284667619051e-003, 9.9999430741909578e-001, 0,
 		-5.2117998649087637e-002, 5.5534117814779317e-004, 2.4816473876739821e-004, 1)));*/
 
-	V_RETURN(PCVisual.CreateResource(pd3dDevice, &kinect->m_pFinalizedRGBDSRV, 512, 424, true,
+	V_RETURN(PCVisual.CreateResource(pd3dDevice, &kinect->m_pAddDepthSRV, 512, 424, true,
 										XMFLOAT2(-3.6172484623525816e+002, -3.6121411187495357e+002),
 										XMFLOAT2(2.5681568188916287e+002, 2.0554866916495337e+002)));
 	return S_OK;
