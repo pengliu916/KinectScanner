@@ -6,6 +6,7 @@
 #include "NuiApi.h"
 #include "IRGBDStreamForOpenCV.h"
 #include "IRGBDStreamForDirectX.h"
+using namespace std;
 
 class KinectSensor : public IRGBDStreamForOpenCV, public IRGBDStreamForDirectX{
 
@@ -52,6 +53,33 @@ public:
     bool                                m_bInfraded;
 
 
+
+	HRESULT CompileFormString(string code,
+							  const D3D_SHADER_MACRO* pDefines,
+							  LPCSTR pEntrypoint, LPCSTR pTarget,
+							  UINT Flags1, UINT Flags2,
+							  ID3DBlob** ppCode);
+	// Generate shader code
+	void GenShaderCode();
+	// flag for shader compile
+	const UINT					m_uCompileFlag;
+
+	ID3D11VertexShader*				m_pPassVS;
+	ID3D11PixelShader*				m_pPS;
+	ID3D11GeometryShader*			m_pScreenQuadGS;
+	ID3D11InputLayout*				m_pScreenQuadIL;
+	ID3D11Buffer*					m_pScreenQuadVB;
+	//For Texture output
+	ID3D11Texture2D*				m_pRGBDTex;
+	ID3D11ShaderResourceView*		m_pRGBDSRV;
+	ID3D11RenderTargetView*			m_pRGBDRTV;
+	D3D11_VIEWPORT					m_Viewport;
+
+	// str for shader code
+	std::string m_strShaderCode;
+
+
+
     KinectSensor();
     virtual HRESULT Initialize();
 	HRESULT ToggleNearMode();
@@ -81,12 +109,12 @@ public:
     virtual ID3D11ShaderResourceView** getColor_ppSRV();
     virtual ID3D11ShaderResourceView** getDepth_ppSRV();
 	virtual ID3D11ShaderResourceView** getInfrared_ppSRV();
-
+	virtual ID3D11ShaderResourceView** getRGBD_ppSRV();
     virtual ~KinectSensor();
 
 };
 
-KinectSensor::KinectSensor(){
+KinectSensor::KinectSensor() : m_uCompileFlag(D3DCOMPILE_ENABLE_STRICTNESS){
     DWORD width = 0;
     DWORD height = 0;
 
@@ -374,13 +402,48 @@ void KinectSensor::GetInfraredMat( cv::Mat& out ){
 HRESULT KinectSensor::CreateResource(ID3D11Device* pd3dDevice){
     HRESULT hr = S_OK;
 
+
+
+	GenShaderCode();
+	ID3DBlob* pVSBlob = NULL;
+	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "VS", "vs_5_0", m_uCompileFlag, 0, &pVSBlob));
+	V_RETURN(pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &m_pPassVS));
+	DXUT_SetDebugName(m_pPassVS, "m_pPassVS");
+
+	ID3DBlob* pGSBlob = NULL;
+	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "GS", "gs_5_0", m_uCompileFlag, 0, &pGSBlob));
+	V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pScreenQuadGS));
+	DXUT_SetDebugName(m_pScreenQuadGS, "m_pScreenQuadGS");
+	pGSBlob->Release();
+
+	ID3DBlob* pPSBlob = NULL;
+	V_RETURN(CompileFormString(m_strShaderCode, nullptr, "PS", "ps_5_0", m_uCompileFlag, 0, &pPSBlob));
+	V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPS));
+	DXUT_SetDebugName(m_pPS, "m_pPS");
+	pPSBlob->Release();
+
+	D3D11_INPUT_ELEMENT_DESC layout[] = { { "POSITION", 0, DXGI_FORMAT_R16_SINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 } };
+	V_RETURN(pd3dDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &m_pScreenQuadIL));
+	DXUT_SetDebugName(m_pScreenQuadIL, "m_pScreenQuadIL");
+	pVSBlob->Release();
+
+
+	// Create the vertex buffer
+	D3D11_BUFFER_DESC bd = { 0 };
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(short);
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+	V_RETURN(pd3dDevice->CreateBuffer(&bd, NULL, &m_pScreenQuadVB));
+	DXUT_SetDebugName(m_pScreenQuadVB, "m_pScreenQuadVB");
+
     // Create depth texture and its resource view
     D3D11_TEXTURE2D_DESC depthTexDesc = { 0 };
     depthTexDesc.Width = m_depthWidth;
     depthTexDesc.Height = m_depthHeight;
     depthTexDesc.MipLevels = 1;
     depthTexDesc.ArraySize = 1;
-    depthTexDesc.Format = DXGI_FORMAT_R16_SINT;
+    depthTexDesc.Format = DXGI_FORMAT_R16_UINT;
     depthTexDesc.SampleDesc.Count = 1;
     depthTexDesc.SampleDesc.Quality = 0;
     depthTexDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -406,6 +469,32 @@ HRESULT KinectSensor::CreateResource(ID3D11Device* pd3dDevice){
     V_RETURN( pd3dDevice->CreateTexture2D( &colorTexDesc, NULL, &m_pColorTex ));
     V_RETURN( pd3dDevice->CreateShaderResourceView( m_pColorTex, NULL, &m_pColorSRV ));
 
+
+	// Create rendertarget resource
+
+	D3D11_TEXTURE2D_DESC	RTtextureDesc = { 0 };
+	RTtextureDesc.Width = m_depthWidth;
+	RTtextureDesc.Height = m_depthHeight;
+	RTtextureDesc.MipLevels = 1;
+	RTtextureDesc.ArraySize = 1;
+	RTtextureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	RTtextureDesc.SampleDesc.Count = 1;
+	RTtextureDesc.Usage = D3D11_USAGE_DEFAULT;
+	RTtextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	RTtextureDesc.CPUAccessFlags = 0;
+	RTtextureDesc.MiscFlags = 0;
+	V_RETURN(pd3dDevice->CreateTexture2D(&RTtextureDesc, NULL, &m_pRGBDTex));
+	V_RETURN(pd3dDevice->CreateRenderTargetView(m_pRGBDTex, NULL, &m_pRGBDRTV));
+	V_RETURN(pd3dDevice->CreateShaderResourceView(m_pRGBDTex, NULL, &m_pRGBDSRV));
+
+	m_Viewport.Width = (float)m_depthWidth;
+	m_Viewport.Height = (float)m_depthHeight;
+	m_Viewport.MinDepth = 0.0f;
+	m_Viewport.MaxDepth = 1.0f;
+	m_Viewport.TopLeftX = 0;
+	m_Viewport.TopLeftY = 0;
+
+
     return hr;
 }
 
@@ -415,6 +504,20 @@ void KinectSensor::Release(){
     SAFE_RELEASE( m_pDepthSRV );
     SAFE_RELEASE( m_pColorTex );
     SAFE_RELEASE( m_pColorSRV );
+
+
+
+	SAFE_RELEASE(m_pRGBDTex);
+	SAFE_RELEASE(m_pRGBDRTV);
+	SAFE_RELEASE(m_pRGBDSRV);
+
+	SAFE_RELEASE(m_pPassVS);
+	SAFE_RELEASE(m_pPS);
+	SAFE_RELEASE(m_pScreenQuadGS);
+	SAFE_RELEASE(m_pScreenQuadIL);
+	SAFE_RELEASE(m_pScreenQuadVB);
+
+
 }
 
 HRESULT KinectSensor::ProcessDepth( ID3D11DeviceContext* pd3dimmediateContext ){
@@ -511,6 +614,23 @@ HRESULT KinectSensor::MapColorToDepth( ID3D11DeviceContext* pd3dimmediateContext
         }
     }
     pd3dimmediateContext->Unmap( m_pColorTex, NULL );
+
+
+
+	pd3dimmediateContext->IASetInputLayout(m_pScreenQuadIL);
+	pd3dimmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	UINT stride = 0;
+	UINT offset = 0;
+	pd3dimmediateContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVB, &stride, &offset);
+	pd3dimmediateContext->VSSetShader(m_pPassVS, NULL, 0);
+	pd3dimmediateContext->GSSetShader(m_pScreenQuadGS, NULL, 0);
+	pd3dimmediateContext->PSSetShader(m_pPS, NULL, 0);
+	pd3dimmediateContext->OMSetRenderTargets(1, &m_pRGBDRTV, NULL);
+	pd3dimmediateContext->PSSetShaderResources(0, 1, &m_pColorSRV);
+	pd3dimmediateContext->PSSetShaderResources(1, 1, &m_pDepthSRV);
+	pd3dimmediateContext->RSSetViewports(1, &m_Viewport);
+	pd3dimmediateContext->Draw(1, 0);
+
     return hr;
 }
 
@@ -587,6 +707,89 @@ ID3D11ShaderResourceView** KinectSensor::getDepth_ppSRV(){
 ID3D11ShaderResourceView** KinectSensor::getInfrared_ppSRV(){
 	return &m_pDepthSRV;
 }
+
+
+
+
+
+ID3D11ShaderResourceView** KinectSensor::getRGBD_ppSRV(){
+	return &m_pRGBDSRV;
+}
+
+HRESULT KinectSensor::CompileFormString(string code,
+										const D3D_SHADER_MACRO* pDefines,
+										LPCSTR pEntrypoint, LPCSTR pTarget,
+										UINT Flags1, UINT Flags2,
+										ID3DBlob** ppCode){
+	HRESULT hr;
+#if defined( DEBUG ) || defined( _DEBUG )
+	// Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
+	// Setting this flag improves the shader debugging experience, but still allows 
+	// the shaders to be optimized and to run exactly the way they will run in 
+	// the release configuration of this program.
+	Flags1 |= D3DCOMPILE_DEBUG;
+#endif
+
+	ID3DBlob* pErrorBlob = nullptr;
+	hr = D3DCompile(code.c_str(), code.size(), NULL, NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, pEntrypoint, pTarget, Flags1, Flags2, ppCode, &pErrorBlob);
+#pragma warning( suppress : 6102 )
+	if (pErrorBlob)
+	{
+		OutputDebugStringA(reinterpret_cast<const char*>(pErrorBlob->GetBufferPointer()));
+		pErrorBlob->Release();
+	}
+
+	return hr;
+};
+
+void KinectSensor::GenShaderCode(){
+	std::stringstream shaderCode;
+	shaderCode << "Texture2D<float4> txColor : register( t0 );\n";
+	shaderCode << "Texture2D<uint> txDepth : register( t1 );\n";
+	shaderCode << "static const float2 reso =float2(" << m_depthWidth << "," << m_depthHeight << ");\n";
+	shaderCode << "struct GS_INPUT{};\n";
+	shaderCode << "struct PS_INPUT{   \n";
+	shaderCode << "	float4 Pos : SV_POSITION;\n";
+	shaderCode << "	float2 Tex : TEXCOORD0;   \n";
+	shaderCode << "};\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Pass Through Vertex Shader, used in pass 0, pass 1 and pass 2\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "GS_INPUT VS(){   \n";
+	shaderCode << "	GS_INPUT output = (GS_INPUT)0;   \n";
+	shaderCode << "	return output;   \n";
+	shaderCode << "}\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Quad Geometry Shader, used in pass 0 and pass 2\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "[maxvertexcount(4)]\n";
+	shaderCode << "void GS(point GS_INPUT particles[1], inout TriangleStream<PS_INPUT> triStream){   \n";
+	shaderCode << "	PS_INPUT output;\n";
+	shaderCode << "	output.Pos = float4(-1.0f, 1.0f, 0.01f, 1.0f);   \n";
+	shaderCode << "	output.Tex = float2(0,0);\n";
+	shaderCode << "	triStream.Append(output);\n";
+	shaderCode << "	output.Pos = float4(1.0f, 1.0f, 0.01f, 1.0f);   \n";
+	shaderCode << "	output.Tex = float2(reso.x,0);   \n";
+	shaderCode << "	triStream.Append(output);\n";
+	shaderCode << "	output.Pos = float4(-1.0f, -1.0f, 0.01f, 1.0f);   \n";
+	shaderCode << "	output.Tex = float2(0, reso.y);   \n";
+	shaderCode << "	triStream.Append(output);\n";
+	shaderCode << "	output.Pos = float4(1.0f, -1.0f, 0.01f, 1.0f);   \n";
+	shaderCode << "	output.Tex = reso;\n";
+	shaderCode << "	triStream.Append(output);\n";
+	shaderCode << "}\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "// Undistorted Merge Pixel Shader, \n";
+	shaderCode << "// generate undistorted RGBD texture, used in pass 0\n";
+	shaderCode << "//--------------------------------------------------------------------------------------\n";
+	shaderCode << "float4 PS(PS_INPUT input) : SV_Target{ \n";
+	shaderCode << "	float4 col = txColor.Load(int3(input.Tex,0));\n";
+	shaderCode << " col.w = txDepth.Load( int3(input.Tex,0) ) / 8000.f;\n";
+	shaderCode << " return col;\n";
+	shaderCode << "}\n";
+	m_strShaderCode = shaderCode.str();
+}
+
 
 IRGBDStreamForOpenCV* OpenCVStreamFactory::createFromKinect(){
     return new KinectSensor();

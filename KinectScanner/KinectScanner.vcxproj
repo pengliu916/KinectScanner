@@ -198,13 +198,17 @@
     </ProjectReference>
     <ProjectReference Include="..\RGBDStreamDLL\RGBDStreamDLL.vcxproj">
       <Project>{c77a879a-9986-4c4d-857c-184c07e1d663}</Project>
+      <Private>true</Private>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="FilteredPCL.fx" />
     <FxCompile Include="HistoPyramidMC.fx" />
     <FxCompile Include="MultiTexturePresenter.fx">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

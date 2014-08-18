@@ -247,12 +247,13 @@ public:
 	void Integrate(ID3D11DeviceContext* pd3dImmediateContext)
 	{
 
-		if( m_bResetVol ) ClearVolume(pd3dImmediateContext);
+		if(m_bResetVol ) ClearVolume(pd3dImmediateContext);
 		//pd3dImmediateContext->UpdateSubresource( m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0 );
 		ID3D11UnorderedAccessView* uavs[2] = { m_pDWVolumeUAV, m_pColVolumeUAV };
 		pd3dImmediateContext->RSSetViewports( 1, &m_cViewport );
 		pd3dImmediateContext->OMSetRenderTargetsAndUnorderedAccessViews( 1, &m_pUAVDescmmyRTV, NULL, 1, 2, uavs, 0 );
 		pd3dImmediateContext->IASetInputLayout( m_pScreenQuadIL );
+		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
 		UINT stride = sizeof( short ); UINT offset = 0;
 		pd3dImmediateContext->IASetVertexBuffers( 0, 1, &m_pScreenQuadVB, &stride, &offset );

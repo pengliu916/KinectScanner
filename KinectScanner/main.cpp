@@ -18,11 +18,11 @@ wchar_t                         g_debugLine2[100];
 wchar_t                         g_debugLine3[100];
 
 MultiTexturePresenter           multiTexture = MultiTexturePresenter( 4, true, SUB_TEXTUREWIDTH, SUB_TEXTUREHEIGHT );
-FilteredPCL                     pointCloud = FilteredPCL();
+FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
 VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
 //VolumeTSDF                      meshVolume = VolumeTSDF(0.0075f, 384, 384, 384);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
-PoseEstimator                   poseEstimator = PoseEstimator();
+PoseEstimator                   poseEstimator = PoseEstimator(D_W,D_H);
 
 bool                            g_bFirstFrame = true;
 //--------------------------------------------------------------------------------------
@@ -160,7 +160,6 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext,
                                   double fTime, float fElapsedTime, void* pUserContext )
 {
-    pointCloud.SetupPipeline(pd3dImmediateContext);
     pointCloud.Render(pd3dImmediateContext);
     
     /*tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
@@ -217,7 +216,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
                     swprintf(g_debugLine3,100,L"Track failed!!  Singular Matrix");
                 }
             }while(tracked && iterationTime<15);//meshMatrixN.m_fError>=0.000000001);
-            if ( tracked ) {
+            if ( true || tracked ) {
                 float rnorm = norm ( vectorR );
                 float tnorm = norm ( vectorT );
                 //pointCloud.m_TransformedPC.m_vRotate += vectorR;

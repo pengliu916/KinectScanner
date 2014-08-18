@@ -201,8 +201,8 @@ public:
 		TEXDesc.MiscFlags = 0;
 		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pFreeCamOutTex));
 		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pRaycastOutTex));
-		TEXDesc.Width = DEPTH_WIDTH;
-		TEXDesc.Height = DEPTH_HEIGHT;
+		TEXDesc.Width = D_W;
+		TEXDesc.Height = D_H;
 		TEXDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pKinectOutTex[0])); // RGBZ tex
 		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pKinectOutTex[1])); // Normal tex
@@ -242,8 +242,8 @@ public:
 		m_cFreeCamViewport.TopLeftX = 0;
 		m_cFreeCamViewport.TopLeftY = 0;
 
-		m_cKinectViewport.Width = (float)DEPTH_WIDTH;
-		m_cKinectViewport.Height = (float)DEPTH_HEIGHT;
+		m_cKinectViewport.Width = (float)D_W;
+		m_cKinectViewport.Height = (float)D_H;
 		m_cKinectViewport.MinDepth = 0.0f;
 		m_cKinectViewport.MaxDepth = 1.0f;
 		m_cKinectViewport.TopLeftX = 0;
@@ -382,7 +382,8 @@ public:
 
 	void GetRaycastImg( ID3D11DeviceContext* pd3dImmediateContext, bool phong = true )
 	{
-		if( m_bEmptyTSDF )
+
+		if (m_bEmptyTSDF)
 		{
 			m_pTSDFVolume->Integrate( pd3dImmediateContext );
 			m_bEmptyTSDF = false;
@@ -404,7 +405,8 @@ public:
 		XMStoreFloat4( &m_CB_FreecamPerFrame.ViewPos, m_cCamera.GetEyePt() );
 		pd3dImmediateContext->UpdateSubresource( m_pCB_FreecamPerFrame, 0, NULL, &m_CB_FreecamPerFrame, 0, 0 );
 		if( phong ) { pd3dImmediateContext->OMSetRenderTargets( 1, &m_pFreeCamOutRTV, NULL ); } else { pd3dImmediateContext->OMSetRenderTargets( 1, &m_pRaycastOutRTV, NULL ); }
-		pd3dImmediateContext->IASetInputLayout( m_pScreenQuadIL );
+		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+		pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
 		UINT stride = sizeof( short );
 		UINT offset = 0;
 		pd3dImmediateContext->IASetVertexBuffers( 0, 1, &m_pGenVB, &stride, &offset );

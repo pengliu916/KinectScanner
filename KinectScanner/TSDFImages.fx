@@ -10,8 +10,15 @@ static const float4 light_offset = float4 ( 0.0f, 0.10f, 0.0f, 0.0f );
 static const float4 ambient = float4 ( 0.3f, 0.3f, 0.3f, 1.0f );
 static const float4 light_attenuation = float4 ( 1, 0, 0, 0 );
 
-static const float KinectFTRpos_x = DEPTH_WIDTH * XSCALE * 0.5f; // Top right conner x_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
-static const float KinectFTRpos_y = DEPTH_HEIGHT * XSCALE * 0.5f; // Top right conner y_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
+//static const float KinectFTRpos_x = DEPTH_WIDTH * XSCALE * 0.5f; // Top right conner x_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
+//static const float KinectFTRpos_y = DEPTH_HEIGHT * XSCALE * 0.5f; // Top right conner y_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
+
+
+static const float2 reso = float2(D_W, D_H);
+static const float2 range = float2(R_N, R_F);
+static const float2 f = float2(F_X, -F_Y);
+static const float2 c = float2(C_X, C_Y);
+
 //--------------------------------------------------------------------------------------
 // Const buffers
 //--------------------------------------------------------------------------------------
@@ -102,20 +109,24 @@ GS_INPUT VS( )
 void GS_KinectQuad( point GS_INPUT particles[1], inout TriangleStream<PS_INPUT> triStream )
 {
 	PS_INPUT output;
-	output.Pos = float4( -KinectFTRpos_x, -KinectFTRpos_y, 1.0f, 1.0f );// TEXCOORD0
-	output.projPos = float4( -1, -1, 0, 1 );// SV_POSITION
-	triStream.Append( output );
-
-	output.Pos = float4( -KinectFTRpos_x, KinectFTRpos_y, 1.0f, 1.0f );
+	//output.Pos = float4(-KinectFTRpos_x, KinectFTRpos_y, 1.0f, 1.0f);
+	output.Pos = float4((float2(0,0) - c) / f, 1.0f, 1.0f);
 	output.projPos = float4( -1, 1, 0, 1 );
 	triStream.Append( output );
 
-	output.Pos = float4( KinectFTRpos_x, -KinectFTRpos_y, 1.0f, 1.0f );
-	output.projPos = float4( 1, -1, 0, 1 );
+	//output.Pos = float4(KinectFTRpos_x, KinectFTRpos_y, 1.0f, 1.0f);
+	output.Pos = float4((float2(reso.x,0) - c) / f, 1.0f, 1.0f);
+	output.projPos = float4( 1, 1, 0, 1 );
 	triStream.Append( output );
 
-	output.Pos = float4( KinectFTRpos_x, KinectFTRpos_y, 1.0f, 1.0f );
-	output.projPos = float4( 1, 1, 0, 1 );
+	//output.Pos = float4(-KinectFTRpos_x, -KinectFTRpos_y, 1.0f, 1.0f);// TEXCOORD0
+	output.Pos = float4((float2(0,reso.y) - c) / f , 1.0f, 1.0f);// TEXCOORD0
+	output.projPos = float4( -1, -1, 0, 1 );// SV_POSITION
+	triStream.Append( output );
+
+	//output.Pos = float4(KinectFTRpos_x, -KinectFTRpos_y, 1.0f, 1.0f);
+	output.Pos = float4((reso - c) / f,1.0f, 1.0f);
+	output.projPos = float4( 1, -1, 0, 1 );
 	triStream.Append( output );
 }
 

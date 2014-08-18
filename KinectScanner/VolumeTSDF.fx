@@ -5,8 +5,15 @@ RWTexture3D<uint> tex3D_DistWeight : register(t0);
 RWTexture3D<uint> tex3D_RGBColor : register(t1);
 Texture2D<float4> txRGBZ  : register(t2);
 
-static const float4 XYScale = float4(-XSCALE,-XSCALE,0,0); // Mirro the input image for correctness
-static const float2 HalfDepthImgSize = float2(DEPTH_WIDTH, DEPTH_HEIGHT) * 0.5f; // Half resolution of depth image
+//static const float4 XYScale = float4(-XSCALE,-XSCALE,0,0); // Mirro the input image for correctness
+//static const float2 HalfDepthImgSize = float2(DEPTH_WIDTH, DEPTH_HEIGHT) * 0.5f; // Half resolution of depth image
+
+
+
+static const float2 reso = float2(D_W, D_H);
+static const float2 range = float2(R_N, R_F);
+static const float2 f = float2(F_X, -F_Y);
+static const float2 c = float2(C_X, C_Y);
 
 cbuffer cbVolumeInit : register ( b0 )
 {
@@ -39,20 +46,21 @@ void GS( point GS_INPUT particles[1], uint primID : SV_PrimitiveID,
 					 inout TriangleStream<PS_INPUT> triStream )
 {
 	PS_INPUT output;
-	output.Pos = float4( -1.0f, -1.0f, 0.0f, 1.0f);
+
+	output.Pos = float4( -1.0f, 1.0f, 0.0f, 1.0f );
 	output.Coord = float3( -HalfVoxelRes.x, HalfVoxelRes.y, ( float )primID - HalfVoxelRes.z + 0.5 );
 	triStream.Append( output );
 
-	output.Pos = float4( 1.0f, -1.0f, 0.0f, 1.0f );
-	output.Coord = float3( HalfVoxelRes.x, HalfVoxelRes.y, ( float )primID - HalfVoxelRes.z + 0.5 );
+	output.Pos = float4( 1.0f, 1.0f, 0.0f, 1.0f );
+	output.Coord = float3( HalfVoxelRes.x, HalfVoxelRes.y, ( float )primID - HalfVoxelRes.z + 0.5);
 	triStream.Append( output );
 
-	output.Pos = float4( -1.0f, 1.0f, 0.0f, 1.0f );
+	output.Pos = float4( -1.0f, -1.0f, 0.0f, 1.0f);
 	output.Coord = float3( -HalfVoxelRes.x, -HalfVoxelRes.y, ( float )primID - HalfVoxelRes.z + 0.5 );
 	triStream.Append( output );
 
-	output.Pos = float4( 1.0f, 1.0f, 0.0f, 1.0f );
-	output.Coord = float3( HalfVoxelRes.x, -HalfVoxelRes.y, ( float )primID - HalfVoxelRes.z + 0.5);
+	output.Pos = float4( 1.0f, -1.0f, 0.0f, 1.0f );
+	output.Coord = float3( HalfVoxelRes.x, -HalfVoxelRes.y, ( float )primID - HalfVoxelRes.z + 0.5 );
 	triStream.Append( output );
 }
 
@@ -66,15 +74,20 @@ float PS( PS_INPUT input ) : SV_Target
 
 	if( currentVoxelPos.z <= 0.4 ) return 0;
 	//should in [-HalfDepthImgSize,HalfDepthImgSize] 
-	float2 backProjectedXY = currentVoxelPos.xy / ( currentVoxelPos.z * XYScale.xy );
+	//float2 backProjectedXY = currentVoxelPos.xy / ( currentVoxelPos.z * XYScale.xy );
 
-	//if ( any ( clamp ( abs ( backProjectedXY ) - HalfDepthImgSize, 0, 10 ) ) )
-	if ( backProjectedXY.x > HalfDepthImgSize.x || backProjectedXY.x < -HalfDepthImgSize.x ||
-		 backProjectedXY.y > HalfDepthImgSize.y || backProjectedXY.y < -HalfDepthImgSize.x )
-		 return 0;
+	////if ( any ( clamp ( abs ( backProjectedXY ) - HalfDepthImgSize, 0, 10 ) ) )
+	//if ( backProjectedXY.x > HalfDepthImgSize.x || backProjectedXY.x < -HalfDepthImgSize.x ||
+	//	 backProjectedXY.y > HalfDepthImgSize.y || backProjectedXY.y < -HalfDepthImgSize.x )
+	//	 return 0;
 
 	//Shift for texture Load function 
-	backProjectedXY = backProjectedXY + HalfDepthImgSize;
+	//backProjectedXY = backProjectedXY + HalfDepthImgSize;
+
+	float2 backProjectedXY = currentVoxelPos.xy / currentVoxelPos.z * f + c;
+	if (backProjectedXY.x > reso.x || backProjectedXY.x < 0 ||
+		backProjectedXY.y > reso.y || backProjectedXY.y < 0)
+		return 0;
 	float4 RGBZdata =  txRGBZ.Load ( int3 ( backProjectedXY, 0 ) );
 	
 	float realDepth = RGBZdata.a;

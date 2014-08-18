@@ -859,6 +859,10 @@ HRESULT Kinect2Sensor::CompileFormString(string code,
 
 void Kinect2Sensor::ProcessFinalizedRGBD(ID3D11DeviceContext* pd3dimmediatecontext){
 	// Pass 0: undistort and merge depth and rgb to get registerd RGBD
+	pd3dimmediatecontext->PSSetShaderResources(0, 5, m_ppNullSRV);
+	pd3dimmediatecontext->GSSetShaderResources(0, 5, m_ppNullSRV);
+
+
 	pd3dimmediatecontext->OMSetRenderTargets(1, &m_pUndistortRegisteredRGBDRTV, NULL);
 	pd3dimmediatecontext->IASetInputLayout( m_pPassIL );
 	pd3dimmediatecontext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST );
@@ -878,6 +882,7 @@ void Kinect2Sensor::ProcessFinalizedRGBD(ID3D11DeviceContext* pd3dimmediateconte
 	pd3dimmediatecontext->RSSetViewports( 1, &m_RTviewport );
 
 	pd3dimmediatecontext->Draw(1,0);
+	//pd3dimmediatecontext->PSSetShaderResources(0, 5, m_ppNullSRV);
 
 	// Pass 1
 	// Clear the render target

@@ -6,18 +6,18 @@
   <ItemGroup>
     <FxCompile Include="MultiTexturePresenter.fx" />
     <FxCompile Include="NormalGenerator.fx" />
-    <FxCompile Include="FilteredPCL.fx" />
     <FxCompile Include="VolumeTSDF.fx" />
     <FxCompile Include="RayCast.fx" />
     <FxCompile Include="TSDFImages.fx" />
     <FxCompile Include="Reduction.fx" />
     <FxCompile Include="PoseEstimator.fx" />
-    <FxCompile Include="HistoPyramidMC.fx" />
     <FxCompile Include="RGBDBilateralFilter.fx" />
+    <FxCompile Include="HistoPyramidMC.fx">
+      <Filter>NotInUse</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MultiTexturePresenter.h" />
-    <ClInclude Include="Scanner.h" />
     <ClInclude Include="FilteredPCL.h" />
     <ClInclude Include="NormalGenerator.h" />
     <ClInclude Include="TransPCLs.h" />
@@ -27,14 +27,19 @@
     <ClInclude Include="TSDFImages.h" />
     <ClInclude Include="Reduction.h" />
     <ClInclude Include="PoseEstimator.h" />
-    <ClInclude Include="HistoPyramidMC.h" />
     <ClInclude Include="RGBDBilateralFilter.h" />
+    <ClInclude Include="HistoPyramidMC.h">
+      <Filter>NotInUse</Filter>
+    </ClInclude>
+    <ClInclude Include="Scanner.h">
+      <Filter>NotInUse</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="D3DX_DXGIFormatConvert.inl" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Utility">
+    <Filter Include="NotInUse">
       <UniqueIdentifier>{d8840fe0-b06a-4b4f-9ad0-dfbc0c8c16e2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

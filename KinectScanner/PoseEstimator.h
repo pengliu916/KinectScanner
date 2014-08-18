@@ -77,11 +77,11 @@ public:
 	float							m_fPreNpairs;
 	double							m_dDet;
 
-	PoseEstimator()
+	PoseEstimator(UINT _inputWidth, UINT _inputHeight)
 	{
 		m_mA = Eigen::MatrixXf::Identity(6,6);
-		m_uOutputTexSize_x=DEPTH_WIDTH;
-		m_uOutputTexSize_y=DEPTH_HEIGHT;
+		m_uOutputTexSize_x = _inputWidth;
+		m_uOutputTexSize_y = _inputHeight;
 		m_fPreNpairs = 1;
 	}
 

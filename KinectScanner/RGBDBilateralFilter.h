@@ -34,7 +34,7 @@ public:
 
 	bool			m_bWorking;
 
-	RGBDBilateralFilter( UINT width = DEPTH_WIDTH, UINT height = DEPTH_HEIGHT )
+	RGBDBilateralFilter( UINT width, UINT height )
 	{
 		m_uRTWidth = width;
 		m_uRTHeight = height;

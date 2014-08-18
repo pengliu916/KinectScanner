@@ -28,7 +28,7 @@ public:
 	UINT			m_uRTWidth;
 	UINT			m_uRTHeight;
 
-	NormalGenerator(UINT width = DEPTH_WIDTH, UINT height = DEPTH_HEIGHT)
+	NormalGenerator(UINT width = D_W, UINT height = D_H)
 	{
 		m_uRTWidth=width;
 		m_uRTHeight=height;

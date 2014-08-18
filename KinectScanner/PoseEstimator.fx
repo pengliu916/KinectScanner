@@ -16,13 +16,16 @@ cbuffer cbMeshTransform :register( b1 ){
 //--------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------
-static const float2 DEPTH_WIDTHHeight = float2(DEPTH_WIDTH, DEPTH_HEIGHT);
-static const float2 DepthHalfWidthHeight = DEPTH_WIDTHHeight / 2.0;
-static const float2 DepthHalfWidthHeightOffset = DepthHalfWidthHeight - 0.5;
-static const float4 XYScale=float4(XSCALE,-XSCALE,0,0);
+//static const float2 DEPTH_WIDTHHeight = float2(DEPTH_WIDTH, DEPTH_HEIGHT);
+//static const float2 DepthHalfWidthHeight = DEPTH_WIDTHHeight / 2.0;
+//static const float2 DepthHalfWidthHeightOffset = DepthHalfWidthHeight - 0.5;
+//static const float4 XYScale=float4(XSCALE,-XSCALE,0,0);
 
-static const float ANGLE_THRES = sin (20.f * 3.14159254f / 180.f);
-static const float DIST_THRES = 0.1f;
+
+static const float2 reso = float2(D_W, D_H);
+static const float2 range = float2(R_N, R_F);
+static const float2 f = float2(F_X, -F_Y);
+static const float2 c = float2(C_X, C_Y);
 //--------------------------------------------------------------------------------------
 // Structures
 //--------------------------------------------------------------------------------------
@@ -112,12 +115,12 @@ PS_OUT_I PS_I(PS_INPUT input) : SV_Target
 	float3 kinectPoint;
 	kinectPoint.z = txRGBZ_kinect.Load(currentLocation).w;
 	if ( abs (kinectPoint.z + 1) <= EPSILON ) return output;
-	kinectPoint.xy = (input.Tex.xy - DepthHalfWidthHeightOffset) * XYScale.xy * kinectPoint.z;
+	kinectPoint.xy = (input.Tex.xy - c) / f * kinectPoint.z;
 	
 	float3 tsdfPoint;
 	tsdfPoint.z = txRGBZ_tsdf.Load(currentLocation).w;
 	if ( abs ( tsdfPoint.z + 1) <= EPSILON ) return output;
-	tsdfPoint.xy = (input.Tex.xy - DepthHalfWidthHeightOffset) * XYScale.xy * tsdfPoint.z;
+	tsdfPoint.xy = (input.Tex.xy - c) / f * tsdfPoint.z;
 
 	float dist = length(tsdfPoint-kinectPoint);
 	if(dist>DIST_THRES) return output;
@@ -171,12 +174,12 @@ PS_OUT_II PS_II(PS_INPUT input) : SV_Target
 	float3 kinectPoint;
 	kinectPoint.z = txRGBZ_kinect.Load(currentLocation).w;
 	if ( abs (kinectPoint.z + 1) <= EPSILON ) return output;
-	kinectPoint.xy = (input.Tex.xy - DepthHalfWidthHeightOffset) * XYScale.xy * kinectPoint.z;
+	kinectPoint.xy = (input.Tex.xy - c) / f  * kinectPoint.z;
 	
 	float3 tsdfPoint;
 	tsdfPoint.z = txRGBZ_tsdf.Load(currentLocation).w;
 	if ( abs ( tsdfPoint.z + 1) <= EPSILON ) return output;
-	tsdfPoint.xy = (input.Tex.xy - DepthHalfWidthHeightOffset) * XYScale.xy * tsdfPoint.z;
+	tsdfPoint.xy = (input.Tex.xy - c) / f  * tsdfPoint.z;
 	
 	float dist = length(tsdfPoint-kinectPoint);
 	if(dist>DIST_THRES) return output;

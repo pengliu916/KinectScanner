@@ -21,45 +21,46 @@ class FilteredPCL
 {
 public:
 
-    ID3D11VertexShader*				m_pPassVS;
-    ID3D11PixelShader*				m_pPS;
-    ID3D11GeometryShader*			m_pScreenQuadGS;
-
-    ID3D11InputLayout*				m_pScreenQuadIL;
-    ID3D11Buffer*					m_pScreenQuadVB;
-
     ID3D11ShaderResourceView**		m_ppDepthSRV;
-    ID3D11ShaderResourceView**		m_ppColorSRV;
-    //For Texture output
-    ID3D11Texture2D*				m_pOutTex;
-    ID3D11RenderTargetView*			m_pOutRTV;
-
-    D3D11_VIEWPORT					m_Viewport;
+	ID3D11ShaderResourceView**		m_ppColorSRV;
+	ID3D11ShaderResourceView**		m_ppRGBDSRV;
 
     IRGBDStreamForDirectX*          m_kinect;
-    RGBDBilateralFilter				m_bilateralFilter;
-    NormalGenerator					m_normalGenerator;
+    RGBDBilateralFilter*			m_pBilteralFilter;
+    NormalGenerator*				m_pNormalGenerator;
 
-    ID3D11ShaderResourceView*		m_pOutSRV;
     TransformedPointClould			m_TransformedPC;
     UINT							m_uRTwidth;
     UINT							m_uRTheight;
     bool			m_bShoot;
     bool			m_bUpdated;
 
-    FilteredPCL(UINT width = DEPTH_WIDTH, UINT height = DEPTH_HEIGHT)
+    FilteredPCL(int width, int height)
     {
         m_bShoot = false;
         m_bUpdated = false;
 
         m_uRTwidth = width;
         m_uRTheight = height;
+
+		m_pBilteralFilter = new RGBDBilateralFilter(width,height);
+		m_pNormalGenerator = new NormalGenerator(width,height);
 #if USING_KINECT
+#if KINECT2
+		m_kinect = DirectXStreamFactory::createFromKinect2();
+#else
 		m_kinect = DirectXStreamFactory::createFromKinect();
+#endif
 #else
         m_kinect = DirectXStreamFactory::createFromVideo();
 #endif
     }
+
+	~FilteredPCL()
+	{
+		SAFE_RELEASE(m_pBilteralFilter);
+		SAFE_RELEASE(m_pNormalGenerator);
+	}
 
     HRESULT Initial()
     {
@@ -74,79 +75,11 @@ public:
 
         V_RETURN(m_kinect->CreateResource(pd3dDevice));
         m_ppDepthSRV=m_kinect->getDepth_ppSRV();
-        m_ppColorSRV=m_kinect->getColor_ppSRV();
+		m_ppColorSRV = m_kinect->getColor_ppSRV();
+		m_ppRGBDSRV = m_kinect->getRGBD_ppSRV();
 
         ID3D11DeviceContext* immediateContext;
         pd3dDevice->GetImmediateContext(&immediateContext);
-
-        ID3DBlob* pVSBlob = NULL;
-        V_RETURN(DXUTCompileFromFile(L"FilteredPCL.fx", nullptr, "VS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob));
-        V_RETURN(pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(),pVSBlob->GetBufferSize(),NULL,&m_pPassVS));
-        DXUT_SetDebugName(m_pPassVS,"m_pPassVS");
-
-        ID3DBlob* pPSBlob = NULL;
-        V_RETURN(DXUTCompileFromFile(L"FilteredPCL.fx", nullptr, "PS", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
-        V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPS));
-        DXUT_SetDebugName(m_pPS, "m_pPS");
-        pPSBlob->Release();
-
-        ID3DBlob* pGSBlob = NULL;
-        V_RETURN(DXUTCompileFromFile(L"FilteredPCL.fx", nullptr, "GS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
-        V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pScreenQuadGS));
-        DXUT_SetDebugName(m_pScreenQuadGS, "m_pScreenQuadGS");
-        pGSBlob->Release();
-
-        D3D11_INPUT_ELEMENT_DESC layout[] = { { "POSITION", 0, DXGI_FORMAT_R16_SINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 } };
-        V_RETURN(pd3dDevice->CreateInputLayout(layout,ARRAYSIZE(layout),pVSBlob->GetBufferPointer(),pVSBlob->GetBufferSize(),&m_pScreenQuadIL));
-        DXUT_SetDebugName(m_pScreenQuadIL, "m_pScreenQuadIL");
-        pVSBlob->Release();
-
-        // Create the vertex buffer
-        D3D11_BUFFER_DESC bd = {0};
-        bd.Usage = D3D11_USAGE_DEFAULT;
-        bd.ByteWidth = sizeof(short);
-        bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-        bd.CPUAccessFlags = 0;
-        V_RETURN(pd3dDevice->CreateBuffer(&bd, NULL, &m_pScreenQuadVB));
-        DXUT_SetDebugName(m_pScreenQuadVB, "m_pScreenQuadVB");
-
-        // Create rendertarget resource
-
-        D3D11_TEXTURE2D_DESC	RTtextureDesc = {0};
-        RTtextureDesc.Width = m_uRTwidth;
-        RTtextureDesc.Height = m_uRTheight;
-        RTtextureDesc.MipLevels = 1;
-        RTtextureDesc.ArraySize = 1;
-        RTtextureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-        RTtextureDesc.SampleDesc.Count = 1;
-        RTtextureDesc.Usage = D3D11_USAGE_DEFAULT;
-        RTtextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-        RTtextureDesc.CPUAccessFlags = 0;
-        RTtextureDesc.MiscFlags = 0;
-        V_RETURN(pd3dDevice->CreateTexture2D(&RTtextureDesc, NULL, &m_pOutTex));
-
-        D3D11_RENDER_TARGET_VIEW_DESC		RTViewDesc;
-        ZeroMemory( &RTViewDesc, sizeof(RTViewDesc));
-        RTViewDesc.Format = RTtextureDesc.Format;
-        RTViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        RTViewDesc.Texture2D.MipSlice = 0;
-        V_RETURN(pd3dDevice->CreateRenderTargetView(m_pOutTex, &RTViewDesc,&m_pOutRTV));
-
-        
-        D3D11_SHADER_RESOURCE_VIEW_DESC RTshaderResourceDesc;
-        RTshaderResourceDesc.Format=RTtextureDesc.Format;
-        RTshaderResourceDesc.ViewDimension=D3D11_SRV_DIMENSION_TEXTURE2D;
-        RTshaderResourceDesc.Texture2D.MostDetailedMip=0;
-        RTshaderResourceDesc.Texture2D.MipLevels=1;
-        V_RETURN(pd3dDevice->CreateShaderResourceView(m_pOutTex,&RTshaderResourceDesc,&m_pOutSRV));
-        
-        m_Viewport.Width = (float)m_uRTwidth ;
-        m_Viewport.Height = (float)m_uRTheight;
-        m_Viewport.MinDepth = 0.0f;
-        m_Viewport.MaxDepth = 1.0f;
-        m_Viewport.TopLeftX = 0;
-        m_Viewport.TopLeftY = 0;
-
 
         // Set rasterizer state to disable backface culling
         D3D11_RASTERIZER_DESC rasterDesc;
@@ -170,33 +103,18 @@ public:
         SAFE_RELEASE(pState);
         SAFE_RELEASE(immediateContext);
 
-        m_bilateralFilter.CreateResource(pd3dDevice,&m_pOutSRV);
-        m_normalGenerator.CreateResource(pd3dDevice,&m_bilateralFilter.m_pOutSRV);
+		m_pBilteralFilter->CreateResource(pd3dDevice, m_ppRGBDSRV);
+        m_pNormalGenerator->CreateResource(pd3dDevice,&m_pBilteralFilter->m_pOutSRV);
 
-        m_TransformedPC.ppMeshRGBZTexSRV = &m_bilateralFilter.m_pOutSRV;
-        m_TransformedPC.ppMeshRawRGBZTexSRV = &m_pOutSRV;
-        m_TransformedPC.ppMeshNormalTexSRV = &m_normalGenerator.m_pOutSRV;
+        m_TransformedPC.ppMeshRGBZTexSRV = &m_pBilteralFilter->m_pOutSRV;
+		m_TransformedPC.ppMeshRawRGBZTexSRV = m_ppRGBDSRV;
+        m_TransformedPC.ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
         m_TransformedPC.reset();
         
         return hr;
 }
 
-    void SetupPipeline(ID3D11DeviceContext* pd3dImmediateContext)
-    {
-        pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
-        pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-        UINT stride = 0;
-        UINT offset = 0;
-        pd3dImmediateContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVB, &stride, &offset);
-        pd3dImmediateContext->VSSetShader( m_pPassVS, NULL, 0 );
-        pd3dImmediateContext->GSSetShader(m_pScreenQuadGS,NULL,0);
-        pd3dImmediateContext->PSSetShader( m_pPS, NULL, 0 );
-        pd3dImmediateContext->PSSetShaderResources(0, 1, m_ppDepthSRV);
-        pd3dImmediateContext->PSSetShaderResources(1, 1, m_ppColorSRV);
-        pd3dImmediateContext->RSSetViewports(1, &m_Viewport);
-        pd3dImmediateContext->OMSetRenderTargets(1,&m_pOutRTV,NULL);
-    }
-
+   
     void Render(ID3D11DeviceContext* pd3dimmediateContext)
     {
         m_bUpdated = m_kinect->UpdateTextures(pd3dimmediateContext);
@@ -205,11 +123,7 @@ public:
 
         if(m_bUpdated)
         {
-            this->SetupPipeline(pd3dimmediateContext);
-            pd3dimmediateContext->Draw(1, 0);
-
-            ID3D11ShaderResourceView* ppSRVNULLs[4] = { NULL,NULL,NULL,NULL };
-            pd3dimmediateContext->PSSetShaderResources( 0, 4, ppSRVNULLs );
+           
             //pd3dimmediateContext->OMSetRenderTargets(1,&m_pOutRTV,NULL);
             //if( m_bShoot )
             //{
@@ -217,33 +131,25 @@ public:
             //	//D3DX11SaveTextureToFile(pd3dimmediateContext,m_pOutTex,D3DX11_IFF_DDS,L"Frame.dds");
 
             //}
-            m_bilateralFilter.ProcessImage(pd3dimmediateContext);
-            m_normalGenerator.ProcessImage(pd3dimmediateContext);
+			m_pBilteralFilter->SetupPipeline(pd3dimmediateContext);
+            m_pBilteralFilter->ProcessImage(pd3dimmediateContext);
+            m_pNormalGenerator->ProcessImage(pd3dimmediateContext);
         }
     }
 
     void Release()
     {
         m_kinect->Release();
-        SAFE_RELEASE(m_pOutTex);
-        SAFE_RELEASE(m_pOutRTV);
-        
-        SAFE_RELEASE(m_pPassVS);
-        SAFE_RELEASE(m_pPS);
-        SAFE_RELEASE(m_pScreenQuadGS);
-        SAFE_RELEASE(m_pScreenQuadIL);
-        SAFE_RELEASE(m_pScreenQuadVB);
 
-        m_normalGenerator.Release();
-        m_bilateralFilter.Release();
+        m_pNormalGenerator->Release();
+        m_pBilteralFilter->Release();
         
-        SAFE_RELEASE(m_pOutSRV);
     }
 
     LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         m_kinect->HandleMessages(hWnd,uMsg,wParam,lParam);
-        m_bilateralFilter.HandleMessages(hWnd,uMsg,wParam,lParam);
+        m_pBilteralFilter->HandleMessages(hWnd,uMsg,wParam,lParam);
         switch(uMsg)
         {
         case WM_KEYDOWN:
