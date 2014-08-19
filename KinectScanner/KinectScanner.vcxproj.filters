@@ -4,7 +4,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="MultiTexturePresenter.fx" />
     <FxCompile Include="NormalGenerator.fx" />
     <FxCompile Include="VolumeTSDF.fx" />
     <FxCompile Include="RayCast.fx" />
@@ -17,7 +16,6 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MultiTexturePresenter.h" />
     <ClInclude Include="FilteredPCL.h" />
     <ClInclude Include="NormalGenerator.h" />
     <ClInclude Include="TransPCLs.h" />
@@ -34,6 +32,7 @@
     <ClInclude Include="Scanner.h">
       <Filter>NotInUse</Filter>
     </ClInclude>
+    <ClInclude Include="TiledTextures.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="D3DX_DXGIFormatConvert.inl" />

@@ -63,6 +63,9 @@ public:
 	UINT16*                             m_pInfraredBuffer;
 	UINT                                m_pInfraredBufferSize;
 
+	UINT16								m_usDepthMinReliableDistance;
+	UINT16								m_usDepthMaxReliableDistance;
+
 	bool                                m_bLongExposureInfrared;
 	bool                                m_bUpdated;
 

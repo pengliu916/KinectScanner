@@ -5,19 +5,23 @@
 #include "DXUTgui.h"
 
 #include "header.h"
-#include "MultiTexturePresenter.h"
+#include "TiledTextures.h"
 #include "FilteredPCL.h"
 #include "VolumeTSDF.h"
 #include "TSDFImages.h"
 #include "PoseEstimator.h"
 //hi
+
+using namespace std::placeholders;
+
+
 CDXUTDialogResourceManager      g_DialogResourceManager;
 CDXUTTextHelper*                g_pTxtHelper = NULL;
 wchar_t                         g_debugLine1[100];
 wchar_t                         g_debugLine2[100];
 wchar_t                         g_debugLine3[100];
 
-MultiTexturePresenter           multiTexture = MultiTexturePresenter( 4, true, SUB_TEXTUREWIDTH, SUB_TEXTUREHEIGHT );
+TiledTextures					multiTexture = TiledTextures();
 FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
 VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
 //VolumeTSDF                      meshVolume = VolumeTSDF(0.0075f, 384, 384, 384);
@@ -49,8 +53,13 @@ HRESULT Initial()
     HRESULT hr = S_OK;
     V_RETURN( pointCloud.Initial() )
     V_RETURN( multiTexture.Initial() );
+	V_RETURN(poseEstimator.Initial(tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 
-    
+    multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
+	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
+	multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
+							nullptr,
+							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));
     swprintf(g_debugLine1,100,L"Debug Line 1...");
     swprintf(g_debugLine2,100,L"Debug Line 2...");
     swprintf(g_debugLine3,100,L"Debug Line 3...");
@@ -110,18 +119,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( pointCloud.CreateResource( pd3dDevice ));
     V_RETURN( meshVolume.CreateResource(pd3dDevice,&pointCloud.m_TransformedPC));
     V_RETURN( tsdfImgs.CreateResource(pd3dDevice));
-    V_RETURN( poseEstimator.CreateResource(pd3dDevice,tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
-    V_RETURN( multiTexture.CreateResource( pd3dDevice, 
-        //poseEstimator.m_pSumOfCoordSRV,
-        poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,
-        pointCloud.m_ppColorSRV,
-        //poseEstimator.m_pTsdfTPC->ppMeshRGBZTexSRV,
-        //poseEstimator.m_pTsdfTPC->ppMeshNormalTexSRV,
-        &tsdfImgs.m_pFreeCamOutSRV,
-        &tsdfImgs.m_pKinectOutSRV[2]
-        //&pointCloud.m_bilateralFilter.m_pOutSRV
-        //&pointCloud.m_normalGenerator.m_pOutSRV 
-        ) );
+    V_RETURN( poseEstimator.CreateResource(pd3dDevice));
+    V_RETURN( multiTexture.CreateResource( pd3dDevice) );
     return S_OK;
 }
 
@@ -138,7 +137,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     V_RETURN( g_DialogResourceManager.OnD3D11ResizedSwapChain( pd3dDevice, pBackBufferSurfaceDesc ) );
 
-    multiTexture.Resize();
+	multiTexture.Resize(pd3dDevice, pBackBufferSurfaceDesc);
     poseEstimator.Resize(pd3dimmediateContext);
     SAFE_RELEASE(pd3dimmediateContext);
     return S_OK;
@@ -274,7 +273,6 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     pointCloud.HandleMessages( hWnd, uMsg, wParam, lParam );
     poseEstimator.HandleMessages( hWnd, uMsg, wParam, lParam );
     meshVolume.HandleMessages( hWnd, uMsg, wParam, lParam );
-    tsdfImgs.HandleMessages( hWnd, uMsg, wParam, lParam );
     switch(uMsg)
     {
     case WM_KEYDOWN:
@@ -284,14 +282,14 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
             if (nKey == 'O')
             {
                 stepMode=!stepMode;
-                if( stepMode )
+               /* if( stepMode )
                 {
                     multiTexture.m_ppInputSRV[3] = &tsdfImgs.m_pFreeCamOutSRV;
                 }
                 else
                 {
                     multiTexture.m_ppInputSRV[3] = &tsdfImgs.m_pKinectOutSRV[2];
-                }
+                }*/
             }
             if (nKey == 'I')
             {
@@ -368,7 +366,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
     Initial();
 
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0, true, 640, 480 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0, true, 1280, 800 );
     DXUTMainLoop(); // Enter into the DXUT ren  der loop
 
     // Perform any application-level cleanup here

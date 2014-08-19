@@ -85,15 +85,17 @@ public:
 		m_fPreNpairs = 1;
 	}
 
-	HRESULT Initial()
+	HRESULT Initial(TransformedPointClould* pTsdfTPC,
+					TransformedPointClould* pKinectTPC)
 	{
 		HRESULT hr=S_OK;
+
+		m_pTsdfTPC = pTsdfTPC;
+		m_pKinectTPC = pKinectTPC;
 		return hr;
 	}
 
-	HRESULT CreateResource(ID3D11Device* pd3dDevice,
-		TransformedPointClould* pTsdfTPC,
-		TransformedPointClould* pKinectTPC)
+	HRESULT CreateResource(ID3D11Device* pd3dDevice)
 	{
 		HRESULT hr=S_OK;
 
@@ -126,8 +128,6 @@ public:
 		pVSBlob->Release();
 		DXUT_SetDebugName( m_pScreenQuadIL, "m_pScreenQuadIL");
 
-		m_pTsdfTPC = pTsdfTPC;
-		m_pKinectTPC = pKinectTPC;
 
 		D3D11_BUFFER_DESC bd = {0};
 		bd.Usage = D3D11_USAGE_DEFAULT;

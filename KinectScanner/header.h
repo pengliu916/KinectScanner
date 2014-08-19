@@ -1,4 +1,4 @@
-#define USING_KINECT 1 // Set to 0 will instead use prerecorded RGBD video as input
+#define USING_KINECT 0 // Set to 0 will instead use prerecorded RGBD video as input
 #define KINECT2 1
 #define Z_OFFSET -1.0
 

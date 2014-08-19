@@ -205,7 +205,10 @@ bool Kinect2Sensor::UpdateMats( bool defaultReg = true, bool color = true, bool 
 			UINT16 *pDepthBuffer = NULL;
 
 			// get depth frame data
-			if( SUCCEEDED( hr ) ) hr = pDepthFrame->get_FrameDescription( &pDepthFrameDescription );
+			if (SUCCEEDED(hr)) hr = pDepthFrame->get_FrameDescription(&pDepthFrameDescription);
+			if (SUCCEEDED(hr)) hr = pDepthFrame->get_DepthMaxReliableDistance(&m_usDepthMaxReliableDistance);
+			if (SUCCEEDED(hr)) hr = pDepthFrame->get_DepthMinReliableDistance(&m_usDepthMinReliableDistance);
+			if (SUCCEEDED(hr)) hr = pDepthFrame->get_FrameDescription(&pDepthFrameDescription);
 			if( SUCCEEDED( hr ) ) hr = pDepthFrameDescription->get_Width( &nDepthWidth );
 			if( SUCCEEDED( hr ) ) hr = pDepthFrameDescription->get_Height( &nDepthHeight );
 			if( SUCCEEDED( hr ) ) hr = pDepthFrame->AccessUnderlyingBuffer( &nDepthBufferSize, &pDepthBuffer );
@@ -438,7 +441,7 @@ HRESULT Kinect2Sensor::CreateResource( ID3D11Device* pd3dDevice ){
 	RTtextureDesc.Height = m_cDepthHeight;
 	RTtextureDesc.MipLevels = 1;
 	RTtextureDesc.ArraySize = 1;
-	RTtextureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	RTtextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	RTtextureDesc.SampleDesc.Count = 1;
 	RTtextureDesc.Usage = D3D11_USAGE_DEFAULT;
 	RTtextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -886,9 +889,9 @@ void Kinect2Sensor::ProcessFinalizedRGBD(ID3D11DeviceContext* pd3dimmediateconte
 
 	// Pass 1
 	// Clear the render target
-	float ClearColor[4] = { -1.0f, -1.0f, -1.0f, 0.0f };
+	float ClearColor[4] = { -1.0f, -1.0f, -1.0f, -1.0f };
 	pd3dimmediatecontext->ClearRenderTargetView(m_pAddDepthRTV, ClearColor);
-	pd3dimmediatecontext->ClearDepthStencilView(m_pAddDepthDSSRV, D3D11_CLEAR_DEPTH, 0.99f, 0);
+	pd3dimmediatecontext->ClearDepthStencilView(m_pAddDepthDSSRV, D3D11_CLEAR_DEPTH, 1.f, 0);
 	pd3dimmediatecontext->OMSetRenderTargets(1, &m_pAddDepthRTV, m_pAddDepthDSSRV);
 	//pd3dimmediatecontext->OMSetRenderTargets(1, &m_pAddDepthRTV, NULL);
 	pd3dimmediatecontext->GSSetShader( m_pAddDepthGS, NULL, 0);

@@ -66,6 +66,15 @@ public:
     {
         HRESULT hr=S_OK;
         hr = m_kinect->Initialize();
+
+		m_ppDepthSRV = m_kinect->getDepth_ppSRV();
+		m_ppColorSRV = m_kinect->getColor_ppSRV();
+		m_ppRGBDSRV = m_kinect->getRGBD_ppSRV();
+
+
+		m_TransformedPC.ppMeshRGBZTexSRV = &m_pBilteralFilter->m_pOutSRV;
+		m_TransformedPC.ppMeshRawRGBZTexSRV = m_ppRGBDSRV;
+		m_TransformedPC.ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
         return hr;
     }
 
@@ -74,9 +83,6 @@ public:
         HRESULT hr=S_OK;
 
         V_RETURN(m_kinect->CreateResource(pd3dDevice));
-        m_ppDepthSRV=m_kinect->getDepth_ppSRV();
-		m_ppColorSRV = m_kinect->getColor_ppSRV();
-		m_ppRGBDSRV = m_kinect->getRGBD_ppSRV();
 
         ID3D11DeviceContext* immediateContext;
         pd3dDevice->GetImmediateContext(&immediateContext);
@@ -106,9 +112,6 @@ public:
 		m_pBilteralFilter->CreateResource(pd3dDevice, m_ppRGBDSRV);
         m_pNormalGenerator->CreateResource(pd3dDevice,&m_pBilteralFilter->m_pOutSRV);
 
-        m_TransformedPC.ppMeshRGBZTexSRV = &m_pBilteralFilter->m_pOutSRV;
-		m_TransformedPC.ppMeshRawRGBZTexSRV = m_ppRGBDSRV;
-        m_TransformedPC.ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
         m_TransformedPC.reset();
         
         return hr;

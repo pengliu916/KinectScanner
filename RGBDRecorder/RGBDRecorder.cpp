@@ -156,3 +156,24 @@ int main()
     cv::waitKey(0);
     return 0;
 }
+/*
+cv::Mat rgbdMat;
+rgbdReader>>rgbdMat;
+if(rgbdMat.data){
+D3D11_MAPPED_SUBRESOURCE resource;
+pd3dImmediateContext->Map(g_pRGBDTex, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+float* data = (float*)resource.pData;
+UINT pos=0;
+
+for (int i = 0; i < rgbdMat.rows; i++){
+for (int j = 0; j < rgbdMat.cols; j++){
+cv::Vec4f elms = rgbdMat.at<cv::Vec4f>(i, j);
+data[pos++] = elms[0];
+data[pos++] = elms[1];
+data[pos++] = elms[2];
+data[pos++] = elms[3];
+}
+}
+pd3dImmediateContext->Unmap(g_pRGBDTex, 0);
+}
+*/
