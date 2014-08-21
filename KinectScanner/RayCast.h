@@ -291,6 +291,7 @@ public:
 
 	void Render( ID3D11DeviceContext* pd3dImmediateContext )
 	{
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Raycast");
 		XMMATRIX m_Proj = m_pCamera->GetProjMatrix();
 		XMMATRIX m_View = m_pCamera->GetViewMatrix();
 		XMMATRIX m_World = m_pCamera->GetWorldMatrix();
@@ -329,6 +330,7 @@ public:
 
 		ID3D11ShaderResourceView* pSRVNULL = NULL;
 		pd3dImmediateContext->PSSetShaderResources( 0, 1, &pSRVNULL );
+		DXUT_EndPerfEvent();
 	}
 
 	LRESULT HandleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )

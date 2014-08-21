@@ -248,6 +248,7 @@ public:
 	}
 	void Processing(ID3D11DeviceContext* pd3dImmediateContext)
 	{
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Reduction");
 		pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
 		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 		UINT stride = 0;
@@ -296,5 +297,6 @@ public:
 			m_vfAnswer[j] = *reinterpret_cast<XMFLOAT4*>(subresource.pData);
 			pd3dImmediateContext->Unmap(m_pFinalTexForCPU[j],D3D11CalcSubresource(0,0,1));
 		}
+		DXUT_EndPerfEvent();
 	}
 };

@@ -1,5 +1,6 @@
-#define USING_KINECT 0 // Set to 0 will instead use prerecorded RGBD video as input
-#define KINECT2 1
+#define USING_KINECT 0				// Set to 0 will instead use prerecorded RGBD video as input
+#define KINECT2 1					// Set to 0 will use Kinect1 params instead of Kinect2
+#define PASSIVE_STREAM 1			// Set to 1 will guanrrante every frame get processed
 #define Z_OFFSET -1.0
 
 #define SMALL_OFFSET 0.03 // 3 centimeter
@@ -16,9 +17,9 @@
 #define SUB_TEXTUREHEIGHT 450
 
 #define VOXEL_SIZE  0.0075
-#define VOXEL_NUM_X 384
-#define VOXEL_NUM_Y 384
-#define VOXEL_NUM_Z 384
+#define VOXEL_NUM_X 256
+#define VOXEL_NUM_Y 256
+#define VOXEL_NUM_Z 256
 
 #define COMPILE_FLAG D3DCOMPILE_ENABLE_STRICTNESS
 

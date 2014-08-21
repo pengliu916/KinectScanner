@@ -39,5 +39,6 @@ class RGBDSTREAMDLL_API DirectXStreamFactory{
 public:
     static IRGBDStreamForDirectX* createFromKinect();
 	static IRGBDStreamForDirectX* createFromKinect2();
-    static IRGBDStreamForDirectX* createFromVideo();
+	static IRGBDStreamForDirectX* createFromVideo();
+	static IRGBDStreamForDirectX* createFromPassiveVideo();
 };

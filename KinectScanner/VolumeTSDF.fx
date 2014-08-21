@@ -107,16 +107,38 @@ float PS( PS_INPUT input ) : SV_Target
 
 		//if( tsdf >= 1 && pre_tsdf < 1 ) return 0;
 
-		float3 col = (RGBZdata.xyz * weight + previousColor * pre_weight) / (weight + pre_weight);
 
 		float2 DepthWeight;
 		DepthWeight.x = ( tsdf * weight + pre_tsdf * pre_weight ) / ( weight + pre_weight );
 		DepthWeight.y = min ( weight + pre_weight, MaxWeight );
 
 		tex3D_DistWeight[ input.Coord + HalfVoxelRes ] = D3DX_FLOAT2_to_R16G16_FLOAT( DepthWeight );
+
+		if (dot(RGBZdata.xyz, RGBZdata.xyz)<0.001) discard;
+		float3 col = (RGBZdata.xyz * weight + previousColor * pre_weight) / (weight + pre_weight);
 		tex3D_RGBColor[ input.Coord + HalfVoxelRes ] = D3DX_FLOAT4_to_R10G10B10A2_UNORM( float4( col,0 ) );
 
 		return 0;
 	}
+	return 0;
+
+
+
+	//// Uncomment above for correctness, the following is only for testing 
+	////Voxel position in model space
+	////after half pixel correction during GS, the voxel pos is exact and correct for reading Volume and computing
+	//float4 currentVoxelPos = float4 (input.Coord * VoxelSize, 1);//in meters of model space
+
+	//float radius = dot(currentVoxelPos.xyz, currentVoxelPos.xyz);
+
+	//float2 DepthWeight;
+	//DepthWeight.x = radius - 0.5;
+	//DepthWeight.y = MaxWeight;
+
+	//tex3D_DistWeight[input.Coord + HalfVoxelRes] = D3DX_FLOAT2_to_R16G16_FLOAT(DepthWeight);
+
+	//float3 col = float3(1,1,1);
+	//tex3D_RGBColor[input.Coord + HalfVoxelRes] = D3DX_FLOAT4_to_R10G10B10A2_UNORM(float4(col, 0));
+
 	return 0;
 }

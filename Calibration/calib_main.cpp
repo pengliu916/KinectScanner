@@ -9,10 +9,10 @@
 #include "Calibration.h"
 
 #define IMG_ACQUISITION 1
-#define IMG_SAVING 1
-#define IMG_LOADING 1
-#define IMG_DSIPLAY 1
-#define CALIBRATION 1
+#define IMG_SAVING 0
+#define IMG_LOADING 0
+#define IMG_DSIPLAY 0
+#define CALIBRATION 0
 
 
 const string strImgFolder = "Kinect2CircleGridImgs_home";

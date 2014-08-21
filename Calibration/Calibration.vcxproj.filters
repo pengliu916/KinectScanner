@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="calibration.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="calib_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Calibration.h" />

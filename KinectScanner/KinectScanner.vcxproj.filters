@@ -11,9 +11,7 @@
     <FxCompile Include="Reduction.fx" />
     <FxCompile Include="PoseEstimator.fx" />
     <FxCompile Include="RGBDBilateralFilter.fx" />
-    <FxCompile Include="HistoPyramidMC.fx">
-      <Filter>NotInUse</Filter>
-    </FxCompile>
+    <FxCompile Include="HistoPyramidMC.fx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FilteredPCL.h" />
@@ -26,13 +24,11 @@
     <ClInclude Include="Reduction.h" />
     <ClInclude Include="PoseEstimator.h" />
     <ClInclude Include="RGBDBilateralFilter.h" />
-    <ClInclude Include="HistoPyramidMC.h">
-      <Filter>NotInUse</Filter>
-    </ClInclude>
     <ClInclude Include="Scanner.h">
       <Filter>NotInUse</Filter>
     </ClInclude>
     <ClInclude Include="TiledTextures.h" />
+    <ClInclude Include="HistoPyramidMC.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="D3DX_DXGIFormatConvert.inl" />

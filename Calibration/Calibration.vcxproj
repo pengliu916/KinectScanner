@@ -168,7 +168,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="calib_main.cpp" />
     <ClCompile Include="Calibration.cpp" />
   </ItemGroup>
   <ItemGroup>

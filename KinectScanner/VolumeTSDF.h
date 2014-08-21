@@ -208,6 +208,7 @@ public:
 	}
 	void ClearVolume( ID3D11DeviceContext* pd3dImmediateContext )
 	{
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Clean Volume");
 		// clear the render target
 		float ClearColor[2] = { 2.0f,0.0f };
 		pd3dImmediateContext->ClearRenderTargetView( m_pDWVolumeRTV, ClearColor );
@@ -216,6 +217,7 @@ public:
 		pd3dImmediateContext->ClearRenderTargetView( m_pColVolumeRTV, ClearColor_color );
 
 		m_bResetVol = false;
+		DXUT_EndPerfEvent();
 	}
 
 	void Release()
@@ -246,6 +248,7 @@ public:
 
 	void Integrate(ID3D11DeviceContext* pd3dImmediateContext)
 	{
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"UpdateVolume");
 
 		if(m_bResetVol ) ClearVolume(pd3dImmediateContext);
 		//pd3dImmediateContext->UpdateSubresource( m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0 );
@@ -273,6 +276,7 @@ public:
 
 		ID3D11ShaderResourceView* ppSRVNULL[3] = { NULL,NULL,NULL };
 		pd3dImmediateContext->PSSetShaderResources( 0, 3, ppSRVNULL);
+		DXUT_EndPerfEvent();
 	}
 
 	LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

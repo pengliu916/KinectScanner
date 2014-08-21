@@ -173,7 +173,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SensorExplorer.cpp" />
+    <ClCompile Include="sensorExp_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TiledTextures.h" />

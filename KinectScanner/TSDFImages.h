@@ -325,10 +325,11 @@ public:
 	{
 		if( m_bEmptyTSDF )
 		{
-			m_pTSDFVolume->Integrate( pd3dImmediateContext );
+			m_pTSDFVolume->Integrate(pd3dImmediateContext);
 			m_bEmptyTSDF = false;
 		}
 
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Generate 3 img from Volume");
 		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
 		float ClearColor[4] = { 0.0f, 0.0f, 0.0f, -1.0f };
@@ -374,9 +375,12 @@ public:
 
 		ID3D11ShaderResourceView* ppSRVNULL[3] = { NULL,NULL,NULL };
 		pd3dImmediateContext->PSSetShaderResources( 0, 3, ppSRVNULL);
+		DXUT_EndPerfEvent();
 
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Generate Normal Map");
 		m_pNormalGenerator->SetupPipeline(pd3dImmediateContext);
 		m_pNormalGenerator->ProcessImage(pd3dImmediateContext);
+		DXUT_EndPerfEvent();
 
 	}
 
@@ -385,9 +389,10 @@ public:
 
 		if (m_bEmptyTSDF)
 		{
-			m_pTSDFVolume->Integrate( pd3dImmediateContext );
+			m_pTSDFVolume->Integrate(pd3dImmediateContext);
 			m_bEmptyTSDF = false;
 		}
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Raycasting from free cam");
 		float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		if( phong )
 		{ 
@@ -404,7 +409,8 @@ public:
 		m_CB_FreecamPerFrame.WorldViewProj = XMMatrixTranspose( m_World*m_View*m_Proj );
 		XMStoreFloat4( &m_CB_FreecamPerFrame.ViewPos, m_cCamera.GetEyePt() );
 		pd3dImmediateContext->UpdateSubresource( m_pCB_FreecamPerFrame, 0, NULL, &m_CB_FreecamPerFrame, 0, 0 );
-		if( phong ) { pd3dImmediateContext->OMSetRenderTargets( 1, &m_pFreeCamOutRTV, NULL ); } else { pd3dImmediateContext->OMSetRenderTargets( 1, &m_pRaycastOutRTV, NULL ); }
+		if( phong ) { pd3dImmediateContext->OMSetRenderTargets( 1, &m_pFreeCamOutRTV, NULL ); } 
+		else { pd3dImmediateContext->OMSetRenderTargets( 1, &m_pRaycastOutRTV, NULL ); }
 		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 		pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
 		UINT stride = sizeof( short );
@@ -414,7 +420,8 @@ public:
 		pd3dImmediateContext->GSSetShader( m_pVolumeCubeGS, NULL, 0 );
 		pd3dImmediateContext->GSSetConstantBuffers( 0, 1, &m_pCBperCall );
 		pd3dImmediateContext->GSSetConstantBuffers( 2, 1, &m_pCB_FreecamPerFrame );
-		if( phong ){ pd3dImmediateContext->PSSetShader( m_pFreeCamShadePS, NULL, 0 ); } else{ pd3dImmediateContext->PSSetShader( m_pRaycastPS, NULL, 0 ); }
+		if( phong ){ pd3dImmediateContext->PSSetShader( m_pFreeCamShadePS, NULL, 0 ); } 
+		else{ pd3dImmediateContext->PSSetShader( m_pRaycastPS, NULL, 0 ); }
 		pd3dImmediateContext->PSSetConstantBuffers( 0, 1, &m_pCBperCall );
 		pd3dImmediateContext->PSSetConstantBuffers( 2, 1, &m_pCB_FreecamPerFrame );
 		pd3dImmediateContext->PSSetSamplers( 0, 1, &m_pGenSampler );
@@ -425,6 +432,7 @@ public:
 
 		ID3D11ShaderResourceView* ppSRVNULL[3] = { NULL, NULL, NULL };
 		pd3dImmediateContext->PSSetShaderResources( 0, 3, ppSRVNULL );
+		DXUT_EndPerfEvent();
 
 	}
 

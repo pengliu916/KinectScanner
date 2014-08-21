@@ -10,10 +10,12 @@
 #include "VolumeTSDF.h"
 #include "TSDFImages.h"
 #include "PoseEstimator.h"
-//hi
+#include "HistoPyramidMC.h"
 
 using namespace std::placeholders;
 
+// For generating debug info
+ID3D11Debug *d3dDebug = nullptr;
 
 CDXUTDialogResourceManager      g_DialogResourceManager;
 CDXUTTextHelper*                g_pTxtHelper = NULL;
@@ -27,7 +29,7 @@ VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X,
 //VolumeTSDF                      meshVolume = VolumeTSDF(0.0075f, 384, 384, 384);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
 PoseEstimator                   poseEstimator = PoseEstimator(D_W,D_H);
-
+HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(XMFLOAT4(VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z, VOXEL_SIZE));
 bool                            g_bFirstFrame = true;
 //--------------------------------------------------------------------------------------
 //Global Variables only for test purpose..... 
@@ -60,6 +62,10 @@ HRESULT Initial()
 	multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
 							nullptr,
 							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));
+	multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
+							std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
+							std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
+
     swprintf(g_debugLine1,100,L"Debug Line 1...");
     swprintf(g_debugLine2,100,L"Debug Line 2...");
     swprintf(g_debugLine3,100,L"Debug Line 3...");
@@ -119,8 +125,37 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( pointCloud.CreateResource( pd3dDevice ));
     V_RETURN( meshVolume.CreateResource(pd3dDevice,&pointCloud.m_TransformedPC));
     V_RETURN( tsdfImgs.CreateResource(pd3dDevice));
-    V_RETURN( poseEstimator.CreateResource(pd3dDevice));
+	V_RETURN(poseEstimator.CreateResource(pd3dDevice));
+	V_RETURN(histoPyraimdMC.CreateResource(pd3dDevice,meshVolume.m_pColVolumeSRV,meshVolume.m_pDWVolumeSRV));
     V_RETURN( multiTexture.CreateResource( pd3dDevice) );
+
+	// Setup the debug layer
+	
+	if (SUCCEEDED(pd3dDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&d3dDebug)))
+	{
+		ID3D11InfoQueue *d3dInfoQueue = nullptr;
+		if (SUCCEEDED(d3dDebug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&d3dInfoQueue)))
+		{
+#ifdef _DEBUG
+			d3dInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+			d3dInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+#endif
+
+			D3D11_MESSAGE_ID hide[] =
+			{
+				D3D11_MESSAGE_ID_DEVICE_DRAW_VERTEX_BUFFER_TOO_SMALL,
+				// Add more message IDs here as needed
+			};
+
+			D3D11_INFO_QUEUE_FILTER filter;
+			memset(&filter, 0, sizeof(filter));
+			filter.DenyList.NumIDs = _countof(hide);
+			filter.DenyList.pIDList = hide;
+			d3dInfoQueue->AddStorageFilterEntries(&filter);
+			d3dInfoQueue->Release();
+		}
+		d3dDebug->Release();
+	}
     return S_OK;
 }
 
@@ -150,6 +185,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
     tsdfImgs.Update(fElapsedTime);
+	histoPyraimdMC.Update(fElapsedTime);
 }
 
 
@@ -161,12 +197,11 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 {
     pointCloud.Render(pd3dImmediateContext);
     
-    /*tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
-    poseEstimator.Processing ( pd3dImmediateContext );
-    meshVolume.Integrate( pd3dImmediateContext );
-    tsdfImgs.GetRaycastImg( pd3dImmediateContext);*/
+    //tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
+    //poseEstimator.Processing ( pd3dImmediateContext );
+    //meshVolume.Integrate( pd3dImmediateContext );
+    //tsdfImgs.GetRaycastImg( pd3dImmediateContext);
 
-    int iterationTime = 0;
 
     if ( !stepMode ) nextIteration = true;
 
@@ -174,13 +209,12 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
         nextIteration = false;
         bool tracked = false;
         if ( pointCloud.m_bUpdated ){
-        //if ( true ){
             XMFLOAT3 vRotate = XMFLOAT3 ( 0, 0, 0 );
             XMFLOAT3 vTrans = XMFLOAT3 ( 0, 0, 0 );
             XMVECTOR vectorR = XMLoadFloat3 ( &vRotate );
             XMVECTOR vectorT = XMLoadFloat3 ( &vTrans );
 
-            iterationTime = 0;
+            int iIterationCount = 0;
 
             do
             {
@@ -209,12 +243,12 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
                     swprintf(g_debugLine1,100,L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f",L"tran:", t_overall.x, t_overall.y, t_overall.z);
                     swprintf(g_debugLine2,100,L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f",L"rotate:", r_overall.x, r_overall.y, r_overall.z );
 
-                    iterationTime++; 
+                    iIterationCount++; 
                 }else if ( poseEstimator.m_bSigularMatrix ){
                     //stepMode = true;
                     swprintf(g_debugLine3,100,L"Track failed!!  Singular Matrix");
                 }
-            }while(tracked && iterationTime<15);//meshMatrixN.m_fError>=0.000000001);
+            }while(tracked && iIterationCount<25);//meshMatrixN.m_fError>=0.000000001);
             if ( true || tracked ) {
                 float rnorm = norm ( vectorR );
                 float tnorm = norm ( vectorT );
@@ -227,6 +261,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     }
     if( stepMode ) tsdfImgs.GetRaycastImg( pd3dImmediateContext );
     tsdfImgs.GetRaycastImg( pd3dImmediateContext);
+	histoPyraimdMC.Render(pd3dImmediateContext);
 
     multiTexture.Render( pd3dImmediateContext );
     RenderText();
@@ -239,6 +274,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 void CALLBACK OnD3D11ReleasingSwapChain( void* pUserContext )
 {
     g_DialogResourceManager.OnD3D11ReleasingSwapChain();
+	histoPyraimdMC.Release();
 }
 
 
@@ -253,12 +289,19 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     meshVolume.Release();
     poseEstimator.Release();
 
+	histoPyraimdMC.Destory();
 
     
     g_DialogResourceManager.OnD3D11DestroyDevice();
     CDXUTDirectionWidget::StaticOnD3D11DestroyDevice();
     DXUTGetGlobalResourceCache().OnDestroyDevice();
     SAFE_DELETE( g_pTxtHelper );
+
+	if (d3dDebug != nullptr)
+	{
+		d3dDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+		d3dDebug = nullptr;
+	}
 
 }
 

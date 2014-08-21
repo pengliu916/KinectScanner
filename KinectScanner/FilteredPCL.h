@@ -52,7 +52,11 @@ public:
 		m_kinect = DirectXStreamFactory::createFromKinect();
 #endif
 #else
+#if PASSIVE_STREAM
+		m_kinect = DirectXStreamFactory::createFromPassiveVideo();
+#else
         m_kinect = DirectXStreamFactory::createFromVideo();
+#endif
 #endif
     }
 
@@ -134,10 +138,12 @@ public:
             //	//D3DX11SaveTextureToFile(pd3dimmediateContext,m_pOutTex,D3DX11_IFF_DDS,L"Frame.dds");
 
             //}
+			DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Filter the RGBD and Creat Normal Map");
 			m_pBilteralFilter->SetupPipeline(pd3dimmediateContext);
             m_pBilteralFilter->ProcessImage(pd3dimmediateContext);
             m_pNormalGenerator->ProcessImage(pd3dimmediateContext);
-        }
+			DXUT_EndPerfEvent();
+		}
     }
 
     void Release()

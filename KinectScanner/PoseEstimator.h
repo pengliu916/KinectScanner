@@ -235,7 +235,8 @@ public:
 
 	bool Processing(ID3D11DeviceContext* pd3dImmediateContext)
 	{
-		
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"PoseEstimat Computing");
+
 		pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
 		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 		UINT stride = 0;
@@ -337,6 +338,7 @@ public:
 			m_mTinc = XMMatrixIdentity();
 			return false;
 		}*/
+		DXUT_EndPerfEvent();
 
 		return true;
 
