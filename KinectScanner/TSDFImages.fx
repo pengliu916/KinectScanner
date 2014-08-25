@@ -1,7 +1,7 @@
 #include "header.h"
 
-Texture3D g_txVolume : register(t0);
-Texture3D g_txVolume_color : register(t1);
+Texture3D<float2> g_txVolume : register(t0);
+Texture3D<float4> g_txVolume_color : register(t1);
 
 SamplerState samRaycast : register(s0);
 

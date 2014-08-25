@@ -26,7 +26,6 @@ wchar_t                         g_debugLine3[100];
 TiledTextures					multiTexture = TiledTextures();
 FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
 VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
-//VolumeTSDF                      meshVolume = VolumeTSDF(0.0075f, 384, 384, 384);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
 PoseEstimator                   poseEstimator = PoseEstimator(D_W,D_H);
 HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(XMFLOAT4(VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z, VOXEL_SIZE));
@@ -59,9 +58,9 @@ HRESULT Initial()
 
     multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
 	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
-	multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
+	/*multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
 							nullptr,
-							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));
+							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));*/
 	multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
 							std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
 							std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
@@ -260,7 +259,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
         }
     }
     if( stepMode ) tsdfImgs.GetRaycastImg( pd3dImmediateContext );
-    tsdfImgs.GetRaycastImg( pd3dImmediateContext);
+    //tsdfImgs.GetRaycastImg( pd3dImmediateContext);
 	histoPyraimdMC.Render(pd3dImmediateContext);
 
     multiTexture.Render( pd3dImmediateContext );

@@ -6,6 +6,8 @@
 #include "DXUTcamera.h"
 #include "SDKmisc.h"
 
+#include "rply.h"// for output as .ply format
+
 #include "header.h"
 
 using namespace DirectX;
@@ -78,6 +80,16 @@ public:
 	ID3D11InputLayout*				m_pPassVL;
 	ID3D11Buffer*					m_pPassVB;
 
+	// Resource for output mesh
+	ID3D11GeometryShader*			m_pTraversalAndOutGS;// GS for traversing HP, generating triangles and output stream;
+	ID3D11Buffer*					m_pOutVB;// Buffer holding MC result(usage DEFAULT)
+	ID3D11Buffer*					m_pOutVBCPU;// Result Vertex Buffer for CPU Read back(usage STAGING)
+	UINT							m_uOutVBsize;
+	float*							m_pVertex;
+	UINT							m_uVertexCount;
+	ID3D11Query*					m_pSOQuery;// Query interface for retriving triangle count from SO
+	UINT64							m_u64SOOutput[2];
+
 	//Video memory resource for HPMC pass
 	ID3D11ShaderResourceView*		m_pNullSRV[func_<VOXEL_NUM_X, 3>::value];
 	ID3D11ShaderResourceView*		m_pHistoPyramidSRV[func_<VOXEL_NUM_X>::value];
@@ -91,6 +103,9 @@ public:
 
 	// Framewire and solid switcher
 	bool							m_bFramewire;
+	// Output vertex
+	bool							m_bOutputMesh;
+	bool							m_bOutputInProgress;
 
 	HistoPyramidMC(XMFLOAT4 volumeTexInfo, bool RTTexture = false,
 				   UINT txWidth = SUB_TEXTUREWIDTH, UINT txHeight = SUB_TEXTUREHEIGHT)
@@ -103,14 +118,70 @@ public:
 		m_uRTwidth = txWidth;
 		m_uRTheight = txHeight;
 		m_bFramewire = false;
+
+		m_bOutputMesh = false;
+		m_bOutputInProgress = false;
+		m_uOutVBsize = 100000000;
+		m_pVertex = new float[m_uOutVBsize * 6];
+
 		XMVECTORF32 vecEye = { 0.0f, 0.0f, -2.0f };
 		XMVECTORF32 vecAt = { 0.0f, 0.0f, 0.0f };
 		m_Camera.SetViewParams(vecEye, vecAt);
 	}
 
+
+	bool OutputMesh(){
+		p_ply ply = ply_create("outputMesh.ply", PLY_ASCII, NULL, 0, NULL);
+		if (!ply) return false;
+
+		// add vertex element definition
+		ply_add_element(ply, "vertex", m_uVertexCount);
+		ply_add_scalar_property(ply, "x", PLY_FLOAT);
+		ply_add_scalar_property(ply, "y", PLY_FLOAT);
+		ply_add_scalar_property(ply, "z", PLY_FLOAT);
+		ply_add_scalar_property(ply, "red", PLY_UCHAR);
+		ply_add_scalar_property(ply, "green", PLY_UCHAR);
+		ply_add_scalar_property(ply, "blue", PLY_UCHAR);
+
+		// add face element definition
+		ply_add_element(ply, "face", m_uVertexCount / 3);
+		ply_add_list_property(ply, "vertex_indices", PLY_UCHAR, PLY_UINT32);
+
+		if (!ply_write_header(ply)) return false;
+
+		for (int i = 0; i < m_uVertexCount * 6; i += 6){
+			ply_write(ply, m_pVertex[i]);
+			ply_write(ply, m_pVertex[i + 1]);
+			ply_write(ply, m_pVertex[i + 2]);
+			ply_write(ply, m_pVertex[i + 3] * 255);
+			ply_write(ply, m_pVertex[i + 4] * 255);
+			ply_write(ply, m_pVertex[i + 5] * 255);
+		}
+		UINT vertexID = 0;
+		for (int i = 0; i < m_uVertexCount / 3; i++){
+			ply_write(ply, 3);
+			ply_write(ply, vertexID);
+			ply_write(ply, vertexID + 2);
+			ply_write(ply, vertexID + 1);
+			vertexID += 3;
+		}
+
+		ply_close(ply);
+		m_bOutputInProgress = false;
+		return true;
+	}
+
 	HRESULT CreateResource(ID3D11Device* pd3dDevice, ID3D11ShaderResourceView*	pColorVolSRV, ID3D11ShaderResourceView* pDensityVolSRV)
 	{
 		HRESULT hr = S_OK;
+		
+		// Create the quary object
+		D3D11_QUERY_DESC queryDesc;
+		queryDesc.MiscFlags = 0;
+		queryDesc.Query = D3D11_QUERY_SO_STATISTICS;
+		V_RETURN(pd3dDevice->CreateQuery(&queryDesc, &m_pSOQuery));
+		DXUT_SetDebugName(m_pSOQuery, "m_pSOQuery");
+
 		ID3DBlob* pVSBlob = NULL;
 		V_RETURN(DXUTCompileFromFile(L"HistoPyramidMC.fx", nullptr, "PassVS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob));
 		V_RETURN(pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &m_pPassVS));
@@ -126,6 +197,21 @@ public:
 		V_RETURN(DXUTCompileFromFile(L"HistoPyramidMC.fx", nullptr, "TraversalGS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
 		V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pTraversalGS));
 		DXUT_SetDebugName(m_pTraversalGS, "m_pTraversalGS");
+
+		// For output-stream GS
+		// Streamoutput GS
+		D3D11_SO_DECLARATION_ENTRY outputstreamLayout[] = {
+				{ 0, "POSITION", 0, 0, 3, 0 },
+				{ 0, "COLOR", 0, 0, 3, 0 },
+		};
+		UINT stride = 6 * sizeof(float);
+		UINT elems = sizeof(outputstreamLayout) / sizeof(D3D11_SO_DECLARATION_ENTRY);
+		V_RETURN(DXUTCompileFromFile(L"HistoPyramidMC.fx", nullptr, "TraversalAndOutGS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
+		V_RETURN(pd3dDevice->CreateGeometryShaderWithStreamOutput(pGSBlob->GetBufferPointer(),
+			pGSBlob->GetBufferSize(), outputstreamLayout, elems, &stride, 1,
+			D3D11_SO_NO_RASTERIZED_STREAM, NULL, &m_pTraversalAndOutGS));
+		DXUT_SetDebugName(m_pTraversalAndOutGS, "m_pTraversalAndOutGSGS");
+
 		pGSBlob->Release();
 
 		ID3DBlob* pPSBlob = NULL;
@@ -151,6 +237,22 @@ public:
 
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));
+		// For output-stream related buffers
+		bd.Usage = D3D11_USAGE_DEFAULT;
+		bd.ByteWidth = m_uOutVBsize;
+		bd.BindFlags = D3D11_BIND_STREAM_OUTPUT;
+		bd.CPUAccessFlags = 0;
+		V_RETURN(pd3dDevice->CreateBuffer(&bd, NULL, &m_pOutVB));
+		DXUT_SetDebugName(m_pOutVB, "m_pOutVB");
+
+		bd.Usage = D3D11_USAGE_STAGING;
+		bd.ByteWidth = m_uOutVBsize;
+		bd.BindFlags = 0;
+		bd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		V_RETURN(pd3dDevice->CreateBuffer(&bd, NULL, &m_pOutVBCPU));
+		DXUT_SetDebugName(m_pOutVBCPU, "m_pOutVBCPU");
+
+		// For vertex buffer
 		bd.Usage = D3D11_USAGE_DEFAULT;
 		bd.ByteWidth = sizeof(short);
 		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -393,6 +495,14 @@ public:
 
 		SAFE_RELEASE(m_pSS_Linear);
 
+		// Destory stream-output related resource
+		SAFE_RELEASE(m_pTraversalAndOutGS);
+		SAFE_RELEASE(m_pOutVB);
+		SAFE_RELEASE(m_pOutVBCPU);
+		SAFE_RELEASE(m_pSOQuery);
+		delete m_pVertex;
+
+
 		for (int i = 0; i < func_<VOXEL_NUM_X>::value; ++i){
 			SAFE_RELEASE(m_pHistoPyramidSRV[i]);
 			SAFE_RELEASE(m_pHistoPyramidTex[i]);
@@ -523,6 +633,31 @@ public:
 			pd3dImmediateContext->Draw(activeCellNum, 0);
 			//pd3dImmediateContext->Draw(m_cbPerFrame.cubeInfo.x * m_cbPerFrame.cubeInfo.y * m_cbPerFrame.cubeInfo.z, 0);
 		}
+		if (m_bOutputMesh && !m_bOutputInProgress){
+			m_bOutputMesh = false;
+			m_bOutputInProgress = true;
+			pd3dImmediateContext->GSSetShader(m_pTraversalAndOutGS, NULL, 0);
+			pd3dImmediateContext->PSSetShader(NULL, NULL, 0);
+			UINT offset[1] = { 0 };
+			pd3dImmediateContext->SOSetTargets(1, &m_pOutVB, offset);
+			pd3dImmediateContext->Begin(m_pSOQuery);
+			pd3dImmediateContext->Draw(activeCellNum, 0);
+			pd3dImmediateContext->End(m_pSOQuery);
+			pd3dImmediateContext->CopyResource(m_pOutVBCPU, m_pOutVB);
+
+			while (S_OK != pd3dImmediateContext->GetData(m_pSOQuery, &m_u64SOOutput, 2 * sizeof(UINT64), 0)){};
+
+			D3D11_MAPPED_SUBRESOURCE subresource;
+			pd3dImmediateContext->Map(m_pOutVBCPU, D3D11CalcSubresource(0, 0, 1), D3D11_MAP_READ, 0, &subresource);
+			float* data = reinterpret_cast<float*>(subresource.pData);
+			m_uVertexCount = m_u64SOOutput[0] * 3;
+			if (m_uVertexCount * 6 * sizeof(float) > m_uOutVBsize)
+				m_uVertexCount = m_uOutVBsize / sizeof(float) / 6;
+			memcpy(m_pVertex, data, m_uVertexCount * 6 * sizeof(float));
+			pd3dImmediateContext->Unmap(m_pOutVBCPU, D3D11CalcSubresource(0, 0, 1));
+			OutputMesh();
+		}
+
 		pd3dImmediateContext->GSSetShaderResources(0, 3 + func_<VOXEL_NUM_X>::value, m_pNullSRV);
 		pd3dImmediateContext->PSSetShaderResources(0, 3 + func_<VOXEL_NUM_X>::value, m_pNullSRV);
 		DXUT_EndPerfEvent();
@@ -539,6 +674,10 @@ public:
 			if (nKey == 'F')
 			{
 				m_bFramewire = !m_bFramewire;
+			}
+			if (nKey == 'C')
+			{
+				m_bOutputMesh = true;
 			}
 			break;
 		}

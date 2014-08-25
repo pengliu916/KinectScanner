@@ -392,10 +392,11 @@ struct ShadingPS_IN{
 	float4	Col : COLOR0;
 	float4	Pos_o : NORMAl1;
 };
-//struct SliceNorGS_OUT{
-//	float4 SV_Pos : SV_POSITION;
-//	float4 VolCoord : NORMAL0;
-//};
+
+struct PosColGS_OUT{
+	float4 SV_Pos : POSITION;
+	float4 Col : COLOR0;
+};
 
 struct SliceGS_OUT{
 	float4 SV_Pos : SV_POSITION;
@@ -407,6 +408,11 @@ struct VertexInfo{
 	float4 Field;
 	float3 Pos;
 	float3 Nor;
+};
+
+struct VertexInfoNoNor{
+	float4 Field;
+	float3 Pos;
 };
 //--------------------------------------------------------------------------------------
 // Utility Funcs
@@ -421,6 +427,13 @@ ShadingPS_IN CalIntersectionVertex(VertexInfo Data0, VertexInfo Data1){
 	return output;
 }
 
+PosColGS_OUT InterSec(VertexInfoNoNor Data0, VertexInfoNoNor Data1){
+	PosColGS_OUT output;
+	float t = (cb_f4VolInfo.w - Data0.Field.w) / (Data1.Field.w - Data0.Field.w);
+	output.SV_Pos = float4(Data0.Pos + t * (Data1.Pos - Data0.Pos), 1);
+	output.Col = float4(Data0.Field.xyz + t * (Data1.Field.xyz - Data0.Field.xyz), 1);
+	return output;
+}
 float3 CalNormal(float3 txCoord){// Compute the normal from gradient
 	float depth_dx = g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (1, 0, 0)).x -
 		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (-1, 0, 0)).x;
@@ -634,7 +647,6 @@ void TraversalGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, ino
 	int polygonCount = cb_casePolyTable[caseIdx];// Find how many polygon need to be generated
 	float3 pos = (p.xyz - 0.5*cb_f4VolInfo.xyz) * cb_f4HPMCInfo.w;
 
-	//VertexInfo temp = {float4(0,0,0,0),float3(0,0,0),float3(0,0,0)};
 	VertexInfo v0, v1;
 	int3 edges;
 	int2 endPoints;
@@ -666,6 +678,88 @@ void TraversalGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, ino
 		v1.Nor = fieldNormal[endPoints.y];
 		v1.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.y];
 		triStream.Append(CalIntersectionVertex(v0, v1));
+		triStream.RestartStrip();
+	}
+}
+
+// GS for traversing the HP to generate MC case and output correspondent triangle
+[maxvertexcount(15)]
+void TraversalAndOutGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, inout TriangleStream<PosColGS_OUT> triStream){
+	uint4 p = uint4(0, 0, 0, 0);
+		// now p is the idx of the pyramid top: 1^3 texture3d,
+		// g_txHP9 is 2^3 texture3d object
+#if VOXEL_NUM_X > 512
+		PosInNextLevel(g_txHP9, vertexID, p);
+#endif
+#if VOXEL_NUM_X > 256
+	PosInNextLevel(g_txHP8, vertexID, p);
+#endif
+#if VOXEL_NUM_X > 128
+	PosInNextLevel(g_txHP7, vertexID, p);// now p is the idx of the pyramid 2th level: 2^3 texture3d
+#endif
+#if VOXEL_NUM_X > 64
+	PosInNextLevel(g_txHP6, vertexID, p);// now p is the idx of the pyramid 3th level: 4^3 texture3d
+#endif
+#if VOXEL_NUM_X > 32
+	PosInNextLevel(g_txHP5, vertexID, p);// now p is the idx of the pyramid 4th level: 8^3 texture3d
+#endif
+#if VOXEL_NUM_X > 16
+	PosInNextLevel(g_txHP4, vertexID, p);// now p is the idx of the pyramid 5th level: 16^3 texture3d
+#endif
+#if VOXEL_NUM_X > 8
+	PosInNextLevel(g_txHP3, vertexID, p);// now p is the idx of the pyramid 6th level: 32^3 texture3d
+#endif
+#if VOXEL_NUM_X > 4
+	PosInNextLevel(g_txHP2, vertexID, p);// now p is the idx of the pyramid 7th level: 64^3 texture3d
+#endif
+	PosInNextLevel(g_txHP1, vertexID, p);// now p is the idx of the pyramid 8th level: 128^3 texture3d
+	// Since in the base level the texel actully contain the caseID of that MC cube so 
+	// we use another function to handle it
+	PosInBaseLevel(g_txHP0, vertexID, p);// now p is the idx of the pyramid base level: 256^3 texture3d
+
+	uint caseIdx = g_txHP0.Load(int4(p.xyz, 0));
+
+	// Read the 8 corner of each MC cube
+	float4 ept = float4(0, 0, 0, 0);
+	float4 fieldData[8] = { ept, ept, ept, ept, ept, ept, ept, ept };
+	
+	// p is int idx, so when convert it to normalized texture coordinate, we need to add half pixel in all dimensions
+	float3 volTexCoord = float3(p.xyz + float3(0.5, 0.5, 0.5)) / cb_f4VolInfo.xyz;//-----------------------------------half pixel offset on z? attention!!!!!!!!!!!!!!!!
+	float3 halfCube = 0.5f / cb_f4VolInfo.xyz;
+	[unroll] for (int j = 0; j < 8; ++j){
+		float3 idx = volTexCoord + halfCube * cb_halfCubeOffset[j];
+		fieldData[j].xyz = g_txColorVol.SampleLevel(g_samLinear, idx, 0).xyz;	// Color
+		fieldData[j].w = g_txDensityVol.SampleLevel(g_samLinear, idx, 0).x;		// Density
+	}
+
+	int polygonCount = cb_casePolyTable[caseIdx];// Find how many polygon need to be generated
+	float3 pos = (p.xyz - 0.5*cb_f4VolInfo.xyz) * cb_f4HPMCInfo.w;
+
+	VertexInfoNoNor v0, v1;
+	int3 edges;
+	int2 endPoints;
+	for (int i = 0; i < polygonCount; ++i){
+		edges = cb_triTable[caseIdx][i];
+		endPoints = cb_edgeTable[edges.x];
+		v0.Field = fieldData[endPoints.x];
+		v0.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.x];
+		v1.Field = fieldData[endPoints.y];
+		v1.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.y];
+		triStream.Append(InterSec(v0, v1));
+
+		endPoints = cb_edgeTable[edges.z];
+		v0.Field = fieldData[endPoints.x];
+		v0.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.x];
+		v1.Field = fieldData[endPoints.y];
+		v1.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.y];
+		triStream.Append(InterSec(v0, v1));
+
+		endPoints = cb_edgeTable[edges.y];
+		v0.Field = fieldData[endPoints.x];
+		v0.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.x];
+		v1.Field = fieldData[endPoints.y];
+		v1.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.y];
+		triStream.Append(InterSec(v0, v1));
 		triStream.RestartStrip();
 	}
 }

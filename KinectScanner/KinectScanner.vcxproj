@@ -207,6 +207,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rply.c" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="HistoPyramidMC.fx" />
@@ -222,6 +223,7 @@
     <ClInclude Include="FilteredPCL.h" />
     <ClInclude Include="header.h" />
     <ClInclude Include="HistoPyramidMC.h" />
+    <ClInclude Include="rply.h" />
     <ClInclude Include="TiledTextures.h" />
     <ClInclude Include="NormalGenerator.h" />
     <ClInclude Include="PoseEstimator.h" />
