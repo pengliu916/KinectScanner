@@ -10,6 +10,11 @@
 #include "DXUT.h"
 #include "IRGBDStreamForDirectX.h"
 using namespace std;
+
+#ifndef SKIP_FRAME_NUM
+#define SKIP_FRAME_NUM 0
+#endif
+
 class KinectVideos : public IRGBDStreamForDirectX{
 public:
     KinectVideos(bool);
@@ -121,6 +126,11 @@ HRESULT KinectVideos::Initialize(){
     _matColor.create(_colorHeight,_colorWidth,CV_8UC3);
     _matDepth.create(_depthHeight,_depthWidth,CV_16UC1);
     _matDepthEncoded.create(_depthHeight,_depthWidth,CV_8UC3);
+
+	for(int i=0; i<2; i++){
+		_colorCap >> _matColor;
+		_depthCap >> _matDepthEncoded;
+	}
     return hr;
 }
 
@@ -358,13 +368,13 @@ bool KinectVideos::UpdateTextures( ID3D11DeviceContext* pd3dimmediateContext,
 	}else{
 		_colorCap >> _matColor;
 		if (!_matColor.data){ _bPaused = true; } else{
-			//cv::imshow("color", _matColor);
+			cv::imshow("color", _matColor);
 			_bColorUpdated = true;
 		}
 		_depthCap >> _matDepthEncoded;
 		if (!_matDepthEncoded.data){ _bPaused = true;} else{
 			Mat8UC3toMat16UC1(_matDepthEncoded, _matDepth);
-			//cv::imshow("depth", _matDepth);
+			cv::imshow("depth", _matDepth);
 			_bDepthUpdated = true;
 		}
 		if (color){

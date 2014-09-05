@@ -57,6 +57,7 @@ cbuffer initial : register(b0){
 cbuffer perFrame : register(b1){
 	float4 cb_f4ViewPos;
 	matrix cb_mWorldViewProj;
+	matrix cb_mView;
 };
 cbuffer perReduction : register(b2){
 	int4 cb_i4RTReso;
@@ -99,6 +100,13 @@ cbuffer cbImmutable
 		float3(1, 1, 1),
 		float3(1, -1, 1)
 	};
+	// Return two endpoints idx, if given edge number
+	static const int2 cb_edgeTable[12] =
+	{
+		{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 },
+		{ 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 },
+		{ 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 }
+	};
 	// Return # of polygons, if given case number
 	static const int cb_casePolyTable[256] =
 	{
@@ -111,6 +119,9 @@ cbuffer cbImmutable
 		2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 2, 3, 3, 2, 3, 4, 4, 5, 4, 5, 5, 2, 4, 3, 5, 4, 3, 2, 4, 1,
 		3, 4, 4, 5, 4, 5, 3, 4, 4, 5, 5, 2, 3, 4, 2, 1, 2, 3, 3, 2, 3, 4, 2, 1, 3, 2, 4, 1, 2, 1, 1, 0
 	};
+}
+tbuffer tbImmutable
+{
 	// Return edge info for each vertex(5 at most), if given case number
 	static const int3 cb_triTable[256][5] =
 	{
@@ -371,13 +382,6 @@ cbuffer cbImmutable
 		{ { 0, 3, 8 }, { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 } },
 		{ { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 } }
 	};
-	// Return two endpoints idx, if given edge number
-	static const int2 cb_edgeTable[12] =
-	{
-		{ 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 },
-		{ 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 },
-		{ 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 }
-	};
 };
 
 //--------------------------------------------------------------------------------------
@@ -402,6 +406,13 @@ struct SliceGS_OUT{
 	float4 SV_Pos : SV_POSITION;
 	float4 VolCoord : NORMAL0;
 	uint SliceIdx : SV_RenderTargetArrayIndex;
+};
+
+struct PS_3_OUT
+{
+	float4 Depth : SV_TARGET0;
+	float4 Normal : SV_TARGET1;
+	float4 Image : SV_TARGET2;
 };
 
 struct VertexInfo{
@@ -441,7 +452,7 @@ float3 CalNormal(float3 txCoord){// Compute the normal from gradient
 		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, -1, 0)).x;
 	float depth_dz = g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, 0, 1)).x -
 		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, 0, -1)).x;
-	return -normalize(float3 (depth_dx, depth_dy, depth_dz));
+	return normalize(mul(float3 (depth_dx, depth_dy, depth_dz),cb_mView));
 }
 
 void PosInNextLevel(Texture3D<uint> txHPLevel, uint key_idx, inout uint4 p){// p.xyz is current pos, p.w is the sum
@@ -640,7 +651,8 @@ void TraversalGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, ino
 	[unroll] for (int j = 0; j < 8; ++j){
 		float3 idx = volTexCoord + halfCube * cb_halfCubeOffset[j];
 		fieldData[j].xyz = g_txColorVol.SampleLevel(g_samLinear, idx, 0).xyz;	// Color
-		fieldData[j].w = g_txDensityVol.SampleLevel(g_samLinear, idx, 0).x;		// Density
+		fieldData[j].w = g_txDensityVol.SampleLevel(g_samLinear, idx, 0).x * TRUNC_DIST; // Density
+		if (abs(fieldData[j].w - INVALID_VALUE* TRUNC_DIST) < 1e-6) return;
 		fieldNormal[j] = CalNormal(idx);
 	}
 
@@ -729,7 +741,8 @@ void TraversalAndOutGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveI
 	[unroll] for (int j = 0; j < 8; ++j){
 		float3 idx = volTexCoord + halfCube * cb_halfCubeOffset[j];
 		fieldData[j].xyz = g_txColorVol.SampleLevel(g_samLinear, idx, 0).xyz;	// Color
-		fieldData[j].w = g_txDensityVol.SampleLevel(g_samLinear, idx, 0).x;		// Density
+		fieldData[j].w = g_txDensityVol.SampleLevel(g_samLinear, idx, 0).x* TRUNC_DIST; // Density
+		if (abs(fieldData[j].w - INVALID_VALUE * TRUNC_DIST) < 1e-8) return;
 	}
 
 	int polygonCount = cb_casePolyTable[caseIdx];// Find how many polygon need to be generated
@@ -809,8 +822,11 @@ uint ReductionPS(SliceGS_OUT input) : SV_Target{
 	return sum;
 }
 
-float4 RenderPS(ShadingPS_IN input) : SV_Target
+PS_3_OUT GenerateRGBDPS(ShadingPS_IN input) : SV_Target
 {
+	PS_3_OUT output;
+	
+	// Shading
 	float3 color = input.Col.rgb;
 
 	float4 light_pos = light_offset + cb_f4ViewPos;
@@ -824,5 +840,29 @@ float4 RenderPS(ShadingPS_IN input) : SV_Target
 		light_attenuation.z * light_dist * light_dist));
 	float angleAttn = clamp(0, 1, dot(-input.Nor, light_dir.xyz));
 	float3 col = color * light_dir.w * angleAttn;
-	return float4(col,0);
+	
+	output.Normal = float4(input.Nor*0.5 + 0.5,1);
+	output.Depth = float4(input.Col.rgb, input.Pos_o.z); 
+	output.Image = float4(col, 1);
+	return output;
+}
+
+float4 RenderPS(ShadingPS_IN input) : SV_Target
+{
+	// Shading
+	float3 color = input.Col.rgb;
+
+	float4 light_pos = light_offset + cb_f4ViewPos;
+
+	// shading part
+	float4 light_dir = light_pos - input.Pos_o;
+	float light_dist = length(light_dir);
+	light_dir /= light_dist;
+	light_dir.w = clamp(0, 1, 1.0f / (light_attenuation.x +
+		light_attenuation.y * light_dist +
+		light_attenuation.z * light_dist * light_dist));
+	float angleAttn = clamp(0, 1, dot(-input.Nor, light_dir.xyz));
+	float3 col = color * light_dir.w * angleAttn;
+
+	return float4(col,1);
 }

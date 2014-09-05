@@ -1,7 +1,11 @@
 #define USING_KINECT 0				// Set to 0 will instead use prerecorded RGBD video as input
 #define KINECT2 1					// Set to 0 will use Kinect1 params instead of Kinect2
 #define PASSIVE_STREAM 1			// Set to 1 will guanrrante every frame get processed
-#define Z_OFFSET -1.0
+#define SKIP_FRAME_NUM 1			// Number of first frames to skip due to bad Kinect Startup bug
+#define STEP_MODE 1					// Set to 1 the iteration will be triggered by pressing 'i'
+#define X_OFFSET -0.2
+#define Y_OFFSET -0.35
+#define Z_OFFSET -0.9
 
 #define SMALL_OFFSET 0.03 // 3 centimeter
 #define SMALL_ROTATE 0.05 // <1 Degrees
@@ -16,10 +20,12 @@
 #define SUB_TEXTUREWIDTH 600
 #define SUB_TEXTUREHEIGHT 450
 
-#define VOXEL_SIZE  0.007
-#define VOXEL_NUM_X 256
-#define VOXEL_NUM_Y 256
-#define VOXEL_NUM_Z 256
+#define VOXEL_SIZE  0.015
+#define VOXEL_NUM_X 128
+#define VOXEL_NUM_Y 128
+#define VOXEL_NUM_Z 128
+#define TRUNC_DIST 0.04f //should be at least VOXEL_SIZE
+#define INVALID_VALUE (2.f)
 
 #define COMPILE_FLAG D3DCOMPILE_ENABLE_STRICTNESS
 

@@ -92,6 +92,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Kinect10.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;usp10.lib;$(KinectFusionLib32).lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;usp10.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(KINECTSDK10_DIR)\lib\x86;$(KINECT_TOOLKIT_DIR)\lib\x86;</AdditionalLibraryDirectories>
+      <Profile>true</Profile>
     </Link>
     <FxCompile>
       <EntryPointName />
@@ -117,6 +118,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Kinect10.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;usp10.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(KINECTSDK10_DIR)\lib\amd64;$(KINECT_TOOLKIT_DIR)\lib\amd64;</AdditionalLibraryDirectories>
+      <Profile>true</Profile>
     </Link>
     <FxCompile>
       <EntryPointName />

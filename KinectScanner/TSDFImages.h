@@ -115,6 +115,10 @@ public:
 		
 		m_pGeneratedTPC = new TransformedPointClould();
 		m_pNormalGenerator = new NormalGenerator();
+		
+		m_pGeneratedTPC->ppMeshRGBZTexSRV = &m_pKinectOutSRV[0];
+		//m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pKinectOutSRV[1];
+		m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
 	}
 
 	HRESULT CreateResource( ID3D11Device* pd3dDevice )
@@ -177,7 +181,7 @@ public:
 		// Create the sample state
 		D3D11_SAMPLER_DESC sampDesc;
 		ZeroMemory( &sampDesc, sizeof(sampDesc) );
-		sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;		// FIX_ME
 		sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP       ;
 		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP       ;
 		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP       ;
@@ -257,9 +261,6 @@ public:
 
 		m_pNormalGenerator->CreateResource( pd3dDevice, &m_pKinectOutSRV[0] );
 
-		m_pGeneratedTPC->ppMeshRGBZTexSRV = &m_pKinectOutSRV[0];
-		//m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pKinectOutSRV[1];
-		m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
 
 		ID3D11DeviceContext* pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 		pd3dImmediateContext->UpdateSubresource( m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0 );
@@ -354,6 +355,20 @@ public:
 		m_CB_KinectPerFrame.KinectView = XMMatrixTranspose( view );
 		m_CB_KinectPerFrame.KinectPos = pos;
 		
+
+		// REMOVE_ME
+		/*XMMATRIX m_View = m_cCamera.GetViewMatrix();
+		m_CB_KinectPerFrame.KinectView = XMMatrixTranspose(m_View);
+		view = XMMatrixInverse(&t, m_View);
+		m_CB_KinectPerFrame.KinectTransform = XMMatrixTranspose(view);
+		pos = XMFLOAT4(0, 0, 0, 1);
+		t = XMLoadFloat4(&pos);
+		t = XMVector4Transform(t, m_View);
+		XMStoreFloat4(&pos, t);
+		XMStoreFloat4(&m_CB_KinectPerFrame.KinectPos, m_cCamera.GetEyePt());*/
+
+
+
 		pd3dImmediateContext->UpdateSubresource( m_pCB_KinectPerFrame, 0, NULL, &m_CB_KinectPerFrame, 0, 0 );
 		pd3dImmediateContext->OMSetRenderTargets( 3, m_pKinectOutRTV, NULL );
 		pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
@@ -394,8 +409,7 @@ public:
 		}
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Raycasting from free cam");
 		float ClearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		if( phong )
-		{ 
+		if( phong ){ 
 			pd3dImmediateContext->ClearRenderTargetView( m_pFreeCamOutRTV, ClearColor ); 
 		} else { 
 			pd3dImmediateContext->ClearRenderTargetView( m_pRaycastOutRTV, ClearColor ); 

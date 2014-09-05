@@ -30,11 +30,11 @@ public:
 	TransformedPointClould()
 	{
 		ppMeshRGBZTexSRV = NULL;
-		mModelM_now = XMMatrixTranslation ( 0, 0, Z_OFFSET );
-		mModelM_pre = XMMatrixTranslation ( 0, 0, Z_OFFSET );
+		mModelM_now = XMMatrixTranslation(X_OFFSET, Y_OFFSET, Z_OFFSET);
+		mModelM_pre = XMMatrixTranslation(X_OFFSET, Y_OFFSET, Z_OFFSET);
 		mModelM_r_now = XMMatrixTranslation ( 0, 0, 0 );
 		mModelM_r_pre = XMMatrixTranslation ( 0, 0, 0 );
-		m_vTrans = XMLoadFloat3 ( &XMFLOAT3 ( 0, 0, Z_OFFSET ) );
+		m_vTrans = XMLoadFloat3(&XMFLOAT3(X_OFFSET, Y_OFFSET, Z_OFFSET));
 		m_vRotate = XMLoadFloat3 ( &XMFLOAT3 ( 0, 0, 0 ) );
 
 		mModelT_center = XMMATRIX(XMMatrixIdentity());
@@ -42,11 +42,11 @@ public:
 	}
 	void reset()
 	{
-		mModelM_now = XMMatrixTranslation ( 0, 0, Z_OFFSET );
-		mModelM_pre = XMMatrixTranslation ( 0, 0, Z_OFFSET );
+		mModelM_now = XMMatrixTranslation(X_OFFSET, Y_OFFSET, Z_OFFSET);
+		mModelM_pre = XMMatrixTranslation(X_OFFSET, Y_OFFSET, Z_OFFSET);
 		mModelM_r_now = XMMatrixTranslation ( 0, 0, 0 );
 		mModelM_r_pre = XMMatrixTranslation ( 0, 0, 0 );
-		m_vTrans = XMLoadFloat3 ( &XMFLOAT3 ( 0, 0, Z_OFFSET ) );
+		m_vTrans = XMLoadFloat3(&XMFLOAT3(X_OFFSET, Y_OFFSET, Z_OFFSET));
 		m_vRotate = XMLoadFloat3 ( &XMFLOAT3 ( 0, 0, 0 ) );
 
 		mModelR_center = XMMatrixIdentity();
