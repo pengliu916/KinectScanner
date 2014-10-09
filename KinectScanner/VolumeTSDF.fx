@@ -111,11 +111,10 @@ float PS( PS_INPUT input ) : SV_Target
 		float3 Normal = (codedNormal - float4( 0.5, 0.5, 0.5, 0)).xyz * 2.f;
 		float norAngle = dot( -normalize(currentVoxelPos), Normal);
 
-		//if( norAngle < 1.f/sqrt(2)) discard;
+		//if( norAngle < 0.5f/sqrt(2)) discard;
 		//if( tsdf >= 1 && pre_tsdf < 1 ) return 0;
 		//if( abs(tsdf - pre_tsdf) > 1) discard;
 
-		//if( norAngle < previousColor.z) discard;
 
 		float2 DepthWeight;
 		DepthWeight.x = ( tsdf * weight + pre_tsdf * pre_weight ) / ( weight + pre_weight );
@@ -123,6 +122,7 @@ float PS( PS_INPUT input ) : SV_Target
 
 		tex3D_DistWeight[ input.Coord + HalfVoxelRes ] = D3DX_FLOAT2_to_R16G16_FLOAT( DepthWeight );
 
+		//if( norAngle < previousColor.z) return 0;
 		if (dot(RGBD.xyz, RGBD.xyz)<0.001) discard;
 		float3 col = (RGBD.xyz * weight + previousColor.xyz * pre_weight) / (weight + pre_weight);
 		tex3D_RGBColor[ input.Coord + HalfVoxelRes ] = D3DX_FLOAT4_to_R8G8B8A8_UNORM( float4( col,norAngle ) );

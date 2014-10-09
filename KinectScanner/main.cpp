@@ -28,7 +28,7 @@ FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
 VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
 PoseEstimator                   poseEstimator = PoseEstimator(D_W,D_H);
-HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(XMFLOAT4(VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z, VOXEL_SIZE));
+HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(&meshVolume);
 bool                            g_bFirstFrame = true;
 //--------------------------------------------------------------------------------------
 //Global Variables only for test purpose..... 
@@ -53,16 +53,16 @@ HRESULT Initial()
     V_RETURN( pointCloud.Initial() )
     V_RETURN( multiTexture.Initial() );
 	// Use TSDFImages's Generated RGBD
-	//V_RETURN(poseEstimator.Initial(tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
-	// Use HistoPyramidMC's Generated RGBD
 	V_RETURN(poseEstimator.Initial(tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
+	// Use HistoPyramidMC's Generated RGBD
+	//V_RETURN(poseEstimator.Initial(histoPyraimdMC.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 
     multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
 	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
-	multiTexture.AddTexture(&histoPyraimdMC.m_pGeneratedRGBDSRV[0], D_W, D_H);
-	multiTexture.AddTexture(&histoPyraimdMC.m_pGeneratedRGBDSRV[1], D_W, D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H);
 	multiTexture.AddTexture(&histoPyraimdMC.m_pGeneratedRGBDSRV[2], D_W, D_H);
+	multiTexture.AddTexture(&poseEstimator.m_pSumOfCoordSRV[0],D_W,D_H);
 	/*multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
 							nullptr,
 							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));*/
@@ -219,8 +219,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
             int iIterationCount = 0;
 
             do{
-                pointCloud.m_TransformedPC.mModelM_pre = pointCloud.m_TransformedPC.mModelM_now;
-                pointCloud.m_TransformedPC.mModelM_r_pre = pointCloud.m_TransformedPC.mModelM_r_now;
+                pointCloud.m_TransformedPC.mPreFrame = pointCloud.m_TransformedPC.mCurFrame;
+                pointCloud.m_TransformedPC.mPreRotation = pointCloud.m_TransformedPC.mCurRotation;
 
 				// Get RGBD and Normal data from TSDF with new pose 
                 tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
@@ -230,13 +230,13 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 
                 if ( bTracked ){
 					// Update the Sensor Pose info
-                    pointCloud.m_TransformedPC.m_vRotate += poseEstimator.m_vIncRotate;
+                    pointCloud.m_TransformedPC.vRotation += poseEstimator.m_vIncRotate;
                     XMMATRIX Ri = XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );  
-                    pointCloud.m_TransformedPC.m_vTrans = XMVector3Transform ( pointCloud.m_TransformedPC.m_vTrans, Ri ) + poseEstimator.m_vIncTran;
+                    pointCloud.m_TransformedPC.vTranslation = XMVector3Transform ( pointCloud.m_TransformedPC.vTranslation, Ri ) + poseEstimator.m_vIncTran;
 
 					// Apply the new Sensor Pose
-                    pointCloud.m_TransformedPC.mModelM_r_now *= XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );
-                    pointCloud.m_TransformedPC.mModelM_now = pointCloud.m_TransformedPC.mModelM_r_now * XMMatrixTranslationFromVector ( pointCloud.m_TransformedPC.m_vTrans );
+                    pointCloud.m_TransformedPC.mCurRotation *= XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );
+                    pointCloud.m_TransformedPC.mCurFrame = pointCloud.m_TransformedPC.mCurRotation * XMMatrixTranslationFromVector ( pointCloud.m_TransformedPC.vTranslation );
 
 					// Keep track of the incremental transformation for this data frame
                     vectorR += poseEstimator.m_vIncRotate;
@@ -255,8 +255,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 
 				XMFLOAT3 r_overall;
 				XMFLOAT3 t_overall;
-				XMStoreFloat3(&r_overall, (pointCloud.m_TransformedPC.m_vRotate) * 180.0f / XM_PI);
-				XMStoreFloat3(&t_overall, (pointCloud.m_TransformedPC.m_vTrans) * 100.0f);
+				XMStoreFloat3(&r_overall, (pointCloud.m_TransformedPC.vRotation) * 180.0f / XM_PI);
+				XMStoreFloat3(&t_overall, (pointCloud.m_TransformedPC.vTranslation) * 100.0f);
 				swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", t_overall.x, t_overall.y, t_overall.z);
 				swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", r_overall.x, r_overall.y, r_overall.z);
 
@@ -271,8 +271,9 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
         }
     }
 
+
 	// Render the in-process mesh
-	histoPyraimdMC.Render(pd3dImmediateContext,true,pointCloud.m_TransformedPC.mModelM_pre);
+	histoPyraimdMC.Render(pd3dImmediateContext,false);
 
 	// Render all sub texture to screen
     multiTexture.Render( pd3dImmediateContext );

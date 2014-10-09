@@ -172,52 +172,52 @@ public:
 
                 if (nKey == 'S')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixTranslation(0,0,-SMALL_OFFSET / 5.0f));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixTranslation(0,0,-SMALL_OFFSET / 5.0f));
                 }
                 else if (nKey == 'W')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixTranslation(0,0,SMALL_OFFSET / 5.0f));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixTranslation(0,0,SMALL_OFFSET / 5.0f));
                 }
                 else if (nKey == 'A')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixTranslation(-SMALL_OFFSET / 5.0f,0,0));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixTranslation(-SMALL_OFFSET / 5.0f,0,0));
                 }
                 else if (nKey == 'D')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixTranslation(SMALL_OFFSET / 5.0f,0,0));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixTranslation(SMALL_OFFSET / 5.0f,0,0));
                 }
                 else if (nKey == 'Q')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixTranslation(0,SMALL_OFFSET / 5.0f,0));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixTranslation(0,SMALL_OFFSET / 5.0f,0));
                 }
                 else if (nKey == 'E')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixTranslation(0,-SMALL_OFFSET / 5.0f,0));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixTranslation(0,-SMALL_OFFSET / 5.0f,0));
                 }
 
                 else if (nKey == 'Y')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationRollPitchYaw(SMALL_ROTATE / 5.0f,0,0));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixRotationRollPitchYaw(SMALL_ROTATE / 5.0f,0,0));
                 }
                 else if (nKey == 'H')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationRollPitchYaw(-SMALL_ROTATE / 5.0f,0,0));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixRotationRollPitchYaw(-SMALL_ROTATE / 5.0f,0,0));
                 }
                 else if (nKey == 'G')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationRollPitchYaw(0,SMALL_ROTATE / 5.0f,0));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixRotationRollPitchYaw(0,SMALL_ROTATE / 5.0f,0));
                 }
                 else if (nKey == 'J')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationRollPitchYaw(0,-SMALL_ROTATE / 5.0f,0));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixRotationRollPitchYaw(0,-SMALL_ROTATE / 5.0f,0));
                 }
                 else if (nKey == 'T')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationRollPitchYaw(0,0,SMALL_ROTATE / 5.0f));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixRotationRollPitchYaw(0,0,SMALL_ROTATE / 5.0f));
                 }
                 else if (nKey == 'U')
                 {
-                    m_TransformedPC.mModelM_now = XMMatrixMultiply(m_TransformedPC.mModelM_now,XMMatrixRotationRollPitchYaw(0,0,-SMALL_ROTATE / 5.0f));
+                    m_TransformedPC.mCurFrame = XMMatrixMultiply(m_TransformedPC.mCurFrame,XMMatrixRotationRollPitchYaw(0,0,-SMALL_ROTATE / 5.0f));
                 }
 
                 else if (nKey == 'R')

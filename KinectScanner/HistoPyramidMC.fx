@@ -433,6 +433,7 @@ ShadingPS_IN CalIntersectionVertex(VertexInfo Data0, VertexInfo Data1){
 	float t = (cb_f4VolInfo.w - Data0.Field.w) / (Data1.Field.w - Data0.Field.w);
 	output.Pos_o = float4(Data0.Pos + t * (Data1.Pos - Data0.Pos), 1);
 	output.Pos = mul(output.Pos_o, cb_mWorldViewProj);
+	output.Pos_o = mul(output.Pos_o, cb_mView);
 	output.Nor = normalize(Data0.Nor + t * (Data1.Nor - Data0.Nor));
 	output.Col = float4(Data0.Field.xyz + t * (Data1.Field.xyz - Data0.Field.xyz), 1);
 	return output;
@@ -452,7 +453,7 @@ float3 CalNormal(float3 txCoord){// Compute the normal from gradient
 		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, -1, 0)).x;
 	float depth_dz = g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, 0, 1)).x -
 		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, 0, -1)).x;
-	return normalize(mul(float3 (depth_dx, depth_dy, depth_dz),cb_mView));
+	return -normalize(mul(float3 (depth_dx, depth_dy, depth_dz),cb_mView));
 }
 
 void PosInNextLevel(Texture3D<uint> txHPLevel, uint key_idx, inout uint4 p){// p.xyz is current pos, p.w is the sum

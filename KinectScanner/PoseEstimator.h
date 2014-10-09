@@ -250,8 +250,8 @@ public:
 		pd3dImmediateContext->GSSetShader(m_pGS,NULL,0);	
 		pd3dImmediateContext->PSSetShader( m_pPS_I, NULL, 0 );
 		
-		m_CBperFrame.mKinectMesh = XMMatrixTranspose ( m_pKinectTPC->mModelM_now );
-		m_CBperFrame.mTsdfMesh = XMMatrixTranspose ( m_pTsdfTPC->mModelM_now );
+		m_CBperFrame.mKinectMesh = XMMatrixTranspose ( m_pKinectTPC->mCurFrame );
+		m_CBperFrame.mTsdfMesh = XMMatrixTranspose ( m_pTsdfTPC->mCurFrame );
 		pd3dImmediateContext->UpdateSubresource(m_pCBperFrame,0,NULL,&m_CBperFrame,0,0);
 
 		pd3dImmediateContext->OMSetRenderTargets(4,&m_pSumOfCoordRTV[0],NULL);

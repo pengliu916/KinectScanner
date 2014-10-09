@@ -274,7 +274,7 @@ public:
 		pd3dImmediateContext->IASetVertexBuffers( 0, 1, &m_pScreenQuadVB, &stride, &offset );
 		
 		XMVECTOR t;
-		m_CBperFrame.mInversedWorld_kinect = XMMatrixTranspose(XMMatrixInverse(&t,m_pInputPC->mModelM_now));
+		m_CBperFrame.mInversedWorld_kinect = XMMatrixTranspose(XMMatrixInverse(&t,m_pInputPC->mCurFrame));
 		pd3dImmediateContext->UpdateSubresource( m_pCBperFrame, 0, NULL, &m_CBperFrame, 0, 0 );
 
 		pd3dImmediateContext->VSSetShader( m_pPassVS, NULL, 0 );

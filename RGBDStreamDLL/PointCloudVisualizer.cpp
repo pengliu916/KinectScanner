@@ -38,12 +38,12 @@ void PointCloudVisualizer::GenerateShaderStr(bool hasColor)
 	shaderCode << "	float2 fLength; // in pixel unit \n";
 	shaderCode << "	float2 principalPt;\n";
 	shaderCode << "	float2 xz_offset;\n";
-	shaderCode << "} \n";
+	shaderCode << "}; \n";
 	shaderCode << "\n";
 	shaderCode << "cbuffer perFrame : register( b1 ) \n";
 	shaderCode << "{ \n";
 	shaderCode << "	matrix worldViewProj;\n";
-	shaderCode << "} \n";
+	shaderCode << "}; \n";
 	shaderCode << "\n";
 	shaderCode << "struct GS_INPUT{};\n";
 	shaderCode << "struct PS_INPUT \n";

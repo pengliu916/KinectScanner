@@ -9,6 +9,7 @@
 #include "rply.h"// for output as .ply format
 
 #include "header.h"
+#include "VolumeTSDF.h";
 
 using namespace DirectX;
 
@@ -109,8 +110,9 @@ public:
 	ID3D11Texture3D*				m_pHPTopTex;
 
 	// Shader Resource View for volume data (input)
-	ID3D11ShaderResourceView*		m_pColorVolSRV;
-	ID3D11ShaderResourceView*		m_pDensityVolSRV;
+	VolumeTSDF*						m_pTSDFVolume;
+	//ID3D11ShaderResourceView*		m_pColorVolSRV;
+	//ID3D11ShaderResourceView*		m_pDensityVolSRV;
 
 	// Output Data structure for pose estimation
 	TransformedPointClould*			m_pGeneratedTPC;
@@ -121,9 +123,18 @@ public:
 	bool							m_bOutputMesh;
 	bool							m_bOutputInProgress;
 
-	HistoPyramidMC(XMFLOAT4 volumeTexInfo, bool RTTexture = false,
+	// The TSDF is empty? if yes, run integration
+	bool							m_bEmptyTSDF;
+
+	HistoPyramidMC(VolumeTSDF* pTSDFVolume, bool RTTexture = false,
 				   UINT txWidth = SUB_TEXTUREWIDTH, UINT txHeight = SUB_TEXTUREHEIGHT)
 	{
+		m_pTSDFVolume = pTSDFVolume;
+		XMFLOAT4 volumeTexInfo = XMFLOAT4(m_pTSDFVolume->m_CBperCall.halfWidth * 2,
+										 m_pTSDFVolume->m_CBperCall.halfHeight * 2,
+										 m_pTSDFVolume->m_CBperCall.halfDepth * 2,
+										 m_pTSDFVolume->m_CBperCall.voxelSize);
+
 		m_cbInit.cb_f4VolInfo = volumeTexInfo;
 		m_cbInit.cb_f4VolInfo.w = 0;
 		m_cbInit.cb_f4HPMCInfo = volumeTexInfo;
@@ -133,12 +144,14 @@ public:
 		m_uRTheight = txHeight;
 		m_bFramewire = false;
 
+		m_bEmptyTSDF = true;
+
 		m_uRGBDHeight = D_H;
 		m_uRGBDWidth = D_W;
 
 		m_bOutputMesh = false;
 		m_bOutputInProgress = false;
-		m_uOutVBsize = 100000000;
+		m_uOutVBsize = 600000000;
 		m_pVertex = new float[m_uOutVBsize * 6];
 
 		m_pGeneratedTPC = new TransformedPointClould();
@@ -459,10 +472,6 @@ public:
 		V_RETURN(pd3dDevice->CreateTexture3D(&TEXDesc, NULL, &m_pHPTopTex));
 		DXUT_SetDebugName(m_pHPTopTex, "m_pHPTopTex");
 
-
-		m_pColorVolSRV = pColorVolSRV;
-		m_pDensityVolSRV = pDensityVolSRV;
-
 		return hr;
 	}
 
@@ -610,8 +619,8 @@ public:
 		//pd3dImmediateContext->VSSetShader(m_pPassVS, NULL,0);
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Create the HP base");
 		pd3dImmediateContext->OMSetRenderTargets(1, &m_pHistoPyramidRTV[0], NULL);
-		pd3dImmediateContext->PSSetShaderResources(0, 1, &m_pColorVolSRV);
-		pd3dImmediateContext->PSSetShaderResources(1, 1, &m_pDensityVolSRV);
+		pd3dImmediateContext->PSSetShaderResources(0, 1, &m_pTSDFVolume->m_pColVolumeSRV);
+		pd3dImmediateContext->PSSetShaderResources(1, 1, &m_pTSDFVolume->m_pDWVolumeSRV);
 		pd3dImmediateContext->PSSetSamplers(0, 1, &m_pSS_Linear);
 		pd3dImmediateContext->GSSetShader(m_pVolSliceNorGS, NULL, 0);
 		pd3dImmediateContext->PSSetShader(m_pHPMCBasePS, NULL, 0);
@@ -661,8 +670,7 @@ public:
 		return num;
 	}
 
-	void Render(ID3D11DeviceContext* pd3dImmediateContext, bool bForRGBD = false,
-				XMMATRIX _mView = DirectX::XMMATRIX(), XMMATRIX _mInvView = DirectX::XMMATRIX())
+	void Render(ID3D11DeviceContext* pd3dImmediateContext, bool bForRGBD = false)
 	{
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"HistoPyramidMarchingCube");
 		// For create the HisoPyrimad
@@ -683,7 +691,12 @@ public:
 		// Create the HistoPyrimad
 		UINT activeCellNum = BuildHP(pd3dImmediateContext);
 
-		if (true || bForRGBD){
+		if(bForRGBD){
+			// The first rgbd will be integrated anyway
+			if (m_bEmptyTSDF){
+				m_pTSDFVolume->Integrate(pd3dImmediateContext);
+				m_bEmptyTSDF = false;
+			}
 			// For generate the RGBD texture for alignment
 			DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Generate RGBD");
 
@@ -691,16 +704,18 @@ public:
 			pd3dImmediateContext->OMSetRenderTargets(3, m_pGeneratedRGBDRTV, m_pGeneratedRGBDDSSView);
 
 			// Clear the three render targets
-			pd3dImmediateContext->ClearRenderTargetView(m_pGeneratedRGBDRTV[0], DirectX::Colors::Black);
-			pd3dImmediateContext->ClearRenderTargetView(m_pGeneratedRGBDRTV[1], DirectX::Colors::Black);
-			pd3dImmediateContext->ClearRenderTargetView(m_pGeneratedRGBDRTV[2], DirectX::Colors::Black);
+			float ClearColor[4] = { 0.0f, 0.0f, 0.0f, -1.0f };
+
+			pd3dImmediateContext->ClearRenderTargetView(m_pGeneratedRGBDRTV[0], ClearColor);
+			pd3dImmediateContext->ClearRenderTargetView(m_pGeneratedRGBDRTV[1], ClearColor);
+			pd3dImmediateContext->ClearRenderTargetView(m_pGeneratedRGBDRTV[2], ClearColor);
 
 			pd3dImmediateContext->ClearDepthStencilView(m_pGeneratedRGBDDSSView, D3D11_CLEAR_DEPTH, 1.0, 0);
 
 			// Set the SRVs for GS
 			pd3dImmediateContext->GSSetShaderResources(3, func_<VOXEL_NUM_X>::value, m_pHistoPyramidSRV);
-			pd3dImmediateContext->GSSetShaderResources(0, 1, &m_pColorVolSRV);
-			pd3dImmediateContext->GSSetShaderResources(1, 1, &m_pDensityVolSRV);
+			pd3dImmediateContext->GSSetShaderResources(0, 1, &m_pTSDFVolume->m_pColVolumeSRV);
+			pd3dImmediateContext->GSSetShaderResources(1, 1, &m_pTSDFVolume->m_pDWVolumeSRV);
 
 			// Since the RT reso maybe different, we need a specific Viewport for this pass
 			pd3dImmediateContext->RSSetViewports(1, &m_cGeneratedRGBDVP);
@@ -711,12 +726,13 @@ public:
 										0,			0,			1.005f,		1.f,
 										0,			0,			-0.1005f,	0);
 			XMMATRIX mProj = m_Camera.GetProjMatrix();
-			XMMATRIX m_View = _mView;
-			XMMATRIX m_World = m_Camera.GetWorldMatrix();
 
+			XMMATRIX mKinectTransform = m_pTSDFVolume->m_pInputPC->mPreFrame;
+			m_pGeneratedTPC->mCurFrame = mKinectTransform;
+			m_pGeneratedTPC->mCurRotation = m_pTSDFVolume->m_pInputPC->mPreRotation;
 			XMVECTOR t;
-			XMMATRIX view = XMMatrixInverse(&t, _mView);
-			XMMATRIX m_WorldViewProjection = m_World*view*m_Proj;
+			XMMATRIX view = XMMatrixInverse(&t, mKinectTransform);
+			XMMATRIX m_WorldViewProjection = view*m_Proj;
 			m_cbPerFrame.cb_mWorldViewProj = XMMatrixTranspose(m_WorldViewProjection);
 			m_cbPerFrame.cb_mView = XMMatrixTranspose(view);
 			XMStoreFloat4(&m_cbPerFrame.cb_f4ViewPos, m_Camera.GetEyePt());
@@ -739,8 +755,8 @@ public:
 			// For render to screen use free cam
 			pd3dImmediateContext->OMSetRenderTargets(1, &m_pOutRTV, m_pOutDSSView);
 			pd3dImmediateContext->GSSetShaderResources(3, func_<VOXEL_NUM_X>::value, m_pHistoPyramidSRV);
-			pd3dImmediateContext->GSSetShaderResources(0, 1, &m_pColorVolSRV);
-			pd3dImmediateContext->GSSetShaderResources(1, 1, &m_pDensityVolSRV);
+			pd3dImmediateContext->GSSetShaderResources(0, 1, &m_pTSDFVolume->m_pColVolumeSRV);
+			pd3dImmediateContext->GSSetShaderResources(1, 1, &m_pTSDFVolume->m_pDWVolumeSRV);
 
 			XMMATRIX m_Proj = m_Camera.GetProjMatrix();
 			XMMATRIX m_View = m_Camera.GetViewMatrix();
@@ -775,31 +791,31 @@ public:
 				pd3dImmediateContext->Draw(activeCellNum, 0);
 				//pd3dImmediateContext->Draw(m_cbPerFrame.cubeInfo.x * m_cbPerFrame.cubeInfo.y * m_cbPerFrame.cubeInfo.z, 0);
 			}
-			if (m_bOutputMesh && !m_bOutputInProgress){
-				m_bOutputMesh = false;
-				m_bOutputInProgress = true;
-				pd3dImmediateContext->GSSetShader(m_pTraversalAndOutGS, NULL, 0);
-				pd3dImmediateContext->PSSetShader(NULL, NULL, 0);
-				UINT offset[1] = { 0 };
-				pd3dImmediateContext->SOSetTargets(1, &m_pOutVB, offset);
-				pd3dImmediateContext->Begin(m_pSOQuery);
-				pd3dImmediateContext->Draw(activeCellNum, 0);
-				pd3dImmediateContext->End(m_pSOQuery);
-				pd3dImmediateContext->CopyResource(m_pOutVBCPU, m_pOutVB);
-
-				while (S_OK != pd3dImmediateContext->GetData(m_pSOQuery, &m_u64SOOutput, 2 * sizeof(UINT64), 0)){};
-
-				D3D11_MAPPED_SUBRESOURCE subresource;
-				pd3dImmediateContext->Map(m_pOutVBCPU, D3D11CalcSubresource(0, 0, 1), D3D11_MAP_READ, 0, &subresource);
-				float* data = reinterpret_cast<float*>(subresource.pData);
-				m_uVertexCount = m_u64SOOutput[0] * 3;
-				if (m_uVertexCount * 6 * sizeof(float) > m_uOutVBsize)
-					m_uVertexCount = m_uOutVBsize / sizeof(float) / 6;
-				memcpy(m_pVertex, data, m_uVertexCount * 6 * sizeof(float));
-				pd3dImmediateContext->Unmap(m_pOutVBCPU, D3D11CalcSubresource(0, 0, 1));
-				OutputMesh();
-			}
 			DXUT_EndPerfEvent();
+		}
+		if (m_bOutputMesh && !m_bOutputInProgress){
+			m_bOutputMesh = false;
+			m_bOutputInProgress = true;
+			pd3dImmediateContext->GSSetShader(m_pTraversalAndOutGS, NULL, 0);
+			pd3dImmediateContext->PSSetShader(NULL, NULL, 0);
+			UINT offset[1] = { 0 };
+			pd3dImmediateContext->SOSetTargets(1, &m_pOutVB, offset);
+			pd3dImmediateContext->Begin(m_pSOQuery);
+			pd3dImmediateContext->Draw(activeCellNum, 0);
+			pd3dImmediateContext->End(m_pSOQuery);
+			pd3dImmediateContext->CopyResource(m_pOutVBCPU, m_pOutVB);
+
+			while (S_OK != pd3dImmediateContext->GetData(m_pSOQuery, &m_u64SOOutput, 2 * sizeof(UINT64), 0)){};
+
+			D3D11_MAPPED_SUBRESOURCE subresource;
+			pd3dImmediateContext->Map(m_pOutVBCPU, D3D11CalcSubresource(0, 0, 1), D3D11_MAP_READ, 0, &subresource);
+			float* data = reinterpret_cast<float*>(subresource.pData);
+			m_uVertexCount = m_u64SOOutput[0] * 3;
+			if (m_uVertexCount * 6 * sizeof(float) > m_uOutVBsize)
+				m_uVertexCount = m_uOutVBsize / sizeof(float) / 6;
+			memcpy(m_pVertex, data, m_uVertexCount * 6 * sizeof(float));
+			pd3dImmediateContext->Unmap(m_pOutVBCPU, D3D11CalcSubresource(0, 0, 1));
+			OutputMesh();
 		}
 		pd3dImmediateContext->GSSetShaderResources(0, 3 + func_<VOXEL_NUM_X>::value, m_pNullSRV);
 		pd3dImmediateContext->PSSetShaderResources(0, 3 + func_<VOXEL_NUM_X>::value, m_pNullSRV);
@@ -821,6 +837,11 @@ public:
 			if (nKey == 'C')
 			{
 				m_bOutputMesh = true;
+			}
+			if (nKey == 'R')
+			{
+				m_bEmptyTSDF = true;
+				m_pGeneratedTPC->reset();
 			}
 			break;
 		}

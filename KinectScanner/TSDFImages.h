@@ -341,9 +341,9 @@ public:
 
 
 
-		XMMATRIX mKinectTransform = m_pTSDFVolume->m_pInputPC->mModelM_pre;
-		m_pGeneratedTPC->mModelM_now = mKinectTransform;
-		m_pGeneratedTPC->mModelM_r_now = m_pTSDFVolume->m_pInputPC->mModelM_r_pre;
+		XMMATRIX mKinectTransform = m_pTSDFVolume->m_pInputPC->mPreFrame;
+		m_pGeneratedTPC->mCurFrame = mKinectTransform;
+		m_pGeneratedTPC->mCurRotation = m_pTSDFVolume->m_pInputPC->mPreRotation;
 		XMVECTOR t;
 		XMMATRIX view= XMMatrixInverse(&t,mKinectTransform);
 		XMFLOAT4 pos = XMFLOAT4( 0, 0, 0, 1 );
