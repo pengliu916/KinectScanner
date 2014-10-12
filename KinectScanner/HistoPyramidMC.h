@@ -96,8 +96,8 @@ public:
 	ID3D11GeometryShader*			m_pTraversalAndOutGS;// GS for traversing HP, generating triangles and output stream;
 	ID3D11Buffer*					m_pOutVB;// Buffer holding MC result(usage DEFAULT)
 	ID3D11Buffer*					m_pOutVBCPU;// Result Vertex Buffer for CPU Read back(usage STAGING)
-	UINT							m_uOutVBsize;
-	float*							m_pVertex;
+	UINT							m_uMaxVertecCount;
+	float*							m_pVertexBuffer;
 	UINT							m_uVertexCount;
 	ID3D11Query*					m_pSOQuery;// Query interface for retriving triangle count from SO
 	UINT64							m_u64SOOutput[2];
@@ -151,8 +151,8 @@ public:
 
 		m_bOutputMesh = false;
 		m_bOutputInProgress = false;
-		m_uOutVBsize = 600000000;
-		m_pVertex = new float[m_uOutVBsize * 6];
+		m_uMaxVertecCount = 5000000;
+		m_pVertexBuffer = new float[m_uMaxVertecCount * 6];
 
 		m_pGeneratedTPC = new TransformedPointClould();
 
@@ -188,12 +188,12 @@ public:
 		if (!ply_write_header(ply)) return false;
 
 		for (int i = 0; i < m_uVertexCount * 6; i += 6){
-			ply_write(ply, m_pVertex[i]);
-			ply_write(ply, m_pVertex[i + 1]);
-			ply_write(ply, m_pVertex[i + 2]);
-			ply_write(ply, m_pVertex[i + 3] * 255);
-			ply_write(ply, m_pVertex[i + 4] * 255);
-			ply_write(ply, m_pVertex[i + 5] * 255);
+			ply_write(ply, m_pVertexBuffer[i]);
+			ply_write(ply, m_pVertexBuffer[i + 1]);
+			ply_write(ply, m_pVertexBuffer[i + 2]);
+			ply_write(ply, m_pVertexBuffer[i + 3] * 255);
+			ply_write(ply, m_pVertexBuffer[i + 4] * 255);
+			ply_write(ply, m_pVertexBuffer[i + 5] * 255);
 		}
 		UINT vertexID = 0;
 		for (int i = 0; i < m_uVertexCount / 3; i++){
@@ -280,14 +280,14 @@ public:
 		ZeroMemory(&bd, sizeof(bd));
 		// For output-stream related buffers
 		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = m_uOutVBsize;
+		bd.ByteWidth = m_uMaxVertecCount * 6 * sizeof(float);
 		bd.BindFlags = D3D11_BIND_STREAM_OUTPUT;
 		bd.CPUAccessFlags = 0;
 		V_RETURN(pd3dDevice->CreateBuffer(&bd, NULL, &m_pOutVB));
 		DXUT_SetDebugName(m_pOutVB, "m_pOutVB");
 
 		bd.Usage = D3D11_USAGE_STAGING;
-		bd.ByteWidth = m_uOutVBsize;
+		bd.ByteWidth = m_uMaxVertecCount * 6 * sizeof(float);
 		bd.BindFlags = 0;
 		bd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 		V_RETURN(pd3dDevice->CreateBuffer(&bd, NULL, &m_pOutVBCPU));
@@ -582,7 +582,7 @@ public:
 		SAFE_RELEASE(m_pOutVB);
 		SAFE_RELEASE(m_pOutVBCPU);
 		SAFE_RELEASE(m_pSOQuery);
-		delete m_pVertex;
+		delete m_pVertexBuffer;
 
 
 		for (int i = 0; i < func_<VOXEL_NUM_X>::value; ++i){
@@ -766,7 +766,7 @@ public:
 			XMVECTOR t;
 
 			m_cbPerFrame.cb_mWorldViewProj = XMMatrixTranspose(m_WorldViewProjection);
-			m_cbPerFrame.cb_mView = m_View;
+			m_cbPerFrame.cb_mView = XMMatrixTranspose(m_View);
 			XMStoreFloat4(&m_cbPerFrame.cb_f4ViewPos, m_Camera.GetEyePt());
 			pd3dImmediateContext->UpdateSubresource(m_pCB_HPMC_Frame, 0, NULL, &m_cbPerFrame, 0, 0);
 
@@ -811,9 +811,9 @@ public:
 			pd3dImmediateContext->Map(m_pOutVBCPU, D3D11CalcSubresource(0, 0, 1), D3D11_MAP_READ, 0, &subresource);
 			float* data = reinterpret_cast<float*>(subresource.pData);
 			m_uVertexCount = m_u64SOOutput[0] * 3;
-			if (m_uVertexCount * 6 * sizeof(float) > m_uOutVBsize)
-				m_uVertexCount = m_uOutVBsize / sizeof(float) / 6;
-			memcpy(m_pVertex, data, m_uVertexCount * 6 * sizeof(float));
+			if (m_uVertexCount > m_uMaxVertecCount)
+				m_uVertexCount = m_uMaxVertecCount;
+			memcpy(m_pVertexBuffer, data, m_uVertexCount * 6 * sizeof(float));
 			pd3dImmediateContext->Unmap(m_pOutVBCPU, D3D11CalcSubresource(0, 0, 1));
 			OutputMesh();
 		}

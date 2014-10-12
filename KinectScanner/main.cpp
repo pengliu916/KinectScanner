@@ -61,7 +61,7 @@ HRESULT Initial()
 	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H);
-	multiTexture.AddTexture(&histoPyraimdMC.m_pGeneratedRGBDSRV[2], D_W, D_H);
+	//multiTexture.AddTexture(&histoPyraimdMC.m_pGeneratedRGBDSRV[2], D_W, D_H);
 	multiTexture.AddTexture(&poseEstimator.m_pSumOfCoordSRV[0],D_W,D_H);
 	/*multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
 							nullptr,
