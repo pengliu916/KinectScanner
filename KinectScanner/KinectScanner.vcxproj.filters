@@ -2,25 +2,21 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rply.c" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="MultiTexturePresenter.fx" />
     <FxCompile Include="NormalGenerator.fx" />
-    <FxCompile Include="RGBBilateralFilter.fx" />
-    <FxCompile Include="FilteredPCL.fx" />
     <FxCompile Include="VolumeTSDF.fx" />
     <FxCompile Include="RayCast.fx" />
     <FxCompile Include="TSDFImages.fx" />
     <FxCompile Include="Reduction.fx" />
     <FxCompile Include="PoseEstimator.fx" />
+    <FxCompile Include="RGBDBilateralFilter.fx" />
     <FxCompile Include="HistoPyramidMC.fx" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MultiTexturePresenter.h" />
-    <ClInclude Include="Scanner.h" />
     <ClInclude Include="FilteredPCL.h" />
     <ClInclude Include="NormalGenerator.h" />
-    <ClInclude Include="RGBBilateralFilter.h" />
     <ClInclude Include="TransPCLs.h" />
     <ClInclude Include="header.h" />
     <ClInclude Include="VolumeTSDF.h" />
@@ -28,9 +24,20 @@
     <ClInclude Include="TSDFImages.h" />
     <ClInclude Include="Reduction.h" />
     <ClInclude Include="PoseEstimator.h" />
+    <ClInclude Include="RGBDBilateralFilter.h" />
+    <ClInclude Include="Scanner.h">
+      <Filter>NotInUse</Filter>
+    </ClInclude>
+    <ClInclude Include="TiledTextures.h" />
     <ClInclude Include="HistoPyramidMC.h" />
+    <ClInclude Include="rply.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="D3DX_DXGIFormatConvert.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="NotInUse">
+      <UniqueIdentifier>{d8840fe0-b06a-4b4f-9ad0-dfbc0c8c16e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

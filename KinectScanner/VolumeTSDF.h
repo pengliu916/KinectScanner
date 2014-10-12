@@ -72,7 +72,7 @@ public:
 		m_CBperCall.halfWidth = width / 2;
 		m_CBperCall.halfHeight = height / 2;
 		m_CBperCall.halfDepth = depth / 2;
-		m_CBperCall.truncDist = XMMax( 0.03f, 2.1f * voxelSize ); 
+		m_CBperCall.truncDist = XMMax( 0.001f, 2.1f * voxelSize ); 
 		m_CBperCall.maxWeight = MAX_WEIGHT;
 
 		m_bResetVol = true;
@@ -102,6 +102,7 @@ public:
 		D3D11_INPUT_ELEMENT_DESC inputLayout[]=
 		{{ "POSITION", 0, DXGI_FORMAT_R16_SINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}};
 		V_RETURN(pd3dDevice->CreateInputLayout(inputLayout,ARRAYSIZE(inputLayout),pVSBlob->GetBufferPointer(),pVSBlob->GetBufferSize(),&m_pScreenQuadIL));
+		DXUT_SetDebugName(m_pScreenQuadIL, "m_pScreenQuadIL");
 		pVSBlob->Release();
 
 		D3D11_BUFFER_DESC bd;
@@ -111,6 +112,7 @@ public:
 		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		bd.CPUAccessFlags = 0;
 		V_RETURN(pd3dDevice->CreateBuffer(&bd,NULL,&m_pScreenQuadVB));
+		DXUT_SetDebugName(m_pScreenQuadVB, "m_pScreenQuadVB");
 
 		// Create the constant buffers
 		bd.Usage = D3D11_USAGE_DEFAULT;
@@ -136,8 +138,10 @@ public:
 		TEXDesc.CPUAccessFlags = 0;
 		TEXDesc.MiscFlags = 0;
 		V_RETURN( pd3dDevice->CreateTexture3D( &TEXDesc, NULL, &m_pDWVolumeTex ) );
-		TEXDesc.Format = DXGI_FORMAT_R10G10B10A2_TYPELESS;
+		DXUT_SetDebugName(m_pDWVolumeTex, "m_pDWVolumeTex");
+		TEXDesc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
 		V_RETURN( pd3dDevice->CreateTexture3D( &TEXDesc, NULL, &m_pColVolumeTex ) );
+		DXUT_SetDebugName(m_pColVolumeTex, "m_pColVolumeTex");
 
 		// Create the resource view
 		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
@@ -147,8 +151,10 @@ public:
 		SRVDesc.Texture3D.MostDetailedMip = 0;
 		SRVDesc.Texture3D.MipLevels = 1;
 		V_RETURN( pd3dDevice->CreateShaderResourceView( m_pDWVolumeTex, &SRVDesc,&m_pDWVolumeSRV ) );
-		SRVDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
+		DXUT_SetDebugName(m_pDWVolumeSRV, "m_pDWVolumeSRV");
+		SRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		V_RETURN( pd3dDevice->CreateShaderResourceView( m_pColVolumeTex, &SRVDesc,&m_pColVolumeSRV ) );
+		DXUT_SetDebugName(m_pColVolumeSRV, "m_pColVolumeSRV");
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 		ZeroMemory( &UAVDesc, sizeof( UAVDesc ) );
@@ -158,7 +164,9 @@ public:
 		UAVDesc.Texture3D.WSize = m_CBperCall.halfDepth * 2;
 		UAVDesc.ViewDimension=D3D11_UAV_DIMENSION::D3D11_UAV_DIMENSION_TEXTURE3D;
 		V_RETURN( pd3dDevice->CreateUnorderedAccessView(m_pDWVolumeTex,&UAVDesc,&m_pDWVolumeUAV));
-		V_RETURN( pd3dDevice->CreateUnorderedAccessView(m_pColVolumeTex,&UAVDesc,&m_pColVolumeUAV));
+		DXUT_SetDebugName(m_pDWVolumeUAV, "m_pDWVolumeUAV");
+		V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pColVolumeTex, &UAVDesc, &m_pColVolumeUAV));
+		DXUT_SetDebugName(m_pColVolumeUAV, "m_pColVolumeUAV");
 
 		// Create the render target views
 		D3D11_RENDER_TARGET_VIEW_DESC RTVDesc;
@@ -169,8 +177,10 @@ public:
 		RTVDesc.Texture3D.FirstWSlice = 0;
 		RTVDesc.Texture3D.WSize = m_CBperCall.halfDepth * 2;
 		V_RETURN( pd3dDevice->CreateRenderTargetView( m_pDWVolumeTex, &RTVDesc, &m_pDWVolumeRTV ) );
-		RTVDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
+		DXUT_SetDebugName(m_pDWVolumeRTV, "m_pDWVolumeRTV");
+		RTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		V_RETURN( pd3dDevice->CreateRenderTargetView( m_pColVolumeTex, &RTVDesc, &m_pColVolumeRTV ) );
+		DXUT_SetDebugName(m_pColVolumeRTV, "m_pColVolumeRTV");
 
 		// Create the dummy volume tex and its RTV
 		TEXDesc.Width = m_CBperCall.halfWidth * 2;
@@ -183,6 +193,7 @@ public:
 		TEXDesc.CPUAccessFlags = 0;
 		TEXDesc.MiscFlags = 0;
 		V_RETURN( pd3dDevice->CreateTexture3D( &TEXDesc, NULL, &m_pUAVDescmmyTex ) );
+		DXUT_SetDebugName(m_pUAVDescmmyTex, "m_pUAVDescmmyTex");
 
 		// Create the render target views
 		RTVDesc.Format = TEXDesc.Format;
@@ -191,6 +202,7 @@ public:
 		RTVDesc.Texture3D.FirstWSlice = 0;
 		RTVDesc.Texture3D.WSize = 1;
 		V_RETURN( pd3dDevice->CreateRenderTargetView( m_pUAVDescmmyTex, &RTVDesc, &m_pUAVDescmmyRTV ) );
+		DXUT_SetDebugName(m_pUAVDescmmyRTV, "m_pUAVDescmmyRTV");
 
 		m_cViewport.TopLeftX = 0;
 		m_cViewport.TopLeftY = 0;
@@ -208,14 +220,16 @@ public:
 	}
 	void ClearVolume( ID3D11DeviceContext* pd3dImmediateContext )
 	{
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Clean Volume");
 		// clear the render target
-		float ClearColor[2] = { 2.0f,0.0f };
+		float ClearColor[2] = { INVALID_VALUE,0.0f };
 		pd3dImmediateContext->ClearRenderTargetView( m_pDWVolumeRTV, ClearColor );
 
 		float ClearColor_color[4] = { 0.0f,0.0f,0.0f,0.0f };
 		pd3dImmediateContext->ClearRenderTargetView( m_pColVolumeRTV, ClearColor_color );
 
 		m_bResetVol = false;
+		DXUT_EndPerfEvent();
 	}
 
 	void Release()
@@ -246,19 +260,21 @@ public:
 
 	void Integrate(ID3D11DeviceContext* pd3dImmediateContext)
 	{
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"UpdateVolume");
 
-		if( m_bResetVol ) ClearVolume(pd3dImmediateContext);
-		//pd3dImmediateContext->UpdateSubresource( m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0 );
+		if(m_bResetVol ) ClearVolume(pd3dImmediateContext);
+
 		ID3D11UnorderedAccessView* uavs[2] = { m_pDWVolumeUAV, m_pColVolumeUAV };
 		pd3dImmediateContext->RSSetViewports( 1, &m_cViewport );
 		pd3dImmediateContext->OMSetRenderTargetsAndUnorderedAccessViews( 1, &m_pUAVDescmmyRTV, NULL, 1, 2, uavs, 0 );
 		pd3dImmediateContext->IASetInputLayout( m_pScreenQuadIL );
+		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
 		UINT stride = sizeof( short ); UINT offset = 0;
 		pd3dImmediateContext->IASetVertexBuffers( 0, 1, &m_pScreenQuadVB, &stride, &offset );
 		
 		XMVECTOR t;
-		m_CBperFrame.mInversedWorld_kinect = XMMatrixTranspose(XMMatrixInverse(&t,m_pInputPC->mModelM_now));
+		m_CBperFrame.mInversedWorld_kinect = XMMatrixTranspose(XMMatrixInverse(&t,m_pInputPC->mCurFrame));
 		pd3dImmediateContext->UpdateSubresource( m_pCBperFrame, 0, NULL, &m_CBperFrame, 0, 0 );
 
 		pd3dImmediateContext->VSSetShader( m_pPassVS, NULL, 0 );
@@ -268,10 +284,12 @@ public:
 		pd3dImmediateContext->PSSetConstantBuffers( 0, 1, &m_pCBperCall );
 		pd3dImmediateContext->PSSetConstantBuffers( 1, 1, &m_pCBperFrame );
 		pd3dImmediateContext->PSSetShaderResources( 2, 1, m_pInputPC->ppMeshRawRGBZTexSRV );
+		pd3dImmediateContext->PSSetShaderResources( 3, 1, m_pInputPC->ppMeshNormalTexSRV );
 		pd3dImmediateContext->Draw(m_CBperCall.halfDepth * 2, 0);
 
-		ID3D11ShaderResourceView* ppSRVNULL[3] = { NULL,NULL,NULL };
-		pd3dImmediateContext->PSSetShaderResources( 0, 3, ppSRVNULL);
+		ID3D11ShaderResourceView* ppSRVNULL[4] = { NULL,NULL,NULL,NULL };
+		pd3dImmediateContext->PSSetShaderResources( 0, 4, ppSRVNULL);
+		DXUT_EndPerfEvent();
 	}
 
 	LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

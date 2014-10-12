@@ -77,23 +77,25 @@ public:
 	float							m_fPreNpairs;
 	double							m_dDet;
 
-	PoseEstimator()
+	PoseEstimator(UINT _inputWidth, UINT _inputHeight)
 	{
 		m_mA = Eigen::MatrixXf::Identity(6,6);
-		m_uOutputTexSize_x=DEPTH_WIDTH;
-		m_uOutputTexSize_y=DEPTH_HEIGHT;
+		m_uOutputTexSize_x = _inputWidth;
+		m_uOutputTexSize_y = _inputHeight;
 		m_fPreNpairs = 1;
 	}
 
-	HRESULT Initial()
+	HRESULT Initial(TransformedPointClould* pTsdfTPC,
+					TransformedPointClould* pKinectTPC)
 	{
 		HRESULT hr=S_OK;
+
+		m_pTsdfTPC = pTsdfTPC;
+		m_pKinectTPC = pKinectTPC;
 		return hr;
 	}
 
-	HRESULT CreateResource(ID3D11Device* pd3dDevice,
-		TransformedPointClould* pTsdfTPC,
-		TransformedPointClould* pKinectTPC)
+	HRESULT CreateResource(ID3D11Device* pd3dDevice)
 	{
 		HRESULT hr=S_OK;
 
@@ -126,8 +128,6 @@ public:
 		pVSBlob->Release();
 		DXUT_SetDebugName( m_pScreenQuadIL, "m_pScreenQuadIL");
 
-		m_pTsdfTPC = pTsdfTPC;
-		m_pKinectTPC = pKinectTPC;
 
 		D3D11_BUFFER_DESC bd = {0};
 		bd.Usage = D3D11_USAGE_DEFAULT;
@@ -235,7 +235,8 @@ public:
 
 	bool Processing(ID3D11DeviceContext* pd3dImmediateContext)
 	{
-		
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"PoseEstimat Computing");
+
 		pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
 		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 		UINT stride = 0;
@@ -249,8 +250,8 @@ public:
 		pd3dImmediateContext->GSSetShader(m_pGS,NULL,0);	
 		pd3dImmediateContext->PSSetShader( m_pPS_I, NULL, 0 );
 		
-		m_CBperFrame.mKinectMesh = XMMatrixTranspose ( m_pKinectTPC->mModelM_now );
-		m_CBperFrame.mTsdfMesh = XMMatrixTranspose ( m_pTsdfTPC->mModelM_now );
+		m_CBperFrame.mKinectMesh = XMMatrixTranspose ( m_pKinectTPC->mCurFrame );
+		m_CBperFrame.mTsdfMesh = XMMatrixTranspose ( m_pTsdfTPC->mCurFrame );
 		pd3dImmediateContext->UpdateSubresource(m_pCBperFrame,0,NULL,&m_CBperFrame,0,0);
 
 		pd3dImmediateContext->OMSetRenderTargets(4,&m_pSumOfCoordRTV[0],NULL);
@@ -337,6 +338,7 @@ public:
 			m_mTinc = XMMatrixIdentity();
 			return false;
 		}*/
+		DXUT_EndPerfEvent();
 
 		return true;
 

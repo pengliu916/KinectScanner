@@ -1,7 +1,7 @@
 #include "header.h"
 
-Texture3D g_txVolume : register(t0);
-Texture3D g_txVolume_color : register(t1);
+Texture3D<float2> g_txVolume : register(t0);
+Texture3D<float4> g_txVolume_color : register(t1);
 
 SamplerState samRaycast : register(s0);
 
@@ -10,8 +10,27 @@ static const float4 light_offset = float4 ( 0.0f, 0.10f, 0.0f, 0.0f );
 static const float4 ambient = float4 ( 0.3f, 0.3f, 0.3f, 1.0f );
 static const float4 light_attenuation = float4 ( 1, 0, 0, 0 );
 
-static const float KinectFTRpos_x = DEPTH_WIDTH * XSCALE * 0.5f; // Top right conner x_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
-static const float KinectFTRpos_y = DEPTH_HEIGHT * XSCALE * 0.5f; // Top right conner y_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
+//static const float KinectFTRpos_x = DEPTH_WIDTH * XSCALE * 0.5f; // Top right conner x_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
+//static const float KinectFTRpos_y = DEPTH_HEIGHT * XSCALE * 0.5f; // Top right conner y_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
+
+static const float3 inv_vol_reso = float3(1.f/VOXEL_NUM_X, 1.f/VOXEL_NUM_Y, 1.f/VOXEL_NUM_Z);
+static const float inv_voxelSize = 1.f/VOXEL_SIZE;
+static const float2 reso = float2(D_W, D_H);
+static const float2 range = float2(R_N, R_F);
+static const float2 f = float2(F_X, -F_Y);
+static const float2 c = float2(C_X, C_Y);
+
+static const int3 cb_QuadrantOffset[8] =
+{
+	int3(0, 0, 0),
+	int3(1, 0, 0),
+	int3(0, 1, 0),
+	int3(1, 1, 0),
+	int3(0, 0, 1),
+	int3(1, 0, 1),
+	int3(0, 1, 1),
+	int3(1, 1, 1),
+};
 //--------------------------------------------------------------------------------------
 // Const buffers
 //--------------------------------------------------------------------------------------
@@ -19,7 +38,7 @@ cbuffer cbInit : register( b0 )
 {
 	float Tstep; // step length in meters of ray casting algorithm
 	float3 VolumeHalfSize; //  = volumeRes * voxelSize / 2
-	float TruncDist;
+	float trunc;
 	float3 ReversedTotalSize; // = 1 / ( volumeRes * voxelSize )
 	float3 BoxMin; // Volume bonding box front left bottom pos in world space
 	float NIU0;
@@ -69,7 +88,24 @@ bool IntersectBox(Ray r, float3 BoxMin, float3 BoxMax, out float tnear, out floa
 
 	return tnear<=tfar;
 }
-
+// pos is f3 in world space, value contain result value, the function will return false
+// if sample data contain invalide value, otherwise will return true
+bool SampleDW( float3 uv, inout float2 value, int3 offset = int3(0,0,0) )
+{
+	float3 fIdx = uv - inv_vol_reso *0.5f;
+	float neighbor[8];
+	float2 sum = 0;
+	int invalidCount = 0;
+	// return Invalid value if the sample point is in voxel which contain invalid value;
+	[unroll]for(int i=0; i<8; i++){
+		neighbor[i] = g_txVolume.SampleLevel(samRaycast, fIdx, 0,cb_QuadrantOffset[i]+offset);
+		if (abs(value.x - INVALID_VALUE) < EPSILON) invalidCount++;
+		else sum+=neighbor[i];
+	}
+	value = sum / (8 - invalidCount);
+	if( invalidCount >= 9) return false;
+	else return true;
+}
 //--------------------------------------------------------------------------------------
 // Shader I/O structure
 //--------------------------------------------------------------------------------------
@@ -102,20 +138,24 @@ GS_INPUT VS( )
 void GS_KinectQuad( point GS_INPUT particles[1], inout TriangleStream<PS_INPUT> triStream )
 {
 	PS_INPUT output;
-	output.Pos = float4( -KinectFTRpos_x, -KinectFTRpos_y, 1.0f, 1.0f );// TEXCOORD0
-	output.projPos = float4( -1, -1, 0, 1 );// SV_POSITION
-	triStream.Append( output );
-
-	output.Pos = float4( -KinectFTRpos_x, KinectFTRpos_y, 1.0f, 1.0f );
+	//output.Pos = float4(-KinectFTRpos_x, KinectFTRpos_y, 1.0f, 1.0f);
+	output.Pos = float4((float2(0,0) - c) / f, 1.0f, 1.0f);
 	output.projPos = float4( -1, 1, 0, 1 );
 	triStream.Append( output );
 
-	output.Pos = float4( KinectFTRpos_x, -KinectFTRpos_y, 1.0f, 1.0f );
-	output.projPos = float4( 1, -1, 0, 1 );
+	//output.Pos = float4(KinectFTRpos_x, KinectFTRpos_y, 1.0f, 1.0f);
+	output.Pos = float4((float2(reso.x,0) - c) / f, 1.0f, 1.0f);
+	output.projPos = float4( 1, 1, 0, 1 );
 	triStream.Append( output );
 
-	output.Pos = float4( KinectFTRpos_x, KinectFTRpos_y, 1.0f, 1.0f );
-	output.projPos = float4( 1, 1, 0, 1 );
+	//output.Pos = float4(-KinectFTRpos_x, -KinectFTRpos_y, 1.0f, 1.0f);// TEXCOORD0
+	output.Pos = float4((float2(0,reso.y) - c) / f , 1.0f, 1.0f);// TEXCOORD0
+	output.projPos = float4( -1, -1, 0, 1 );// SV_POSITION
+	triStream.Append( output );
+
+	//output.Pos = float4(KinectFTRpos_x, -KinectFTRpos_y, 1.0f, 1.0f);
+	output.Pos = float4((reso - c) / f,1.0f, 1.0f);
+	output.projPos = float4( 1, -1, 0, 1 );
 	triStream.Append( output );
 }
 
@@ -224,56 +264,78 @@ PS_3_OUT PS_KinectView(PS_INPUT input) : SV_Target
 
 	float3 currentPixPos;
 
-	float dist_pre = g_txVolume.SampleLevel(samRaycast,P * ReversedTotalSize + 0.5,0).x * TruncDist;;
+	float2 result = float2(0,0);
+	bool pre_valid = SampleDW(P*ReversedTotalSize + 0.5, result);
+
+	float dist_pre = result.x*TRUNC_DIST;
+	//float dist_pre = g_txVolume.SampleLevel(samRaycast, P * ReversedTotalSize + 0.5, 0).x * TRUNC_DIST;;
 	float dist_now;
-	
+	//t +=0.5* Tstep;
 	while ( t <= tfar ) {
 		float3 txCoord = P * ReversedTotalSize + 0.5;
-		float2 DistWeight = g_txVolume.SampleLevel ( samRaycast, txCoord, 0 );
+		bool valid = SampleDW(txCoord,result);
+		float2 DistWeight = result;
+		//float2 DistWeight = g_txVolume.SampleLevel ( samRaycast, txCoord, 0 );
 		//float3 DistWeight = g_txVolume.Load ( int4 ( P/meterPerVoxel + voxelResolution / 2.0f, 0 ), 0 );
 
 		dist_pre = dist_now;
-		dist_now = DistWeight.x * TruncDist;
-		
-		//if ( dist_pre < 0 ) return output;
-		if ( dist_pre * dist_now < 0 )
-		//if ( dist_pre >= 0 && dist_now < 0 )
-		{
-			// For computing the depth
-			currentPixPos = P_pre + (P - P_pre) * dist_pre / (dist_pre - dist_now); 
-			txCoord = currentPixPos * ReversedTotalSize + 0.5;
-			float4 surfacePos = float4 ( currentPixPos, 1 );
-			surfacePos = mul ( surfacePos, KinectView );
-			float dist = surfacePos.z;
-
-			// For computing the normal
-			float depth_dx = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 1, 0, 0 ) ).x - 
-								g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( -1, 0, 0 ) ).x;
-			float depth_dy = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 1, 0 ) ).x - 
-								g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, -1, 0 ) ).x;
-			float depth_dz = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, 1 ) ).x - 
-								g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, -1 ) ).x;
-
-			float3 normal = normalize ( float3 ( depth_dx, depth_dy, depth_dz ) );
+		dist_now = DistWeight.x * TRUNC_DIST;
+		if (abs(dist_now - INVALID_VALUE*TRUNC_DIST)>1e-8 &&abs(dist_pre - INVALID_VALUE*TRUNC_DIST)>1e-8){
+			//if ( dist_pre < 0 ) return output;
+			if ( dist_pre * dist_now < 0 )
+			//if ( dist_pre >= 0 && dist_now < 0 )
+			{
+				// For computing the depth
+				currentPixPos = P_pre + (P - P_pre) * dist_pre / (dist_pre - dist_now); 
+				txCoord = currentPixPos * ReversedTotalSize + 0.5;
+				float4 surfacePos = float4 ( currentPixPos, 1 );
+				surfacePos = mul ( surfacePos, KinectView );
+				float dist = surfacePos.z;
 
 
-			// shading part
-			float4 light_dir = light_pos - float4 ( currentPixPos, 1 );
-			float light_dist = length ( light_dir );
-			light_dir /= light_dist;
-			light_dir.w = clamp ( 0, 1, 1.0f / ( light_attenuation.x + 
-												 light_attenuation.y * light_dist + 
-												 light_attenuation.z * light_dist * light_dist ) );
-			float angleAttn = clamp ( 0, 1, dot ( normal, light_dir.xyz ) );
-			float4 col_org = g_txVolume_color.SampleLevel ( samRaycast, txCoord, 0);
-			float4 col = col_org * light_dir.w * angleAttn;
+				float2 temp0 = float2(0,0);
+				float2 temp1 = float2(0,0);
+				SampleDW(txCoord, temp0, int3(1, 0, 0));
+				SampleDW(txCoord, temp1, int3(-1, 0, 0));
+				float depth_dx = temp0.x - temp1.x;
+				SampleDW(txCoord, temp0, int3(0, 1, 0));
+				SampleDW(txCoord, temp1, int3(0, -1, 0));
+				float depth_dy = temp0.x - temp1.x;
+				SampleDW(txCoord, temp0, int3(0, 0, 1));
+				SampleDW(txCoord, temp1, int3(0, 0, -1));
+				float depth_dz = temp0.x - temp1.x;
 
-			output.Depth = float4 ( col_org.xyz, dist );
-			output.Normal = float4 ( normal, 0 ) * 0.5 + 0.5;
-			//output.Normal = float4 ( 0,1,0,0);
-			output.Image = col;
 
-			return output;
+				// For computing the normal
+				/*float depth_dx = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 1, 0, 0 ) ).x - 
+									g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( -1, 0, 0 ) ).x;
+				float depth_dy = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 1, 0 ) ).x - 
+									g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, -1, 0 ) ).x;
+				float depth_dz = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, 1 ) ).x - 
+									g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, -1 ) ).x;*/
+
+				//float3 normal = float3(1,0,0);
+				float3 normal = normalize(float3 (depth_dx, depth_dy, depth_dz));
+
+
+				// shading part
+				float4 light_dir = light_pos - float4 ( currentPixPos, 1 );
+				float light_dist = length ( light_dir );
+				light_dir /= light_dist;
+				light_dir.w = clamp ( 0, 1, 1.0f / ( light_attenuation.x + 
+													 light_attenuation.y * light_dist + 
+													 light_attenuation.z * light_dist * light_dist ) );
+				float angleAttn = clamp ( 0, 1, dot ( normal, light_dir.xyz ) );
+				float4 col_org = g_txVolume_color.SampleLevel ( samRaycast, txCoord, 0);
+				float4 col = col_org * light_dir.w * angleAttn;
+
+				output.Depth = float4 ( col_org.xyz, dist );
+				output.Normal = float4 ( normal, 0 ) * 0.5 + 0.5;
+				//output.Normal = float4 ( 0,1,0,0);
+				output.Image = col;
+
+				return output;
+			}
 		}
 		P_pre = P;
 		P += PStep;
@@ -317,7 +379,7 @@ float4 PS_FreeView(PS_INPUT input) : SV_Target
 
 	float3 currentPixPos;
 
-	float dist_pre = g_txVolume.SampleLevel(samRaycast,P * ReversedTotalSize + 0.5,0).x * TruncDist;
+	float dist_pre = g_txVolume.SampleLevel(samRaycast,P * ReversedTotalSize + 0.5,0).x * TRUNC_DIST;
 	float dist_now;
 	
 	while ( t <= tfar ) {
@@ -326,39 +388,40 @@ float4 PS_FreeView(PS_INPUT input) : SV_Target
 		//float3 DistWeight = g_txVolume.Load ( int4 ( P/meterPerVoxel + voxelResolution / 2.0f, 0 ), 0 );
 
 		dist_pre = dist_now;
-		dist_now = DistWeight.x * TruncDist;
-		
-		if ( dist_pre >= 0 && dist_now < 0 )
-		{
-			// For computing the depth
-			currentPixPos = P_pre + (P - P_pre) * dist_pre / (dist_pre - dist_now); 
-			txCoord = currentPixPos * ReversedTotalSize + 0.5;
+		dist_now = DistWeight.x * TRUNC_DIST;
+		if (abs(dist_now - INVALID_VALUE*TRUNC_DIST)>EPSILON){
+			if ( dist_pre >= 0 && dist_now < 0 )
+			{
+				// For computing the depth
+				currentPixPos = P_pre + (P - P_pre) * dist_pre / (dist_pre - dist_now); 
+				txCoord = currentPixPos * ReversedTotalSize + 0.5;
 
-			// For computing the normal
-			float depth_dx = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 1, 0, 0 ) ).x - 
-								g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( -1, 0, 0 ) ).x;
-			float depth_dy = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 1, 0 ) ).x - 
-								g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, -1, 0 ) ).x;
-			float depth_dz = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, 1 ) ).x - 
-								g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, -1 ) ).x;
+				// For computing the normal
+				float depth_dx = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 1, 0, 0 ) ).x - 
+									g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( -1, 0, 0 ) ).x;
+				float depth_dy = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 1, 0 ) ).x - 
+									g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, -1, 0 ) ).x;
+				float depth_dz = g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, 1 ) ).x - 
+									g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, -1 ) ).x;
 
-			float3 normal = normalize ( float3 ( depth_dx, depth_dy, depth_dz ) );
+				float3 normal = normalize ( float3 ( depth_dx, depth_dy, depth_dz ) );
 
 
-			// shading part
-			float4 light_dir = light_pos - float4 ( currentPixPos, 1 );
-			float light_dist = length ( light_dir );
-			light_dir /= light_dist;
-			light_dir.w = clamp ( 0, 1, 1.0f / ( light_attenuation.x + 
-												 light_attenuation.y * light_dist + 
-												 light_attenuation.z * light_dist * light_dist ) );
-			float angleAttn = clamp ( 0, 1, dot ( normal, light_dir.xyz ) );
-			float4 col_org = g_txVolume_color.SampleLevel ( samRaycast, txCoord, 0);
-			float4 col = col_org * light_dir.w * angleAttn;
+				// shading part
+				float4 light_dir = light_pos - float4 ( currentPixPos, 1 );
+				float light_dist = length ( light_dir );
+				light_dir /= light_dist;
+				light_dir.w = clamp ( 0, 1, 1.0f / ( light_attenuation.x + 
+													 light_attenuation.y * light_dist + 
+													 light_attenuation.z * light_dist * light_dist ) );
+				float angleAttn = clamp ( 0, 1, dot ( normal, light_dir.xyz ) );
+				float4 col_org = g_txVolume_color.SampleLevel ( samRaycast, txCoord, 0);
+				float4 col = col_org * light_dir.w * angleAttn;
 
-			output = col;
+				output = col;
 
-			return output;
+				return output;
+			}
 		}
 		P_pre = P;
 		P += PStep;
@@ -398,7 +461,7 @@ float4 PS_Raycast(PS_INPUT input) : SV_Target
 
 	float3 currentPixPos;
 	
-	float dist_pre = g_txVolume.SampleLevel(samRaycast,P * ReversedTotalSize + 0.5,0).x * TruncDist;
+	float dist_pre = g_txVolume.SampleLevel(samRaycast,P * ReversedTotalSize + 0.5,0).x * TRUNC_DIST;
 	float dist_now;
 	
 	while ( t <= tfar ) {

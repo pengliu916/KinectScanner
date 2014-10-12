@@ -5,33 +5,37 @@
 #include "DXUTgui.h"
 
 #include "header.h"
-#include "MultiTexturePresenter.h"
+#include "TiledTextures.h"
 #include "FilteredPCL.h"
 #include "VolumeTSDF.h"
 #include "TSDFImages.h"
 #include "PoseEstimator.h"
-//hi
+#include "HistoPyramidMC.h"
+
+using namespace std::placeholders;
+
+// For generating debug info
+ID3D11Debug *d3dDebug = nullptr;
+
 CDXUTDialogResourceManager      g_DialogResourceManager;
 CDXUTTextHelper*                g_pTxtHelper = NULL;
 wchar_t                         g_debugLine1[100];
 wchar_t                         g_debugLine2[100];
 wchar_t                         g_debugLine3[100];
 
-MultiTexturePresenter           multiTexture = MultiTexturePresenter( 4, true, SUB_TEXTUREWIDTH, SUB_TEXTUREHEIGHT );
-FilteredPCL                     pointCloud = FilteredPCL();
-VolumeTSDF                      meshVolume  = VolumeTSDF( 0.0075f, 384, 384, 384);
+TiledTextures					multiTexture = TiledTextures();
+FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
+VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
-PoseEstimator                   poseEstimator = PoseEstimator();
-
+PoseEstimator                   poseEstimator = PoseEstimator(D_W,D_H);
+HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(&meshVolume);
 bool                            g_bFirstFrame = true;
 //--------------------------------------------------------------------------------------
 //Global Variables only for test purpose..... 
 //--------------------------------------------------------------------------------------
 
-float time=0.05;
-float fElpst;
-bool nextIteration=true;
-bool stepMode = false;
+bool g_bGetNextFrame = false;
+bool g_bStepMode = STEP_MODE;
 
 float norm ( XMVECTOR vector )
 {
@@ -48,8 +52,24 @@ HRESULT Initial()
     HRESULT hr = S_OK;
     V_RETURN( pointCloud.Initial() )
     V_RETURN( multiTexture.Initial() );
+	// Use TSDFImages's Generated RGBD
+	V_RETURN(poseEstimator.Initial(tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
+	// Use HistoPyramidMC's Generated RGBD
+	//V_RETURN(poseEstimator.Initial(histoPyraimdMC.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 
-    
+    multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
+	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H);
+	//multiTexture.AddTexture(&histoPyraimdMC.m_pGeneratedRGBDSRV[2], D_W, D_H);
+	multiTexture.AddTexture(&poseEstimator.m_pSumOfCoordSRV[0],D_W,D_H);
+	/*multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
+							nullptr,
+							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));*/
+	multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
+							std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
+							std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
+
     swprintf(g_debugLine1,100,L"Debug Line 1...");
     swprintf(g_debugLine2,100,L"Debug Line 2...");
     swprintf(g_debugLine3,100,L"Debug Line 3...");
@@ -109,18 +129,37 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( pointCloud.CreateResource( pd3dDevice ));
     V_RETURN( meshVolume.CreateResource(pd3dDevice,&pointCloud.m_TransformedPC));
     V_RETURN( tsdfImgs.CreateResource(pd3dDevice));
-    V_RETURN( poseEstimator.CreateResource(pd3dDevice,tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
-    V_RETURN( multiTexture.CreateResource( pd3dDevice, 
-        //poseEstimator.m_pSumOfCoordSRV,
-        poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,
-        &pointCloud.m_kinect.m_pColorSRV,
-        //poseEstimator.m_pTsdfTPC->ppMeshRGBZTexSRV,
-        //poseEstimator.m_pTsdfTPC->ppMeshNormalTexSRV,
-        &tsdfImgs.m_pFreeCamOutSRV,
-        &tsdfImgs.m_pKinectOutSRV[2]
-        //&pointCloud.m_bilateralFilter.m_pOutSRV
-        //&pointCloud.m_normalGenerator.m_pOutSRV 
-        ) );
+	V_RETURN(poseEstimator.CreateResource(pd3dDevice));
+	V_RETURN(histoPyraimdMC.CreateResource(pd3dDevice,meshVolume.m_pColVolumeSRV,meshVolume.m_pDWVolumeSRV));
+    V_RETURN( multiTexture.CreateResource( pd3dDevice) );
+
+	// Setup the debug layer
+	
+	if (SUCCEEDED(pd3dDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&d3dDebug)))
+	{
+		ID3D11InfoQueue *d3dInfoQueue = nullptr;
+		if (SUCCEEDED(d3dDebug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&d3dInfoQueue)))
+		{
+#ifdef _DEBUG
+			d3dInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+			d3dInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+#endif
+
+			D3D11_MESSAGE_ID hide[] =
+			{
+				D3D11_MESSAGE_ID_DEVICE_DRAW_VERTEX_BUFFER_TOO_SMALL,
+				// Add more message IDs here as needed
+			};
+
+			D3D11_INFO_QUEUE_FILTER filter;
+			memset(&filter, 0, sizeof(filter));
+			filter.DenyList.NumIDs = _countof(hide);
+			filter.DenyList.pIDList = hide;
+			d3dInfoQueue->AddStorageFilterEntries(&filter);
+			d3dInfoQueue->Release();
+		}
+		d3dDebug->Release();
+	}
     return S_OK;
 }
 
@@ -137,7 +176,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 
     V_RETURN( g_DialogResourceManager.OnD3D11ResizedSwapChain( pd3dDevice, pBackBufferSurfaceDesc ) );
 
-    multiTexture.Resize();
+	multiTexture.Resize(pd3dDevice, pBackBufferSurfaceDesc);
     poseEstimator.Resize(pd3dimmediateContext);
     SAFE_RELEASE(pd3dimmediateContext);
     return S_OK;
@@ -149,7 +188,12 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
-    tsdfImgs.Update(fElapsedTime);
+	// whether to get the next frame or not
+    if ( !g_bStepMode ) g_bGetNextFrame = true;
+
+	// Update the virtual cam of the model viewer of HistoPyramidMC
+	histoPyraimdMC.Update(fElapsedTime);
+	tsdfImgs.Update(fElapsedTime);
 }
 
 
@@ -159,77 +203,82 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext,
                                   double fTime, float fElapsedTime, void* pUserContext )
 {
-    pointCloud.SetupPipeline(pd3dImmediateContext);
-    pointCloud.Render(pd3dImmediateContext);
-    
-    /*tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
-    poseEstimator.Processing ( pd3dImmediateContext );
-    meshVolume.Integrate( pd3dImmediateContext );
-    tsdfImgs.GetRaycastImg( pd3dImmediateContext);*/
+    if ( g_bGetNextFrame ){
+        g_bGetNextFrame = false;
 
-    int iterationTime = 0;
+        bool bTracked = false;
 
-    if ( !stepMode ) nextIteration = true;
+		// Get new depth and color frmae from RGBD sensor
+		pointCloud.Render(pd3dImmediateContext);
 
-    if ( nextIteration ){
-        nextIteration = false;
-        bool tracked = false;
+		// Only run the algorithm if we get new data
         if ( pointCloud.m_bUpdated ){
-        //if ( true ){
-            XMFLOAT3 vRotate = XMFLOAT3 ( 0, 0, 0 );
-            XMFLOAT3 vTrans = XMFLOAT3 ( 0, 0, 0 );
-            XMVECTOR vectorR = XMLoadFloat3 ( &vRotate );
-            XMVECTOR vectorT = XMLoadFloat3 ( &vTrans );
+            XMVECTOR vectorR = XMVectorZero();
+			XMVECTOR vectorT = XMVectorZero();
 
-            iterationTime = 0;
+            int iIterationCount = 0;
 
-            do
-            {
-                pointCloud.m_TransformedPC.mModelM_pre = pointCloud.m_TransformedPC.mModelM_now;
-                pointCloud.m_TransformedPC.mModelM_r_pre = pointCloud.m_TransformedPC.mModelM_r_now;
+            do{
+                pointCloud.m_TransformedPC.mPreFrame = pointCloud.m_TransformedPC.mCurFrame;
+                pointCloud.m_TransformedPC.mPreRotation = pointCloud.m_TransformedPC.mCurRotation;
 
+				// Get RGBD and Normal data from TSDF with new pose 
                 tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
 
-                tracked = poseEstimator.Processing ( pd3dImmediateContext );
+				// Find transformation matrix, return false if can't find one
+                bTracked = poseEstimator.Processing ( pd3dImmediateContext );
 
-                if ( tracked ){
-                    pointCloud.m_TransformedPC.m_vRotate += poseEstimator.m_vIncRotate;
+                if ( bTracked ){
+					// Update the Sensor Pose info
+                    pointCloud.m_TransformedPC.vRotation += poseEstimator.m_vIncRotate;
                     XMMATRIX Ri = XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );  
-                    pointCloud.m_TransformedPC.m_vTrans = XMVector3Transform ( pointCloud.m_TransformedPC.m_vTrans, Ri ) + poseEstimator.m_vIncTran;
+                    pointCloud.m_TransformedPC.vTranslation = XMVector3Transform ( pointCloud.m_TransformedPC.vTranslation, Ri ) + poseEstimator.m_vIncTran;
 
-                    pointCloud.m_TransformedPC.mModelM_r_now *= XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );
-                    pointCloud.m_TransformedPC.mModelM_now = pointCloud.m_TransformedPC.mModelM_r_now * XMMatrixTranslationFromVector ( pointCloud.m_TransformedPC.m_vTrans );
+					// Apply the new Sensor Pose
+                    pointCloud.m_TransformedPC.mCurRotation *= XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );
+                    pointCloud.m_TransformedPC.mCurFrame = pointCloud.m_TransformedPC.mCurRotation * XMMatrixTranslationFromVector ( pointCloud.m_TransformedPC.vTranslation );
 
+					// Keep track of the incremental transformation for this data frame
                     vectorR += poseEstimator.m_vIncRotate;
                     vectorT += poseEstimator.m_vIncTran;
                 
-                    XMFLOAT3 r_overall;
-                    XMFLOAT3 t_overall;
-                    XMStoreFloat3 ( &r_overall, ( pointCloud.m_TransformedPC.m_vRotate ) * 180.0f / XM_PI );
-                    XMStoreFloat3 ( &t_overall, ( pointCloud.m_TransformedPC.m_vTrans ) * 100.0f );
-                    swprintf(g_debugLine1,100,L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f",L"tran:", t_overall.x, t_overall.y, t_overall.z);
-                    swprintf(g_debugLine2,100,L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f",L"rotate:", r_overall.x, r_overall.y, r_overall.z );
-
-                    iterationTime++; 
+					// Increase the iteration counter for termination condition checking
+                    iIterationCount++; 
                 }else if ( poseEstimator.m_bSigularMatrix ){
-                    //stepMode = true;
+                    //g_bStepMode = true;
                     swprintf(g_debugLine3,100,L"Track failed!!  Singular Matrix");
                 }
-            }while(tracked && iterationTime<15);//meshMatrixN.m_fError>=0.000000001);
-            if ( tracked ) {
+            }while(bTracked && iIterationCount<15);
+            if ( bTracked ) {
                 float rnorm = norm ( vectorR );
                 float tnorm = norm ( vectorT );
-                //pointCloud.m_TransformedPC.m_vRotate += vectorR;
-                //pointCloud.m_TransformedPC.m_vTrans = vectorT;
+
+				XMFLOAT3 r_overall;
+				XMFLOAT3 t_overall;
+				XMStoreFloat3(&r_overall, (pointCloud.m_TransformedPC.vRotation) * 180.0f / XM_PI);
+				XMStoreFloat3(&t_overall, (pointCloud.m_TransformedPC.vTranslation) * 100.0f);
+				swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", t_overall.x, t_overall.y, t_overall.z);
+				swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", r_overall.x, r_overall.y, r_overall.z);
+
                 swprintf(g_debugLine3,100,L"Track success  % 6.5f", tnorm + rnorm);
                 if (  rnorm + tnorm > 0.001f ) meshVolume.Integrate( pd3dImmediateContext );
             }
+			// If this is the first frame, then update the TSDF anyway
+			if(g_bFirstFrame){
+				g_bFirstFrame = false;
+				meshVolume.Integrate(pd3dImmediateContext);
+			}
         }
     }
-    if( stepMode ) tsdfImgs.GetRaycastImg( pd3dImmediateContext );
-    tsdfImgs.GetRaycastImg( pd3dImmediateContext);
 
+
+	// Render the in-process mesh
+	histoPyraimdMC.Render(pd3dImmediateContext,false);
+
+	// Render all sub texture to screen
     multiTexture.Render( pd3dImmediateContext );
+
+	// Render the text
     RenderText();
 }
 
@@ -240,6 +289,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 void CALLBACK OnD3D11ReleasingSwapChain( void* pUserContext )
 {
     g_DialogResourceManager.OnD3D11ReleasingSwapChain();
+	histoPyraimdMC.Release();
 }
 
 
@@ -254,12 +304,19 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     meshVolume.Release();
     poseEstimator.Release();
 
+	histoPyraimdMC.Destory();
 
     
     g_DialogResourceManager.OnD3D11DestroyDevice();
     CDXUTDirectionWidget::StaticOnD3D11DestroyDevice();
     DXUTGetGlobalResourceCache().OnDestroyDevice();
     SAFE_DELETE( g_pTxtHelper );
+
+	if (d3dDebug != nullptr)
+	{
+		d3dDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+		d3dDebug = nullptr;
+	}
 
 }
 
@@ -270,11 +327,11 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
 LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
                           bool* pbNoFurtherProcessing, void* pUserContext )
 {
+	tsdfImgs.HandleMessages(hWnd, uMsg, wParam, lParam);
     multiTexture.HandleMessages( hWnd, uMsg, wParam, lParam );
     pointCloud.HandleMessages( hWnd, uMsg, wParam, lParam );
     poseEstimator.HandleMessages( hWnd, uMsg, wParam, lParam );
-    meshVolume.HandleMessages( hWnd, uMsg, wParam, lParam );
-    tsdfImgs.HandleMessages( hWnd, uMsg, wParam, lParam );
+	meshVolume.HandleMessages(hWnd, uMsg, wParam, lParam);
     switch(uMsg)
     {
     case WM_KEYDOWN:
@@ -283,19 +340,19 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 
             if (nKey == 'O')
             {
-                stepMode=!stepMode;
-                if( stepMode )
+                g_bStepMode=!g_bStepMode;
+               /* if( g_bStepMode )
                 {
                     multiTexture.m_ppInputSRV[3] = &tsdfImgs.m_pFreeCamOutSRV;
                 }
                 else
                 {
                     multiTexture.m_ppInputSRV[3] = &tsdfImgs.m_pKinectOutSRV[2];
-                }
+                }*/
             }
             if (nKey == 'I')
             {
-                nextIteration=true;
+                g_bGetNextFrame=true;
             }
             break;
         }
@@ -368,7 +425,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
     Initial();
 
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0, true, 640, 480 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0, true, 1280, 800 );
     DXUTMainLoop(); // Enter into the DXUT ren  der loop
 
     // Perform any application-level cleanup here
