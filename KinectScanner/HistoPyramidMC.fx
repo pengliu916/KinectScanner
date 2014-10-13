@@ -587,22 +587,22 @@ void VolSliceGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, inou
 	SliceGS_OUT output;
 	output.SV_Pos = float4(-1.0f, 1.0f, 0.0f, 1.0f);
 	//output.VolCoord = float4(0, 0, vertexID, 0);
-	output.VolCoord = float4(-0.5, -0.5, vertexID, 0);
+	output.VolCoord = float4(0, 0, vertexID, 0);
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
 	output.SV_Pos = float4(-1.0f, -1.0f, 0.0f, 1.0f);
 	//output.VolCoord = float4(0, cb_i4RTReso.y, vertexID, 0);
-	output.VolCoord = float4(-0.5, cb_i4RTReso.y - 0.5, vertexID, 0);
+	output.VolCoord = float4(0, cb_i4RTReso.y, vertexID, 0);
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
 	output.SV_Pos = float4(1.0f, 1.0f, 0.0f, 1.0f);
 	//output.VolCoord = float4(cb_i4RTReso.x, 0, vertexID, 0);
-	output.VolCoord = float4(cb_i4RTReso.x - 0.5, -0.5, vertexID, 0);
+	output.VolCoord = float4(cb_i4RTReso.x, 0, vertexID, 0);
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
 	output.SV_Pos = float4(1.0f, -1.0f, 0.0f, 1.0f);
 	//output.VolCoord = float4(cb_i4RTReso.x, cb_i4RTReso.y , vertexID, 0);
-	output.VolCoord = float4(cb_i4RTReso.x - 0.5, cb_i4RTReso.y - 0.5, vertexID, 0);
+	output.VolCoord = float4(cb_i4RTReso.x, cb_i4RTReso.y, vertexID, 0);
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
 }
@@ -806,7 +806,7 @@ uint ReductionBasePS(SliceGS_OUT input) : SV_Target{
 	[unroll]
 	for (int i = 0; i < 8; i++){
 		// Here if I don't to half pixel deoffset, then after multiplication, my uv will be incorrect!!
-		int4 idx = input.VolCoord * 2 + float4(0.5, 0.5, 0.5, 0) + int4(cb_QuadrantOffset[i], 0);
+		int4 idx = (input.VolCoord - float4( 0.5, 0.5, 0, 0)) * 2 + float4(0.5, 0.5, 0.5, 0) + int4(cb_QuadrantOffset[i], 0);
 			sum += g_txHPLayer.Load(idx) == 0 ? 0 : 1;
 		//sum += g_txHPLayer.Load(int4(input.VolCoord * 2), cb_QuadrantOffset[i]) == 0 ? 1 : 1;
 	}
@@ -818,7 +818,7 @@ uint ReductionPS(SliceGS_OUT input) : SV_Target{
 	[unroll]
 	for (int i = 0; i < 8; i++){
 		// Here if I don't to half pixel deoffset, then after multiplication, my uv will be incorrect!!
-		int4 idx = input.VolCoord * 2 + float4(0.5, 0.5, 0.5, 0) + int4(cb_QuadrantOffset[i], 0);
+		int4 idx = (input.VolCoord - float4(0.5, 0.5, 0, 0)) * 2 + float4(0.5, 0.5, 0.5, 0) + int4(cb_QuadrantOffset[i], 0);
 			sum += g_txHPLayer.Load(idx);;
 		//sum += g_txHPLayer.Load( int4(input.VolCoord*2), cb_QuadrantOffset[i] );
 	}
