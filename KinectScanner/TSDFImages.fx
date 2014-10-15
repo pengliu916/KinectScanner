@@ -7,7 +7,7 @@ SamplerState samRaycast : register(s0);
 
 // Phong shading variable
 static const float4 light_offset = float4 ( 0.0f, 0.10f, 0.0f, 0.0f );
-static const float4 ambient = float4 ( 0.3f, 0.3f, 0.3f, 1.0f );
+static const float4 ambient = float4 ( 0.1f, 0.1f, 0.1f, 1.0f );
 static const float4 light_attenuation = float4 ( 1, 0, 0, 0 );
 
 //static const float KinectFTRpos_x = DEPTH_WIDTH * XSCALE * 0.5f; // Top right conner x_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
@@ -416,7 +416,7 @@ float4 PS_FreeView(PS_INPUT input) : SV_Target
 													 light_attenuation.z * light_dist * light_dist ) );
 				float angleAttn = clamp ( 0, 1, dot ( normal, light_dir.xyz ) );
 				float4 col_org = g_txVolume_color.SampleLevel ( samRaycast, txCoord, 0);
-				float4 col = col_org * light_dir.w * angleAttn;
+				float4 col = col_org * light_dir.w * angleAttn + ambient;
 
 				output = col;
 

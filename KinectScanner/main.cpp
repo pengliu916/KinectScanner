@@ -33,8 +33,8 @@ HRESULT Initial()
     V_RETURN( pointCloud.Initial() )
     V_RETURN( multiTexture.Initial() );
 	//multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
+	multiTexture.AddTexture(pointCloud.m_TransformedPC.ppMeshNormalTexSRV, D_W, D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
-	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H);
 	multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
 							nullptr,
 							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));

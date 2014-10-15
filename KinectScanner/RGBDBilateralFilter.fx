@@ -106,6 +106,6 @@ float4 PS_Bilateral_Filter_H(PS_INPUT input) : SV_Target
 	//return Color/Weight;
 
 	int2 location = input.Tex.xy - reso / 2.f;
-	if( dot(location,location) < 2000 ) return float4(1,1,1,0.8);
-	else return float4(1,1,1,1.5);
+	float depth = 1.5 - abs(location.x)/500.f;// - location.y;
+	return float4(1,1,1,depth);
 }

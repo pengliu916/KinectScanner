@@ -45,7 +45,7 @@ Texture3D<uint> g_txHP9 : register(t12);
 
 // Phong shading variable
 static const float4 light_offset = float4 (0.0f, 0.0f, 0.0f, 0.0f);
-static const float4 ambient = float4 (0.3f, 0.3f, 0.3f, 1.0f);
+static const float4 ambient = float4 (0.1f, 0.1f, 0.1f, 1.0f);
 static const float4 light_attenuation = float4 (1, 0, 0, 0);
 //--------------------------------------------------------------------------------------
 // Buffers
@@ -869,7 +869,7 @@ float4 RenderPS(ShadingPS_IN input) : SV_Target
 		light_attenuation.y * light_dist +
 		light_attenuation.z * light_dist * light_dist));
 	float angleAttn = clamp(0, 1, dot(-input.Nor, light_dir.xyz));
-	float3 col = color * light_dir.w * angleAttn;
+	float3 col = color * light_dir.w * angleAttn + 8*ambient;
 
 	return float4(col,1);
 }
