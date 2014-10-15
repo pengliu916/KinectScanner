@@ -63,28 +63,23 @@ float4 PS(PS_INPUT input) : SV_Target
 	 PS_INPUT output;
 
     // texture load location for the pixel we're on 
-	float4 point0 =  txRGBZ.Load(int3(input.Tex,0),0);
-    if (point0.a < range.x || point0.a > range.y)
+	float4 data0 =  txRGBZ.Load(int3(input.Tex,0),0);
+    if (data0.a < range.x || data0.a > range.y)
        return float4(0,0,0,-1);
 
-	float4 point1 =  txRGBZ.Load(int3(input.Tex,0),int2(1,0));
-    if (point1.a < range.x || point1.a > range.y)
+	float4 data1 =  txRGBZ.Load(int3(input.Tex,0),int2(1,0));
+    if (data1.a < range.x || data1.a > range.y)
        return float4(0,0,0,-1);
 
-	float4 point2 =  txRGBZ.Load(int3(input.Tex,0),int2(0,1));
-    if (point2.a < range.x|| point2.a > range.y)
+	float4 data2 =  txRGBZ.Load(int3(input.Tex,0),int2(0,1));
+    if (data2.a < range.x|| data2.a > range.y)
        return float4(0,0,0,-1);
    
     // convert x and y lookup coords to world space meters
-    point0.xy = (input.Tex - c) / f * point0.a;
-    point0.z = point0.a;
-    point0.w = 1.0;
-	point1.xy = (input.Tex + int2(1,0) - c) / f * point1.a;
-    point1.z = point1.a;
-    point1.w = 1.0;
-	point2.xy = (input.Tex + int2(0,1) - c) / f * point2.a;
-    point2.z = point2.a;
-    point2.w = 1.0;
+	float4 point0 = float4((input.Tex - c) / f * data0.a, data0.a, 1.f);
+	float4 point1 = float4((input.Tex + float2(1,0) - c) / f * data1.a, data1.a, 1.f);
+	float4 point2 = float4((input.Tex + float2(0,1) - c) / f * data2.a, data2.a, 1.f);
+   
 
 	float3 u = point1.xyz-point0.xyz;
 	float3 v = point2.xyz-point0.xyz;
