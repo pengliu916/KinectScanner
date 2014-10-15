@@ -104,4 +104,8 @@ float4 PS_Bilateral_Filter_H(PS_INPUT input) : SV_Target
 		Weight += range*filter[i+3];
 	}
 	return Color/Weight;
+
+	/*int2 location = input.Tex.xy - reso / 2.f;
+	if( dot(location,location) < 1 ) return float4(1,1,1,0.8);
+	else return float4(1,1,1,1.5);*/
 }

@@ -77,7 +77,8 @@ public:
 
 
 		m_TransformedPC.ppMeshRGBZTexSRV = &m_pBilteralFilter->m_pOutSRV;
-		m_TransformedPC.ppMeshRawRGBZTexSRV = m_ppRGBDSRV;
+		//m_TransformedPC.ppMeshRawRGBZTexSRV = m_ppRGBDSRV;
+		m_TransformedPC.ppMeshRawRGBZTexSRV = &m_pBilteralFilter->m_pOutSRV;
 		m_TransformedPC.ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
         return hr;
     }
