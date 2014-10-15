@@ -449,8 +449,8 @@ PosColGS_OUT InterSec(VertexInfoNoNor Data0, VertexInfoNoNor Data1){
 float3 CalNormal(float3 txCoord){// Compute the normal from gradient
 	float depth_dx = g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (1, 0, 0)).x -
 		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (-1, 0, 0)).x;
-	float depth_dy = g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, 1, 0)).x -
-		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, -1, 0)).x;
+	float depth_dy = g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, -1, 0)).x -
+		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, 1, 0)).x;
 	float depth_dz = g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, 0, 1)).x -
 		g_txDensityVol.SampleLevel(g_samLinear, txCoord, 0, int3 (0, 0, -1)).x;
 	return -normalize(float3 (depth_dx, depth_dy, depth_dz));
@@ -459,10 +459,10 @@ float3 CalNormal(float3 txCoord){// Compute the normal from gradient
 
 void PosInNextLevel(Texture3D<uint> txHPLevel, uint key_idx, inout uint4 p){// p.xyz is current pos, p.w is the sum
 	int4 idx = int4(p.xyz * 2, 0);
-		// Once we move to the next pyramid level, one texel in the previous level becomes 8 texels,
-		// Here we get the corresponding 8 texels' value from the idx pos in previous level 
-		uint4 frontNeighbor = uint4(txHPLevel.Load(idx, int3(0, 0, 0)), txHPLevel.Load(idx, int3(1, 0, 0)),
-		txHPLevel.Load(idx, int3(0, 1, 0)), txHPLevel.Load(idx, int3(1, 1, 0)));
+	// Once we move to the next pyramid level, one texel in the previous level becomes 8 texels,
+	// Here we get the corresponding 8 texels' value from the idx pos in previous level 
+	uint4 frontNeighbor = uint4(txHPLevel.Load(idx, int3(0, 0, 0)), txHPLevel.Load(idx, int3(1, 0, 0)),
+								txHPLevel.Load(idx, int3(0, 1, 0)), txHPLevel.Load(idx, int3(1, 1, 0)));
 	uint4 backNeighbor = uint4(txHPLevel.Load(idx, int3(0, 0, 1)), txHPLevel.Load(idx, int3(1, 0, 1)),
 							   txHPLevel.Load(idx, int3(0, 1, 1)), txHPLevel.Load(idx, int3(1, 1, 1)));
 
@@ -564,12 +564,12 @@ void VolSliceNorGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, i
 	output.VolCoord = float4(0.0f, 0.0f, ((float)vertexID + 0.5) / cb_f4HPMCInfo.z, 0);// the half pix offset still exist when access texture3D(only z)
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
-	output.SV_Pos = float4(-1.0f, -1.0f, 0.0f, 1.0f);
-	output.VolCoord = float4(0.0f, 1.0f, ((float)vertexID + 0.5) / cb_f4HPMCInfo.z, 0);
-	output.SliceIdx = vertexID;
-	triStream.Append(output);
 	output.SV_Pos = float4(1.0f, 1.0f, 0.0f, 1.0f);
 	output.VolCoord = float4(1.0f, 0.0f, ((float)vertexID + 0.5) / cb_f4HPMCInfo.z, 0);
+	output.SliceIdx = vertexID;
+	triStream.Append(output);
+	output.SV_Pos = float4(-1.0f, -1.0f, 0.0f, 1.0f);
+	output.VolCoord = float4(0.0f, 1.0f, ((float)vertexID + 0.5) / cb_f4HPMCInfo.z, 0);
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
 	output.SV_Pos = float4(1.0f, -1.0f, 0.0f, 1.0f);
@@ -587,22 +587,22 @@ void VolSliceGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, inou
 	SliceGS_OUT output;
 	output.SV_Pos = float4(-1.0f, 1.0f, 0.0f, 1.0f);
 	//output.VolCoord = float4(0, 0, vertexID, 0);
-	output.VolCoord = float4(-0.5, -0.5, vertexID, 0);
-	output.SliceIdx = vertexID;
-	triStream.Append(output);
-	output.SV_Pos = float4(-1.0f, -1.0f, 0.0f, 1.0f);
-	//output.VolCoord = float4(0, cb_i4RTReso.y, vertexID, 0);
-	output.VolCoord = float4(-0.5, cb_i4RTReso.y - 0.5, vertexID, 0);
+	output.VolCoord = float4(0, 0, vertexID, 0);
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
 	output.SV_Pos = float4(1.0f, 1.0f, 0.0f, 1.0f);
 	//output.VolCoord = float4(cb_i4RTReso.x, 0, vertexID, 0);
-	output.VolCoord = float4(cb_i4RTReso.x - 0.5, -0.5, vertexID, 0);
+	output.VolCoord = float4(cb_i4RTReso.x, 0, vertexID, 0);
+	output.SliceIdx = vertexID;
+	triStream.Append(output);
+	output.SV_Pos = float4(-1.0f, -1.0f, 0.0f, 1.0f);
+	//output.VolCoord = float4(0, cb_i4RTReso.y, vertexID, 0);
+	output.VolCoord = float4(0, cb_i4RTReso.y, vertexID, 0);
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
 	output.SV_Pos = float4(1.0f, -1.0f, 0.0f, 1.0f);
 	//output.VolCoord = float4(cb_i4RTReso.x, cb_i4RTReso.y , vertexID, 0);
-	output.VolCoord = float4(cb_i4RTReso.x - 0.5, cb_i4RTReso.y - 0.5, vertexID, 0);
+	output.VolCoord = float4(cb_i4RTReso.x, cb_i4RTReso.y, vertexID, 0);
 	output.SliceIdx = vertexID;
 	triStream.Append(output);
 }
@@ -652,6 +652,7 @@ void TraversalGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, ino
 	float3 halfCube = 0.5f / cb_f4VolInfo.xyz;
 	[unroll] for (int j = 0; j < 8; ++j){
 		float3 idx = volTexCoord + halfCube * cb_halfCubeOffset[j];
+		idx.y = 1.f - idx.y; // Convert from volume space to texture space
 		fieldData[j].xyz = g_txColorVol.SampleLevel(g_samLinear, idx, 0).xyz;	// Color
 		fieldData[j].w = g_txDensityVol.SampleLevel(g_samLinear, idx, 0).x * TRUNC_DIST; // Density
 		if (abs(fieldData[j].w - INVALID_VALUE* TRUNC_DIST) < 1e-6) return;
@@ -675,7 +676,7 @@ void TraversalGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, ino
 		v1.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.y];
 		triStream.Append(CalIntersectionVertex(v0, v1));
 
-		endPoints = cb_edgeTable[edges.z];
+		endPoints = cb_edgeTable[edges.y];
 		v0.Field = fieldData[endPoints.x];
 		v0.Nor = fieldNormal[endPoints.x];
 		v0.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.x];
@@ -684,7 +685,7 @@ void TraversalGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveID, ino
 		v1.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.y];
 		triStream.Append(CalIntersectionVertex(v0, v1));
 
-		endPoints = cb_edgeTable[edges.y];
+		endPoints = cb_edgeTable[edges.z];
 		v0.Field = fieldData[endPoints.x];
 		v0.Nor = fieldNormal[endPoints.x];
 		v0.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.x];
@@ -743,6 +744,7 @@ void TraversalAndOutGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveI
 	float3 halfCube = 0.5f / cb_f4VolInfo.xyz;
 	[unroll] for (int j = 0; j < 8; ++j){
 		float3 idx = volTexCoord + halfCube * cb_halfCubeOffset[j];
+		idx.y = 1.f - idx.y;// Convert from volume space to texture space
 		fieldData[j].xyz = g_txColorVol.SampleLevel(g_samLinear, idx, 0).xyz;	// Color
 		fieldData[j].w = g_txDensityVol.SampleLevel(g_samLinear, idx, 0).x* TRUNC_DIST; // Density
 		if (abs(fieldData[j].w - INVALID_VALUE * TRUNC_DIST) < 1e-8) return;
@@ -763,14 +765,14 @@ void TraversalAndOutGS(point PassVS_OUT vertex[1], uint vertexID : SV_PrimitiveI
 		v1.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.y];
 		triStream.Append(InterSec(v0, v1));
 
-		endPoints = cb_edgeTable[edges.z];
+		endPoints = cb_edgeTable[edges.y];
 		v0.Field = fieldData[endPoints.x];
 		v0.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.x];
 		v1.Field = fieldData[endPoints.y];
 		v1.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.y];
 		triStream.Append(InterSec(v0, v1));
 
-		endPoints = cb_edgeTable[edges.y];
+		endPoints = cb_edgeTable[edges.z];
 		v0.Field = fieldData[endPoints.x];
 		v0.Pos = pos + cb_f4HPMCInfo.w * 0.5f * cb_halfCubeOffset[endPoints.x];
 		v1.Field = fieldData[endPoints.y];
@@ -790,7 +792,9 @@ uint HPMCBasePS(SliceGS_OUT input) : SV_Target{
 	float3 halfCube = 0.5 / cb_f4VolInfo.xyz;
 		[unroll]
 	for (int i = 0; i < 8; ++i){
-		fieldData[i].w = g_txDensityVol.Sample(g_samLinear, input.VolCoord.xyz + halfCube * cb_halfCubeOffset[i]).x;
+		float3 uv = input.VolCoord.xyz + halfCube * cb_halfCubeOffset[i];
+		uv.y = 1.f - uv.y;
+		fieldData[i].w = g_txDensityVol.Sample(g_samLinear, uv).x;
 	}
 	uint caseIdx = (uint(fieldData[7].w > cb_f4VolInfo.w) << 7) | (uint(fieldData[6].w > cb_f4VolInfo.w) << 6) |
 		(uint(fieldData[5].w > cb_f4VolInfo.w) << 5) | (uint(fieldData[4].w > cb_f4VolInfo.w) << 4) |
@@ -806,7 +810,7 @@ uint ReductionBasePS(SliceGS_OUT input) : SV_Target{
 	[unroll]
 	for (int i = 0; i < 8; i++){
 		// Here if I don't to half pixel deoffset, then after multiplication, my uv will be incorrect!!
-		int4 idx = input.VolCoord * 2 + float4(0.5, 0.5, 0.5, 0) + int4(cb_QuadrantOffset[i], 0);
+		int4 idx = (input.VolCoord - float4( 0.5, 0.5, 0, 0)) * 2 + float4(0.5, 0.5, 0.5, 0) + int4(cb_QuadrantOffset[i], 0);
 			sum += g_txHPLayer.Load(idx) == 0 ? 0 : 1;
 		//sum += g_txHPLayer.Load(int4(input.VolCoord * 2), cb_QuadrantOffset[i]) == 0 ? 1 : 1;
 	}
@@ -818,7 +822,7 @@ uint ReductionPS(SliceGS_OUT input) : SV_Target{
 	[unroll]
 	for (int i = 0; i < 8; i++){
 		// Here if I don't to half pixel deoffset, then after multiplication, my uv will be incorrect!!
-		int4 idx = input.VolCoord * 2 + float4(0.5, 0.5, 0.5, 0) + int4(cb_QuadrantOffset[i], 0);
+		int4 idx = (input.VolCoord - float4(0.5, 0.5, 0, 0)) * 2 + float4(0.5, 0.5, 0.5, 0) + int4(cb_QuadrantOffset[i], 0);
 			sum += g_txHPLayer.Load(idx);;
 		//sum += g_txHPLayer.Load( int4(input.VolCoord*2), cb_QuadrantOffset[i] );
 	}
