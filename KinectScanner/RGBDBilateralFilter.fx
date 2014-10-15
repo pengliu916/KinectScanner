@@ -85,27 +85,27 @@ float4 PS_Bilateral_Filter_V(PS_INPUT input) : SV_Target
 
 float4 PS_Bilateral_Filter_H(PS_INPUT input) : SV_Target
 {
-	int3 currentLocation = int3(input.Tex.xy,0);
-	// Mirror the input data
-	//currentLocation.x = reso.x - currentLocation.x;
-	float4 centerColor = inputTex.Load(currentLocation);
+	//int3 currentLocation = int3(input.Tex.xy,0);
+	//// Mirror the input data
+	////currentLocation.x = reso.x - currentLocation.x;
+	//float4 centerColor = inputTex.Load(currentLocation);
 
-	const float rsigma = 0.051f;
-	float4 Color = 0.0f;
-	float4 Weight = 0.0f;
+	//const float rsigma = 0.051f;
+	//float4 Color = 0.0f;
+	//float4 Weight = 0.0f;
 
-	[unroll]
-	for(int i = -3; i <= 3; ++i)
-	{
-		float4 sampleColor = inputTex.Load(currentLocation,int2(i,0));
-		float4 delta = centerColor - sampleColor;
-		float4 range = exp((-1.0f*delta*delta)/(2.0f*rsigma*rsigma));
-		Color += sampleColor*range*filter[i+3];
-		Weight += range*filter[i+3];
-	}
-	return Color/Weight;
+	//[unroll]
+	//for(int i = -3; i <= 3; ++i)
+	//{
+	//	float4 sampleColor = inputTex.Load(currentLocation,int2(i,0));
+	//	float4 delta = centerColor - sampleColor;
+	//	float4 range = exp((-1.0f*delta*delta)/(2.0f*rsigma*rsigma));
+	//	Color += sampleColor*range*filter[i+3];
+	//	Weight += range*filter[i+3];
+	//}
+	//return Color/Weight;
 
-	/*int2 location = input.Tex.xy - reso / 2.f;
-	if( dot(location,location) < 1 ) return float4(1,1,1,0.8);
-	else return float4(1,1,1,1.5);*/
+	int2 location = input.Tex.xy - reso / 2.f;
+	if( dot(location,location) < 2000 ) return float4(1,1,1,0.8);
+	else return float4(1,1,1,1.5);
 }

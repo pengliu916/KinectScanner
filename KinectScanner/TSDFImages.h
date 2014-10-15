@@ -252,22 +252,22 @@ public:
 		m_cKinectViewport.MaxDepth = 1.0f;
 		m_cKinectViewport.TopLeftX = 0;
 		m_cKinectViewport.TopLeftY = 0;
-
-		// Setup the camera's projection parameters
-		float fAspectRatio = m_uRTwidth / ( FLOAT )m_uRTheight;
-		m_cCamera.SetProjParams( XM_PI / 4, fAspectRatio, 0.01f, 10.0f );
-		m_cCamera.SetWindow(m_uRTwidth,m_uRTheight );
-		m_cCamera.SetButtonMasks( MOUSE_MIDDLE_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON );
-
 		m_pNormalGenerator->CreateResource( pd3dDevice, &m_pKinectOutSRV[0] );
 
 
 		ID3D11DeviceContext* pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 		pd3dImmediateContext->UpdateSubresource( m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0 );
 
-		XMVECTORF32 vecEye = { 0.0f, 0.0f, -3.0f };
+		XMVECTORF32 vecEye = { 0.0f, 0.0f, -2.0f };
 		XMVECTORF32 vecAt = { 0.0f, 0.0f, -0.0f };
 		m_cCamera.SetViewParams( vecEye, vecAt );
+
+		// Setup the camera's projection parameters
+		float fAspectRatio = m_uRTwidth / ( FLOAT )m_uRTheight;
+		m_cCamera.SetProjParams( XM_PI / 180.f * 70.f, fAspectRatio, 0.1f, 20.0f );
+		m_cCamera.SetWindow(m_uRTwidth,m_uRTheight );
+		m_cCamera.SetButtonMasks( MOUSE_MIDDLE_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON );
+		m_cCamera.SetRadius(2.f, 0.1f,10.f);
 
 		return hr;
 	}

@@ -197,19 +197,6 @@ public:
 		UNREFERENCED_PARAMETER( lParam );
 		UNREFERENCED_PARAMETER( hWnd );
 
-		switch( uMsg )
-		{
-		case WM_KEYDOWN:
-		{
-			int nKey = static_cast< int >( wParam );
-			if( nKey == 'F' )
-			{
-				this->m_bWorking = !this->m_bWorking;
-			}
-			break;
-		}
-		}
-
 		return 0;
 	}
 };

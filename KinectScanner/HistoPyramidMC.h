@@ -483,6 +483,7 @@ public:
 		m_Camera.SetProjParams(XM_PI / 180.f*70.f, fAspectRatio, 0.1f, 20.0f);
 		m_Camera.SetWindow(iWidth, iHeight);
 		m_Camera.SetButtonMasks(MOUSE_MIDDLE_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON);
+		m_Camera.SetRadius(2.f, 0.1f, 10.f);
 
 		m_Viewport.Width = (float)iWidth;
 		m_Viewport.Height = (float)iHeight;
