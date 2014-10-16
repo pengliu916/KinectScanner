@@ -842,11 +842,11 @@ PS_3_OUT GenerateRGBDPS(ShadingPS_IN input) : SV_Target
 	float4 light_dir = light_pos - input.Pos_o;
 	float light_dist = length(light_dir);
 	light_dir /= light_dist;
-	light_dir.w = clamp(0, 1, 1.0f / (light_attenuation.x +
-		light_attenuation.y * light_dist +
-		light_attenuation.z * light_dist * light_dist));
-	float angleAttn = clamp(0, 1, dot(-input.Nor, light_dir.xyz));
-	float3 col = color * light_dir.w * angleAttn;
+	light_dir.w = clamp(1.0f / (light_attenuation.x +
+						light_attenuation.y * light_dist +
+						light_attenuation.z * light_dist * light_dist), 0, 1);
+	float angleAttn = clamp(dot(-input.Nor, light_dir.xyz), 0, 1 );
+	float3 col = color * light_dir.w * angleAttn + ambient;
 	
 	output.Normal = float4(input.Nor*0.5 + 0.5,1);
 	output.Depth = float4(input.Col.rgb, input.Pos_o.z); 
@@ -865,11 +865,11 @@ float4 RenderPS(ShadingPS_IN input) : SV_Target
 	float4 light_dir = light_pos - input.Pos_o;
 	float light_dist = length(light_dir);
 	light_dir /= light_dist;
-	light_dir.w = clamp(0, 1, 1.0f / (light_attenuation.x +
-		light_attenuation.y * light_dist +
-		light_attenuation.z * light_dist * light_dist));
-	float angleAttn = clamp(0, 1, dot(-input.Nor, light_dir.xyz));
-	float3 col = color * light_dir.w * angleAttn + 8*ambient;
+	light_dir.w = clamp(1.0f / (light_attenuation.x +
+						light_attenuation.y * light_dist +
+						light_attenuation.z * light_dist * light_dist), 0, 1);
+	float angleAttn = clamp(dot(-input.Nor, light_dir.xyz), 0, 1);
+	float3 col = color * light_dir.w * angleAttn + ambient;
 
 	return float4(col,1);
 }
