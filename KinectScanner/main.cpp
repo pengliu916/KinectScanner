@@ -34,8 +34,9 @@ HRESULT Initial()
     V_RETURN( multiTexture.Initial() );
 	//multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
 	multiTexture.AddTexture(pointCloud.m_TransformedPC.ppMeshNormalTexSRV, D_W, D_H);
-	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
-	multiTexture.AddTexture(&tsdfImgs.m_pKinectOutSRV[1], D_W, D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H); // Normal map from normal generated 
+	multiTexture.AddTexture(&tsdfImgs.m_pKinectOutSRV[1], D_W, D_H); // Normal map from TSDF
+	multiTexture.AddTexture(NULL,D_W,D_H,"return abs(textures_1.Sample(samColor,input.Tex) - textures_2.Sample(samColor,input.Tex))*4.f;");
 	multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
 							nullptr,
 							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));
