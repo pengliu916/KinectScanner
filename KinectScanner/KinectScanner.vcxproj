@@ -306,16 +306,17 @@
     <ClCompile Include="rply.c" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="BilateralFilter_Blurriness.fx" />
     <FxCompile Include="HistoPyramidMC.fx" />
     <FxCompile Include="NormalGenerator.fx" />
     <FxCompile Include="PoseEstimator.fx" />
     <FxCompile Include="RayCast.fx" />
     <FxCompile Include="Reduction.fx" />
-    <FxCompile Include="RGBDBilateralFilter.fx" />
     <FxCompile Include="TSDFImages.fx" />
     <FxCompile Include="VolumeTSDF.fx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BilateralFilter_Blurriness.h" />
     <ClInclude Include="FilteredPCL.h" />
     <ClInclude Include="header.h" />
     <ClInclude Include="HistoPyramidMC.h" />
@@ -325,7 +326,6 @@
     <ClInclude Include="PoseEstimator.h" />
     <ClInclude Include="RayCast.h" />
     <ClInclude Include="Reduction.h" />
-    <ClInclude Include="RGBDBilateralFilter.h" />
     <ClInclude Include="Scanner.h" />
     <ClInclude Include="TransPCLs.h" />
     <ClInclude Include="TSDFImages.h" />

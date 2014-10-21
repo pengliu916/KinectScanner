@@ -11,7 +11,7 @@
 #include "header.h"
 
 #include "TransPCLs.h"
-#include "RGBDBilateralFilter.h"
+#include "BilateralFilter_Blurriness.h"
 #include "NormalGenerator.h"
 
 #include "RGBDStreamDLL\IRGBDStreamForDirectX.h"
@@ -26,7 +26,7 @@ public:
 	ID3D11ShaderResourceView**		m_ppRGBDSRV;
 
     IRGBDStreamForDirectX*          m_kinect;
-    RGBDBilateralFilter*			m_pBilteralFilter;
+    BilateralFilter_Blurriness*			m_pBilteralFilter;
     NormalGenerator*				m_pNormalGenerator;
 
     TransformedPointClould			m_TransformedPC;
@@ -43,7 +43,7 @@ public:
         m_uRTwidth = width;
         m_uRTheight = height;
 
-		m_pBilteralFilter = new RGBDBilateralFilter(width,height);
+		m_pBilteralFilter = new BilateralFilter_Blurriness(width,height);
 		m_pNormalGenerator = new NormalGenerator(width,height);
 #if USING_KINECT
 #if KINECT2
