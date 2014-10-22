@@ -117,8 +117,8 @@ public:
 		m_pNormalGenerator = new NormalGenerator();
 		
 		m_pGeneratedTPC->ppMeshRGBZTexSRV = &m_pKinectOutSRV[0];
-		//m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pKinectOutSRV[1];
-		m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
+		m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pKinectOutSRV[1];
+		//m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
 	}
 
 	HRESULT CreateResource( ID3D11Device* pd3dDevice )

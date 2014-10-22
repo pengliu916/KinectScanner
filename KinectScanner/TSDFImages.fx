@@ -315,7 +315,7 @@ PS_3_OUT PS_KinectView(PS_INPUT input) : SV_Target
 									g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, -1 ) ).x;*/
 
 				//float3 normal = float3(1,0,0);
-				float3 normal = normalize(float3 (depth_dx, depth_dy, depth_dz));
+				float3 normal = normalize(mul(float3 (depth_dx, depth_dy, depth_dz),KinectView));
 
 
 				// shading part
