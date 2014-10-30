@@ -315,17 +315,17 @@ PS_3_OUT PS_KinectView(PS_INPUT input) : SV_Target
 									g_txVolume.SampleLevel ( samRaycast, txCoord, 0, int3 ( 0, 0, -1 ) ).x;*/
 
 				//float3 normal = float3(1,0,0);
-				float3 normal = normalize(float3 (depth_dx, depth_dy, depth_dz));
+				float3 normal = normalize(mul(float3 (depth_dx, depth_dy, depth_dz),KinectView));
 
 
 				// shading part
 				float4 light_dir = light_pos - float4 ( currentPixPos, 1 );
 				float light_dist = length ( light_dir );
 				light_dir /= light_dist;
-				light_dir.w = clamp ( 0, 1, 1.0f / ( light_attenuation.x + 
-													 light_attenuation.y * light_dist + 
-													 light_attenuation.z * light_dist * light_dist ) );
-				float angleAttn = clamp ( 0, 1, dot ( normal, light_dir.xyz ) );
+				light_dir.w = clamp ( 1.0f / ( light_attenuation.x + 
+									 light_attenuation.y * light_dist + 
+									 light_attenuation.z * light_dist * light_dist ), 0, 1 );
+				float angleAttn = clamp ( dot ( normal, light_dir.xyz ), 0, 1 );
 				float4 col_org = g_txVolume_color.SampleLevel ( samRaycast, txCoord, 0);
 				float4 col = col_org * light_dir.w * angleAttn;
 
@@ -411,10 +411,10 @@ float4 PS_FreeView(PS_INPUT input) : SV_Target
 				float4 light_dir = light_pos - float4 ( currentPixPos, 1 );
 				float light_dist = length ( light_dir );
 				light_dir /= light_dist;
-				light_dir.w = clamp ( 0, 1, 1.0f / ( light_attenuation.x + 
-													 light_attenuation.y * light_dist + 
-													 light_attenuation.z * light_dist * light_dist ) );
-				float angleAttn = clamp ( 0, 1, dot ( normal, light_dir.xyz ) );
+				light_dir.w = clamp ( 1.0f / ( light_attenuation.x + 
+									light_attenuation.y * light_dist + 
+									light_attenuation.z * light_dist * light_dist ), 0, 1 );
+				float angleAttn = clamp ( dot ( normal, light_dir.xyz ), 0, 1 );
 				float4 col_org = g_txVolume_color.SampleLevel ( samRaycast, txCoord, 0);
 				float4 col = col_org * light_dir.w * angleAttn;
 

@@ -11,8 +11,8 @@
     <FxCompile Include="TSDFImages.fx" />
     <FxCompile Include="Reduction.fx" />
     <FxCompile Include="PoseEstimator.fx" />
-    <FxCompile Include="RGBDBilateralFilter.fx" />
     <FxCompile Include="HistoPyramidMC.fx" />
+    <FxCompile Include="BilateralFilter_Blurriness.fx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FilteredPCL.h" />
@@ -24,13 +24,13 @@
     <ClInclude Include="TSDFImages.h" />
     <ClInclude Include="Reduction.h" />
     <ClInclude Include="PoseEstimator.h" />
-    <ClInclude Include="RGBDBilateralFilter.h" />
     <ClInclude Include="Scanner.h">
       <Filter>NotInUse</Filter>
     </ClInclude>
     <ClInclude Include="TiledTextures.h" />
     <ClInclude Include="HistoPyramidMC.h" />
     <ClInclude Include="rply.h" />
+    <ClInclude Include="BilateralFilter_Blurriness.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="D3DX_DXGIFormatConvert.inl" />

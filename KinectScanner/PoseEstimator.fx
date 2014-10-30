@@ -74,12 +74,12 @@ void GS(point GS_INPUT particles[1], inout TriangleStream<PS_INPUT> triStream)
 	output.Tex=float2(0.0f,0.0f);
 	triStream.Append(output);
 
-	output.Pos=float4(-1.0f,-1.0f,0.0f,1.0f);
-	output.Tex=float2(0.0f,compressed.y);
-	triStream.Append(output);
-
 	output.Pos=float4(1.0f,1.0f,0.0f,1.0f);
 	output.Tex=float2(compressed.x,0.0f);
+	triStream.Append(output);
+
+	output.Pos=float4(-1.0f,-1.0f,0.0f,1.0f);
+	output.Tex=float2(0.0f,compressed.y);
 	triStream.Append(output);
 
 	output.Pos=float4(1.0f,-1.0f,0.0f,1.0f);

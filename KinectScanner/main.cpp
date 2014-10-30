@@ -57,15 +57,10 @@ HRESULT Initial()
 	// Use HistoPyramidMC's Generated RGBD
 	//V_RETURN(poseEstimator.Initial(histoPyraimdMC.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 
-    multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
 	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H); 
+    multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
-	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H);
-	//multiTexture.AddTexture(&histoPyraimdMC.m_pGeneratedRGBDSRV[2], D_W, D_H);
-	multiTexture.AddTexture(&poseEstimator.m_pSumOfCoordSRV[0],D_W,D_H);
-	/*multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
-							nullptr,
-							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));*/
 	multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
 							std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
 							std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
