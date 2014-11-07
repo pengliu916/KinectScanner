@@ -7,6 +7,7 @@
 
 #include "header.h"
 
+#include "NormalGenerator.h"
 #include "VolumeTSDF.h"
 
 struct CB_TSDFImg_PerCall
@@ -87,6 +88,7 @@ public:
 	bool							m_bEmptyTSDF;
 
 	TransformedPointClould*			m_pGeneratedTPC;
+	NormalGenerator*				m_pNormalGenerator;
 
 	TSDFImages( VolumeTSDF* pTSDFVolume, UINT RTwidth = SUB_TEXTUREWIDTH, UINT RTheight = SUB_TEXTUREHEIGHT )
 	{
@@ -112,8 +114,11 @@ public:
 		m_bEmptyTSDF = true;
 		
 		m_pGeneratedTPC = new TransformedPointClould();
+		m_pNormalGenerator = new NormalGenerator();
+		
 		m_pGeneratedTPC->ppMeshRGBZTexSRV = &m_pKinectOutSRV[0];
 		m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pKinectOutSRV[1];
+		//m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
 	}
 
 	HRESULT CreateResource( ID3D11Device* pd3dDevice )
@@ -247,6 +252,8 @@ public:
 		m_cKinectViewport.MaxDepth = 1.0f;
 		m_cKinectViewport.TopLeftX = 0;
 		m_cKinectViewport.TopLeftY = 0;
+		m_pNormalGenerator->CreateResource( pd3dDevice, &m_pKinectOutSRV[0] );
+
 
 		ID3D11DeviceContext* pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 		pd3dImmediateContext->UpdateSubresource( m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0 );
@@ -299,11 +306,14 @@ public:
 		SAFE_RELEASE( m_pFreeCamOutTex );
 		SAFE_RELEASE( m_pFreeCamOutSRV );
 		SAFE_RELEASE( m_pFreeCamOutRTV );
+
+		m_pNormalGenerator->Release();
 	}
 
 	~TSDFImages()
 	{
 		delete m_pGeneratedTPC;
+		delete m_pNormalGenerator;
 	}
 
 	void Update( float fElapsedTime )
@@ -343,6 +353,20 @@ public:
 		m_CB_KinectPerFrame.KinectTransform = XMMatrixTranspose( mKinectTransform );
 		m_CB_KinectPerFrame.KinectView = XMMatrixTranspose( view );
 		m_CB_KinectPerFrame.KinectPos = pos;
+		
+
+		// REMOVE_ME
+		/*XMMATRIX m_View = m_cCamera.GetViewMatrix();
+		m_CB_KinectPerFrame.KinectView = XMMatrixTranspose(m_View);
+		view = XMMatrixInverse(&t, m_View);
+		m_CB_KinectPerFrame.KinectTransform = XMMatrixTranspose(view);
+		pos = XMFLOAT4(0, 0, 0, 1);
+		t = XMLoadFloat4(&pos);
+		t = XMVector4Transform(t, m_View);
+		XMStoreFloat4(&pos, t);
+		XMStoreFloat4(&m_CB_KinectPerFrame.KinectPos, m_cCamera.GetEyePt());*/
+
+
 
 		pd3dImmediateContext->UpdateSubresource( m_pCB_KinectPerFrame, 0, NULL, &m_CB_KinectPerFrame, 0, 0 );
 		pd3dImmediateContext->OMSetRenderTargets( 3, m_pKinectOutRTV, NULL );
@@ -366,6 +390,12 @@ public:
 		ID3D11ShaderResourceView* ppSRVNULL[3] = { NULL,NULL,NULL };
 		pd3dImmediateContext->PSSetShaderResources( 0, 3, ppSRVNULL);
 		DXUT_EndPerfEvent();
+
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Generate Normal Map");
+		m_pNormalGenerator->SetupPipeline(pd3dImmediateContext);
+		m_pNormalGenerator->ProcessImage(pd3dImmediateContext);
+		DXUT_EndPerfEvent();
+
 	}
 
 	void GetRaycastImg( ID3D11DeviceContext* pd3dImmediateContext, bool phong = true )
