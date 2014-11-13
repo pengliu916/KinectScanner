@@ -36,9 +36,9 @@ static const int3 cb_QuadrantOffset[8] =
 //--------------------------------------------------------------------------------------
 cbuffer cbInit : register( b0 )
 {
-	float Tstep; // step length in meters of ray casting algorithm
-	float3 VolumeHalfSize; //  = volumeRes * voxelSize / 2
 	float trunc;
+	float3 VolumeHalfSize; //  = volumeRes * voxelSize / 2
+	float Tstep; // step length in meters of ray casting algorithm
 	float3 ReversedTotalSize; // = 1 / ( volumeRes * voxelSize )
 	float3 BoxMin; // Volume bonding box front left bottom pos in world space
 	float NIU0;
