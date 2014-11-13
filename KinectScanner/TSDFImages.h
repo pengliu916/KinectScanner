@@ -112,6 +112,7 @@ public:
 		m_bEmptyTSDF = true;
 		
 		m_pGeneratedTPC = new TransformedPointClould();
+		
 		m_pGeneratedTPC->ppMeshRGBZTexSRV = &m_pKinectOutSRV[0];
 		m_pGeneratedTPC->ppMeshNormalTexSRV = &m_pKinectOutSRV[1];
 	}
@@ -248,6 +249,7 @@ public:
 		m_cKinectViewport.TopLeftX = 0;
 		m_cKinectViewport.TopLeftY = 0;
 
+
 		ID3D11DeviceContext* pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 		pd3dImmediateContext->UpdateSubresource( m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0 );
 
@@ -299,6 +301,7 @@ public:
 		SAFE_RELEASE( m_pFreeCamOutTex );
 		SAFE_RELEASE( m_pFreeCamOutSRV );
 		SAFE_RELEASE( m_pFreeCamOutRTV );
+
 	}
 
 	~TSDFImages()
@@ -343,6 +346,20 @@ public:
 		m_CB_KinectPerFrame.KinectTransform = XMMatrixTranspose( mKinectTransform );
 		m_CB_KinectPerFrame.KinectView = XMMatrixTranspose( view );
 		m_CB_KinectPerFrame.KinectPos = pos;
+		
+
+		// REMOVE_ME
+		/*XMMATRIX m_View = m_cCamera.GetViewMatrix();
+		m_CB_KinectPerFrame.KinectView = XMMatrixTranspose(m_View);
+		view = XMMatrixInverse(&t, m_View);
+		m_CB_KinectPerFrame.KinectTransform = XMMatrixTranspose(view);
+		pos = XMFLOAT4(0, 0, 0, 1);
+		t = XMLoadFloat4(&pos);
+		t = XMVector4Transform(t, m_View);
+		XMStoreFloat4(&pos, t);
+		XMStoreFloat4(&m_CB_KinectPerFrame.KinectPos, m_cCamera.GetEyePt());*/
+
+
 
 		pd3dImmediateContext->UpdateSubresource( m_pCB_KinectPerFrame, 0, NULL, &m_CB_KinectPerFrame, 0, 0 );
 		pd3dImmediateContext->OMSetRenderTargets( 3, m_pKinectOutRTV, NULL );
@@ -366,6 +383,7 @@ public:
 		ID3D11ShaderResourceView* ppSRVNULL[3] = { NULL,NULL,NULL };
 		pd3dImmediateContext->PSSetShaderResources( 0, 3, ppSRVNULL);
 		DXUT_EndPerfEvent();
+
 	}
 
 	void GetRaycastImg( ID3D11DeviceContext* pd3dImmediateContext, bool phong = true )
