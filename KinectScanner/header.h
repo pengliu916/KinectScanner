@@ -20,6 +20,10 @@
 #define SUB_TEXTUREWIDTH 600
 #define SUB_TEXTUREHEIGHT 450
 
+#define THREAD_X 8
+#define THREAD_Y 8
+#define THREAD_Z 8
+
 #define VOXEL_SIZE  0.007
 #define VOXEL_NUM_X 256
 #define VOXEL_NUM_Y 256
