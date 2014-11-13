@@ -26,7 +26,7 @@ public:
 	ID3D11ShaderResourceView**		m_ppRGBDSRV;
 
     IRGBDStreamForDirectX*          m_kinect;
-	BilateralFilter_Blurriness*			m_pBilteralFilter;
+    BilateralFilter_Blurriness*			m_pBilteralFilter;
     NormalGenerator*				m_pNormalGenerator;
 
     TransformedPointClould			m_TransformedPC;
@@ -43,7 +43,7 @@ public:
         m_uRTwidth = width;
         m_uRTheight = height;
 
-		m_pBilteralFilter = new BilateralFilter_Blurriness(width, height);
+		m_pBilteralFilter = new BilateralFilter_Blurriness(width,height);
 		m_pNormalGenerator = new NormalGenerator(width,height);
 #if USING_KINECT
 #if KINECT2
@@ -77,8 +77,7 @@ public:
 
 
 		m_TransformedPC.ppMeshRGBZTexSRV = &m_pBilteralFilter->m_pOutSRV;
-		//m_TransformedPC.ppMeshRawRGBZTexSRV = m_ppRGBDSRV;
-		m_TransformedPC.ppMeshRawRGBZTexSRV = &m_pBilteralFilter->m_pOutSRV;
+		m_TransformedPC.ppMeshRawRGBZTexSRV = m_ppRGBDSRV;
 		m_TransformedPC.ppMeshNormalTexSRV = &m_pNormalGenerator->m_pOutSRV;
         return hr;
     }
@@ -125,7 +124,7 @@ public:
    
     void Render(ID3D11DeviceContext* pd3dimmediateContext)
     {
-        m_bUpdated = true;//m_kinect->UpdateTextures(pd3dimmediateContext);
+        m_bUpdated = m_kinect->UpdateTextures(pd3dimmediateContext);
         //m_kinect.UpdateDepthTexture(pd3dimmediateContext);
         //m_bUpdated = m_kinect.m_bDepthReceived;
 

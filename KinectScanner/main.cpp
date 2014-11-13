@@ -18,16 +18,32 @@ using namespace std::placeholders;
 ID3D11Debug *d3dDebug = nullptr;
 
 CDXUTDialogResourceManager      g_DialogResourceManager;
+CDXUTTextHelper*                g_pTxtHelper = NULL;
+wchar_t                         g_debugLine1[100];
+wchar_t                         g_debugLine2[100];
+wchar_t                         g_debugLine3[100];
 
 TiledTextures					multiTexture = TiledTextures();
 FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
 VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
+PoseEstimator                   poseEstimator = PoseEstimator(D_W,D_H);
 HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(&meshVolume);
+bool                            g_bFirstFrame = true;
+//--------------------------------------------------------------------------------------
+//Global Variables only for test purpose..... 
+//--------------------------------------------------------------------------------------
 
+bool g_bGetNextFrame = false;
+bool g_bStepMode = STEP_MODE;
 
-bool							g_bRender = true;
-
+float norm ( XMVECTOR vector )
+{
+    XMVECTOR length = XMVector3Length ( vector );
+    float distance = 0.0f;
+    XMStoreFloat ( &distance, length );
+    return distance;
+};
 //--------------------------------------------------------------------------------------
 //Initialization
 //--------------------------------------------------------------------------------------
@@ -36,18 +52,41 @@ HRESULT Initial()
     HRESULT hr = S_OK;
     V_RETURN( pointCloud.Initial() )
     V_RETURN( multiTexture.Initial() );
-	//multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
-	multiTexture.AddTexture(pointCloud.m_TransformedPC.ppMeshNormalTexSRV, D_W, D_H);
-	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H); // Normal map from normal generated 
-	multiTexture.AddTexture(&tsdfImgs.m_pKinectOutSRV[2], D_W, D_H); // Normal map from TSDF
-	multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
-							nullptr,
-							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));
+	// Use TSDFImages's Generated RGBD
+	V_RETURN(poseEstimator.Initial(tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
+	// Use HistoPyramidMC's Generated RGBD
+	//V_RETURN(poseEstimator.Initial(histoPyraimdMC.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
+
+	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H); 
+    multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
 	multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
 							std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
 							std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
 
+    swprintf(g_debugLine1,100,L"Debug Line 1...");
+    swprintf(g_debugLine2,100,L"Debug Line 2...");
+    swprintf(g_debugLine3,100,L"Debug Line 3...");
+
     return hr;
+}
+
+//--------------------------------------------------------------------------------------
+// Render the help and statistics text
+//--------------------------------------------------------------------------------------
+void RenderText()
+{
+    g_pTxtHelper->Begin();
+    g_pTxtHelper->SetForegroundColor( XMFLOAT4( 1.0f, 0.0f, 0.0f, 1.0f ) );
+    //g_pTxtHelper->DrawTextLine( DXUTGetFrameStats( DXUTIsVsyncEnabled() ) );
+    g_pTxtHelper->SetInsertionPos( 2, 10 );
+    g_pTxtHelper->DrawTextLine(g_debugLine1);
+    g_pTxtHelper->SetInsertionPos( 2, 30 );
+    g_pTxtHelper->DrawTextLine(g_debugLine2);
+    g_pTxtHelper->SetInsertionPos( 2, 50 );
+    g_pTxtHelper->DrawTextLine(g_debugLine3);
+    g_pTxtHelper->End();
 }
 
 //--------------------------------------------------------------------------------------
@@ -80,10 +119,12 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
     ID3D11DeviceContext* pd3dImmediateContext = DXUTGetD3D11DeviceContext();
     V_RETURN( g_DialogResourceManager.OnD3D11CreateDevice( pd3dDevice, pd3dImmediateContext ) );
+    g_pTxtHelper = new CDXUTTextHelper( pd3dDevice, pd3dImmediateContext, &g_DialogResourceManager, 2 );
 
     V_RETURN( pointCloud.CreateResource( pd3dDevice ));
     V_RETURN( meshVolume.CreateResource(pd3dDevice,&pointCloud.m_TransformedPC));
     V_RETURN( tsdfImgs.CreateResource(pd3dDevice));
+	V_RETURN(poseEstimator.CreateResource(pd3dDevice));
 	V_RETURN(histoPyraimdMC.CreateResource(pd3dDevice,meshVolume.m_pColVolumeSRV,meshVolume.m_pDWVolumeSRV));
     V_RETURN( multiTexture.CreateResource( pd3dDevice) );
 
@@ -131,6 +172,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
     V_RETURN( g_DialogResourceManager.OnD3D11ResizedSwapChain( pd3dDevice, pBackBufferSurfaceDesc ) );
 
 	multiTexture.Resize(pd3dDevice, pBackBufferSurfaceDesc);
+    poseEstimator.Resize(pd3dimmediateContext);
     SAFE_RELEASE(pd3dimmediateContext);
     return S_OK;
 }
@@ -141,6 +183,9 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
+	// whether to get the next frame or not
+    if ( !g_bStepMode ) g_bGetNextFrame = true;
+
 	// Update the virtual cam of the model viewer of HistoPyramidMC
 	histoPyraimdMC.Update(fElapsedTime);
 	tsdfImgs.Update(fElapsedTime);
@@ -153,20 +198,83 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext,
                                   double fTime, float fElapsedTime, void* pUserContext )
 {
-	pointCloud.Render(pd3dImmediateContext);
+    if ( g_bGetNextFrame ){
+        g_bGetNextFrame = false;
 
-	// Get RGBD and Normal data from TSDF with new pose 
-	tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
-	if(g_bRender) tsdfImgs.GetRaycastImg(pd3dImmediateContext);
+        bool bTracked = false;
 
-	meshVolume.Integrate(pd3dImmediateContext);
+		// Get new depth and color frmae from RGBD sensor
+		pointCloud.Render(pd3dImmediateContext);
+
+		// Only run the algorithm if we get new data
+        if ( pointCloud.m_bUpdated ){
+            XMVECTOR vectorR = XMVectorZero();
+			XMVECTOR vectorT = XMVectorZero();
+
+            int iIterationCount = 0;
+
+            do{
+                pointCloud.m_TransformedPC.mPreFrame = pointCloud.m_TransformedPC.mCurFrame;
+                pointCloud.m_TransformedPC.mPreRotation = pointCloud.m_TransformedPC.mCurRotation;
+
+				// Get RGBD and Normal data from TSDF with new pose 
+                tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
+
+				// Find transformation matrix, return false if can't find one
+                bTracked = poseEstimator.Processing ( pd3dImmediateContext );
+
+                if ( bTracked ){
+					// Update the Sensor Pose info
+                    pointCloud.m_TransformedPC.vRotation += poseEstimator.m_vIncRotate;
+                    XMMATRIX Ri = XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );  
+                    pointCloud.m_TransformedPC.vTranslation = XMVector3Transform ( pointCloud.m_TransformedPC.vTranslation, Ri ) + poseEstimator.m_vIncTran;
+
+					// Apply the new Sensor Pose
+                    pointCloud.m_TransformedPC.mCurRotation *= XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );
+                    pointCloud.m_TransformedPC.mCurFrame = pointCloud.m_TransformedPC.mCurRotation * XMMatrixTranslationFromVector ( pointCloud.m_TransformedPC.vTranslation );
+
+					// Keep track of the incremental transformation for this data frame
+                    vectorR += poseEstimator.m_vIncRotate;
+                    vectorT += poseEstimator.m_vIncTran;
+                
+					// Increase the iteration counter for termination condition checking
+                    iIterationCount++; 
+                }else if ( poseEstimator.m_bSigularMatrix ){
+                    //g_bStepMode = true;
+                    swprintf(g_debugLine3,100,L"Track failed!!  Singular Matrix");
+                }
+            }while(bTracked && iIterationCount<15);
+            if ( bTracked ) {
+                float rnorm = norm ( vectorR );
+                float tnorm = norm ( vectorT );
+
+				XMFLOAT3 r_overall;
+				XMFLOAT3 t_overall;
+				XMStoreFloat3(&r_overall, (pointCloud.m_TransformedPC.vRotation) * 180.0f / XM_PI);
+				XMStoreFloat3(&t_overall, (pointCloud.m_TransformedPC.vTranslation) * 100.0f);
+				swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", t_overall.x, t_overall.y, t_overall.z);
+				swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", r_overall.x, r_overall.y, r_overall.z);
+
+                swprintf(g_debugLine3,100,L"Track success  % 6.5f", tnorm + rnorm);
+                if (  rnorm + tnorm > 0.001f ) meshVolume.Integrate( pd3dImmediateContext );
+            }
+			// If this is the first frame, then update the TSDF anyway
+			if(g_bFirstFrame){
+				g_bFirstFrame = false;
+				meshVolume.Integrate(pd3dImmediateContext);
+			}
+        }
+    }
+
 
 	// Render the in-process mesh
-	if (g_bRender) histoPyraimdMC.Render(pd3dImmediateContext, false);
+	histoPyraimdMC.Render(pd3dImmediateContext,false);
 
 	// Render all sub texture to screen
-	multiTexture.Render(pd3dImmediateContext);
+    multiTexture.Render( pd3dImmediateContext );
 
+	// Render the text
+    RenderText();
 }
 
 
@@ -189,6 +297,7 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     pointCloud.Release();
     tsdfImgs.Release();
     meshVolume.Release();
+    poseEstimator.Release();
 
 	histoPyraimdMC.Destory();
 
@@ -196,6 +305,7 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     g_DialogResourceManager.OnD3D11DestroyDevice();
     CDXUTDirectionWidget::StaticOnD3D11DestroyDevice();
     DXUTGetGlobalResourceCache().OnDestroyDevice();
+    SAFE_DELETE( g_pTxtHelper );
 
 	if (d3dDebug != nullptr)
 	{
@@ -215,17 +325,33 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	tsdfImgs.HandleMessages(hWnd, uMsg, wParam, lParam);
     multiTexture.HandleMessages( hWnd, uMsg, wParam, lParam );
     pointCloud.HandleMessages( hWnd, uMsg, wParam, lParam );
+    poseEstimator.HandleMessages( hWnd, uMsg, wParam, lParam );
 	meshVolume.HandleMessages(hWnd, uMsg, wParam, lParam);
-	switch (uMsg)
-	{
-	case WM_KEYDOWN:
-		int nKey = static_cast<int>(wParam);
-		if (nKey == 'R')
-		{
-			g_bRender = !g_bRender;
-		}
-		break;
-	}
+    switch(uMsg)
+    {
+    case WM_KEYDOWN:
+        {
+            int nKey = static_cast<int>(wParam);
+
+            if (nKey == 'O')
+            {
+                g_bStepMode=!g_bStepMode;
+               /* if( g_bStepMode )
+                {
+                    multiTexture.m_ppInputSRV[3] = &tsdfImgs.m_pFreeCamOutSRV;
+                }
+                else
+                {
+                    multiTexture.m_ppInputSRV[3] = &tsdfImgs.m_pKinectOutSRV[2];
+                }*/
+            }
+            if (nKey == 'I')
+            {
+                g_bGetNextFrame=true;
+            }
+            break;
+        }
+    }
     return 0;
 }
 
