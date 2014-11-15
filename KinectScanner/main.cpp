@@ -23,7 +23,7 @@ TiledTextures					multiTexture = TiledTextures();
 FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
 VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
-HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(&meshVolume);
+//HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(&meshVolume);
 
 
 bool							g_bRender = true;
@@ -41,11 +41,11 @@ HRESULT Initial()
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H); // Normal map from normal generated 
 	multiTexture.AddTexture(&tsdfImgs.m_pKinectOutSRV[2], D_W, D_H); // Normal map from TSDF
 	multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
-							nullptr,
+							std::bind(&TSDFImages::Resize, &tsdfImgs, _1, _2, _3),
 							std::bind(&TSDFImages::HandleMessages,&tsdfImgs,_1,_2,_3,_4));
-	multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
+	/*multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
 							std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
-							std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
+							std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));*/
 
     return hr;
 }
@@ -84,7 +84,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( pointCloud.CreateResource( pd3dDevice ));
     V_RETURN( meshVolume.CreateResource(pd3dDevice,&pointCloud.m_TransformedPC));
     V_RETURN( tsdfImgs.CreateResource(pd3dDevice));
-	V_RETURN(histoPyraimdMC.CreateResource(pd3dDevice,meshVolume.m_pColVolumeSRV,meshVolume.m_pDWVolumeSRV));
+	//V_RETURN(histoPyraimdMC.CreateResource(pd3dDevice,meshVolume.m_pColVolumeSRV,meshVolume.m_pDWVolumeSRV));
     V_RETURN( multiTexture.CreateResource( pd3dDevice) );
 
 	// Setup the debug layer
@@ -142,7 +142,7 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
 	// Update the virtual cam of the model viewer of HistoPyramidMC
-	histoPyraimdMC.Update(fElapsedTime);
+	//histoPyraimdMC.Update(fElapsedTime);
 	tsdfImgs.Update(fElapsedTime);
 }
 
@@ -162,7 +162,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	meshVolume.Integrate(pd3dImmediateContext);
 
 	// Render the in-process mesh
-	if (g_bRender) histoPyraimdMC.Render(pd3dImmediateContext, false);
+	//if (g_bRender) histoPyraimdMC.Render(pd3dImmediateContext, false);
 
 	// Render all sub texture to screen
 	multiTexture.Render(pd3dImmediateContext);
@@ -176,7 +176,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 void CALLBACK OnD3D11ReleasingSwapChain( void* pUserContext )
 {
     g_DialogResourceManager.OnD3D11ReleasingSwapChain();
-	histoPyraimdMC.Release();
+	//histoPyraimdMC.Release();
 }
 
 
@@ -190,7 +190,7 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     tsdfImgs.Release();
     meshVolume.Release();
 
-	histoPyraimdMC.Destory();
+	//histoPyraimdMC.Destory();
 
     
     g_DialogResourceManager.OnD3D11DestroyDevice();

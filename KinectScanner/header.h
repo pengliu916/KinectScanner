@@ -23,6 +23,8 @@
 #define THREAD_X 8
 #define THREAD_Y 8
 #define THREAD_Z 8
+#define THREAD2D_X 16
+#define THREAD2D_Y 8
 
 #define VOXEL_SIZE  0.007
 #define VOXEL_NUM_X 256

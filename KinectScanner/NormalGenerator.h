@@ -158,7 +158,9 @@ public:
 		pd3dImmediateContext->PSSetShader( m_pPS, NULL, 0 );
 		pd3dImmediateContext->PSSetShaderResources(0, 1, m_ppInputSRV);
 
-		pd3dImmediateContext->Draw(1,0);	
+		pd3dImmediateContext->Draw(1,0);
+		ID3D11RenderTargetView* nullRTVs = NULL;
+		pd3dImmediateContext->OMSetRenderTargets(1, &nullRTVs, NULL);
 	}
 
 	LRESULT HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
