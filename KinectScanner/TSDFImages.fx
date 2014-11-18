@@ -7,10 +7,11 @@ Texture3D<float2> g_srvDepthWeight : register(t0);
 Texture3D<float4> g_srvColor : register(t1);
 
 // for DirectCompte output
-RWTexture2D<float4> g_uavShadedOut : register(u0);
-RWTexture2D<float4> g_uavKinectRGBD : register(u1);
-RWTexture2D<float4> g_uavKinectNorm : register(u2);
-RWTexture2D<float4> g_uavRayCast : register(u3);
+RWTexture2D<float4> g_uavKinectRGBD : register(u0);
+RWTexture2D<float4> g_uavKinectNorm : register(u1);
+RWTexture2D<float4> g_uavKinectShade : register(u2);
+RWTexture2D<float4> g_uavFreeCamShade : register(u3);
+RWTexture2D<float4> g_uavRayCast : register(u4);
 
 SamplerState g_samLinear : register(s0);
 
@@ -64,7 +65,7 @@ cbuffer cbKinectUpdate : register( b1 )
 };
 cbuffer cbFreeCamUpdate : register( b2 )
 {
-	matrix cb_mWorldView;
+	matrix cb_mInvView;
 	float4 cb_f4ViewPos;
 };
 
@@ -147,7 +148,7 @@ void CS_KinectView(uint3 DTid : SV_DispatchThreadID)
 	if (!bHit){
 		g_uavKinectRGBD[DTid.xy] = float4(0.f,0.f,0.f,-1.f);
 		g_uavKinectNorm[DTid.xy] = float4(0.f,0.f,0.f,-1.f);
-		if(cb_bKinectShade) g_uavShadedOut[DTid.xy] = float4(0.f,0.f,0.f,0.f);
+		if(cb_bKinectShade) g_uavKinectShade[DTid.xy] = float4(0.f,0.f,0.f,0.f);
 		return;
 	}
 
@@ -174,6 +175,7 @@ void CS_KinectView(uint3 DTid : SV_DispatchThreadID)
 	float fDist_cur;
 
 	// ray marching
+	[fastopt]
 	for(float i = 0; i <fIteration; i=i+1.f) {
 		// convert to texture space
 		float3 f3txCoord = f3P * cb_f3InvVolSize + 0.5f;
@@ -224,7 +226,7 @@ void CS_KinectView(uint3 DTid : SV_DispatchThreadID)
 					float fNdotL = clamp ( dot ( f3Normal, f4LightDir.xyz ), 0, 1 );
 					float4 f4Color = f4ColOrg * f4LightDir.w * fNdotL;
 					// output shaded image
-					g_uavShadedOut[DTid.xy] = f4Color;
+					g_uavKinectShade[DTid.xy] = f4Color;
 				}
 
 				// output RGBD
@@ -244,7 +246,7 @@ void CS_KinectView(uint3 DTid : SV_DispatchThreadID)
 void CS_FreeView(uint3 DTid : SV_DispatchThreadID)
 {
 	// Get world space pos of this texel
-	float4 f4CurPos = mul(float4((DTid.xy - cb_f2RTReso*0.5f) / float2(cb_f2RTReso.x,-cb_f2RTReso.x), 1.f, 1.f), cb_mWorldView);
+	float4 f4CurPos = mul(float4((DTid.xy - cb_f2RTReso*0.5f) / (float2(cb_f2RTReso.x,-cb_f2RTReso.x)*0.5f), 1.f, 1.f), cb_mInvView);
 
 	Ray eyeray;
 	//world space
@@ -261,7 +263,7 @@ void CS_FreeView(uint3 DTid : SV_DispatchThreadID)
 	
 	// output nothing if ray didn't intesect with volume
 	if (!bHit){
-		g_uavShadedOut[DTid.xy] = float4(0.f, 0.f, 0.f, 0.f);
+		g_uavFreeCamShade[DTid.xy] = float4(0.f, 0.f, 0.f, 0.f);
 		return;
 	}
 
@@ -288,6 +290,7 @@ void CS_FreeView(uint3 DTid : SV_DispatchThreadID)
 	float fDist_cur;
 
 	// ray marching
+	[fastopt]
 	for (float i = 0; i <fIteration; i=i+1.f) {
 		// convert to texture space
 		float3 f3txCoord = f3P * cb_f3InvVolSize + 0.5f;
@@ -297,7 +300,7 @@ void CS_FreeView(uint3 DTid : SV_DispatchThreadID)
 
 		fDist_pre = fDist_cur;
 		fDist_cur = f2DistWeight.x * TRUNC_DIST;
-		if (abs(fDist_cur - INVALID_VALUE*TRUNC_DIST)>1e-8 &&abs(fDist_pre - INVALID_VALUE*TRUNC_DIST)>1e-8){
+		if (abs(fDist_cur - INVALID_VALUE*TRUNC_DIST)>EPSILON &&abs(fDist_pre - INVALID_VALUE*TRUNC_DIST)>EPSILON){
 			if ( fDist_pre * fDist_cur < 0 )
 			{
 				// get sub voxel txCoord
@@ -323,7 +326,7 @@ void CS_FreeView(uint3 DTid : SV_DispatchThreadID)
 				float4 f4ColOrg = g_srvColor.SampleLevel ( g_samLinear, f3txCoord, 0);
 				
 				// shading part
-				float4 f4LightPos = mul(g_cf4LightOffset + float4 (0.f, 0.f, 0.f, 1.f), cb_mWorldView);
+				float4 f4LightPos = mul(g_cf4LightOffset + float4 (0.f, 0.f, 0.f, 1.f), cb_mInvView);
 				float4 f4LightDir = f4LightPos - float4 ( f3SurfacePos, 1 );
 				float fLightDist = length ( f4LightDir );
 				f4LightDir /= fLightDist;
@@ -334,7 +337,7 @@ void CS_FreeView(uint3 DTid : SV_DispatchThreadID)
 				float4 f4Color = f4ColOrg * f4LightDir.w * fNdotL + g_cf4Ambient;
 
 				// output shaded image
-				g_uavShadedOut[DTid.xy] = f4Color;
+				g_uavFreeCamShade[DTid.xy] = f4Color;
 
 				return;
 			}
@@ -342,7 +345,7 @@ void CS_FreeView(uint3 DTid : SV_DispatchThreadID)
 		f3P_pre = f3P;
 		f3P += f3Step;
 	}
-	g_uavShadedOut[DTid.xy] = float4(0.f, 0.f, 0.f, 0.f);
+	g_uavFreeCamShade[DTid.xy] = float4(0.f, 0.f, 0.f, 0.f);
 	return;
 }
 

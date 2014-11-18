@@ -17,13 +17,13 @@
 
 #define EPSILON 1e-8
 
-#define SUB_TEXTUREWIDTH 600
-#define SUB_TEXTUREHEIGHT 450
+#define SUB_TEXTUREWIDTH 800
+#define SUB_TEXTUREHEIGHT 600
 
 #define THREAD_X 8
 #define THREAD_Y 8
 #define THREAD_Z 8
-#define THREAD2D_X 16
+#define THREAD2D_X 8
 #define THREAD2D_Y 8
 
 #define VOXEL_SIZE  0.007

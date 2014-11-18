@@ -32,7 +32,7 @@ struct m_CB_TSDFImg_KinectPerFrame
 
 struct m_CB_TSDFImg_FreecamPerFrame
 {
-	XMMATRIX WorldView;
+	XMMATRIX InvView;
 	XMFLOAT4 ViewPos;
 };
 
@@ -176,7 +176,7 @@ public:
 
 		ID3D11DeviceContext* pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 		pd3dImmediateContext->UpdateSubresource( m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0 );
-		SAFE_RELEASE(pd3dImmediateContext);
+		//SAFE_RELEASE(pd3dImmediateContext);
 
 		// Setup the camera's projection parameters
 		XMVECTORF32 vecEye = { 0.0f, 0.0f, -2.0f };
@@ -214,7 +214,7 @@ public:
 		
 		// Setup the camera's projection parameters
 		float fAspectRatio = iWidth / (FLOAT)iHeight;
-		m_cCamera.SetProjParams(XM_PI / 180.f*70.f, fAspectRatio, 0.1f, 20.0f);
+		m_cCamera.SetProjParams(XM_PI / 180.f*90.f, fAspectRatio, 0.01f, 20.0f);
 		m_cCamera.SetWindow(iWidth, iHeight);
 		m_cCamera.SetButtonMasks(MOUSE_MIDDLE_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON);
 		m_cCamera.SetRadius(2.f, 0.1f, 10.f);
@@ -226,12 +226,12 @@ public:
 		// Submit to GPU
 		ID3D11DeviceContext* pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 		pd3dImmediateContext->UpdateSubresource(m_pCBperCall, 0, NULL, &m_CBperCall, 0, 0);
-		SAFE_RELEASE(pd3dImmediateContext);
+		//SAFE_RELEASE(pd3dImmediateContext);
 
 		return hr;
 	}
 
-	void Release()
+	void Destory()
 	{
 		SAFE_RELEASE( m_pKinect3ImgCS );
 		SAFE_RELEASE( m_pFreeCamShadeCS );
@@ -254,7 +254,7 @@ public:
 		SAFE_RELEASE( m_pKinectOutUAV[2] );
 	}
 
-	void Destory()
+	void Release()
 	{
 		SAFE_RELEASE( m_pRaycastOutTex );
 		SAFE_RELEASE( m_pRaycastOutSRV );
@@ -332,13 +332,13 @@ public:
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Raycasting from free cam");
 		XMMATRIX m_View = m_cCamera.GetViewMatrix();
 		XMMATRIX m_World = m_cCamera.GetWorldMatrix();
-		m_CB_FreecamPerFrame.WorldView = XMMatrixTranspose( XMMatrixInverse(NULL,m_World*m_View) );
+		m_CB_FreecamPerFrame.InvView = XMMatrixTranspose( XMMatrixInverse(NULL,m_View) );
 		XMStoreFloat4( &m_CB_FreecamPerFrame.ViewPos, m_cCamera.GetEyePt() );
 		pd3dImmediateContext->UpdateSubresource( m_pCB_FreecamPerFrame, 0, NULL, &m_CB_FreecamPerFrame, 0, 0 );
 
 		UINT initCounts = 0;
-		if (phong) { pd3dImmediateContext->CSSetUnorderedAccessViews(0, 1, &m_pFreeCamOutUAV, &initCounts); }
-		else { pd3dImmediateContext->CSSetUnorderedAccessViews(0, 1, &m_pRaycastOutUAV, &initCounts); }
+		if (phong) { pd3dImmediateContext->CSSetUnorderedAccessViews(3, 1, &m_pFreeCamOutUAV, &initCounts); }
+		else { pd3dImmediateContext->CSSetUnorderedAccessViews(4, 1, &m_pRaycastOutUAV, &initCounts); }
 		pd3dImmediateContext->CSSetConstantBuffers( 0, 1, &m_pCBperCall );
 		pd3dImmediateContext->CSSetConstantBuffers( 2, 1, &m_pCB_FreecamPerFrame );
 		if( phong ){ pd3dImmediateContext->CSSetShader( m_pFreeCamShadeCS, NULL, 0 ); } 
@@ -349,13 +349,13 @@ public:
 		pd3dImmediateContext->CSSetShaderResources( 0, 1, &m_pTSDFVolume->m_pDWVolumeSRV );
 		pd3dImmediateContext->CSSetShaderResources( 1, 1, &m_pTSDFVolume->m_pColVolumeSRV );
 
-		pd3dImmediateContext->Dispatch(ceil(D_W / (float)THREAD2D_X), ceil(D_H / (float)THREAD2D_Y), 1);
+		pd3dImmediateContext->Dispatch(ceil(m_CBperCall.RTreso.x / (float)THREAD2D_X), ceil(m_CBperCall.RTreso.y / (float)THREAD2D_Y), 1);
 
 		ID3D11ShaderResourceView* ppSRVNULL[2] = { NULL, NULL };
 		pd3dImmediateContext->CSSetShaderResources(0, 2, ppSRVNULL);
 
-		ID3D11UnorderedAccessView* ppUAViewNULL[3] = { NULL, NULL, NULL };
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 1, ppUAViewNULL, &initCounts);
+		ID3D11UnorderedAccessView* ppUAViewNULL[4] = { NULL, NULL, NULL, NULL };
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 4, ppUAViewNULL, &initCounts);
 		DXUT_EndPerfEvent();
 
 	}
