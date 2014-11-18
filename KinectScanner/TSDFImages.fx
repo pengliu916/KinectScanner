@@ -16,14 +16,15 @@ RWTexture2D<float4> g_uavRayCast : register(u4);
 SamplerState g_samLinear : register(s0);
 
 // Phong shading variable
-static const float4 g_cf4LightOffset = float4 ( 0.0f, 0.10f, 0.0f, 0.0f );
+static const float4 g_cf4LightOffset = float4 ( 0.0f, 0.0f, 0.0f, 0.0f );
 static const float4 g_cf4Ambient = float4 ( 0.1f, 0.1f, 0.1f, 1.0f );
 static const float4 g_cf4LightAtte = float4 ( 1, 0, 0, 0 );
 
 //static const float KinectFTRpos_x = DEPTH_WIDTH * XSCALE * 0.5f; // Top right conner x_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
 //static const float KinectFTRpos_y = DEPTH_HEIGHT * XSCALE * 0.5f; // Top right conner y_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
 
-static const float3 g_cf3InvVoxelReso = float3(1.f/VOXEL_NUM_X, 1.f/VOXEL_NUM_Y, 1.f/VOXEL_NUM_Z);
+static const float3 g_cf3InvVoxelReso = float3(1.f / VOXEL_NUM_X, 1.f / VOXEL_NUM_Y, 1.f / VOXEL_NUM_Z);
+static const float3 g_cf3VoxelReso = float3(VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
 static const float g_cf3InvVoxelSize = 1.f/VOXEL_SIZE;
 static const float2 g_cf2DepthImgReso = float2(D_W, D_H);
 static const float2 g_cf2DepthRange = float2(R_N, R_F);
@@ -78,6 +79,12 @@ struct Ray
 	float4 d;
 };
 
+struct MarchingResult
+{
+	float4 RGBD;
+	float4 Normal;
+};
+
 //--------------------------------------------------------------------------------------
 // Utility Functions
 //--------------------------------------------------------------------------------------
@@ -112,7 +119,7 @@ bool SampleDW( float3 uv, inout float2 value, int3 offset = int3(0,0,0) )
 	int invalidCount = 0;
 	// return Invalid value if the sample point is in voxel which contain invalid value;
 	[unroll]for(int i=0; i<8; i++){
-		neighbor[i] = g_srvDepthWeight.SampleLevel(g_samLinear, fIdx, 0,cb_QuadrantOffset[i]+offset);
+		neighbor[i] = g_srvDepthWeight.SampleLevel(g_samLinear, fIdx, 0,cb_QuadrantOffset[i]+offset).x;
 		if (abs(value.x - INVALID_VALUE) < EPSILON) invalidCount++;
 		else sum+=neighbor[i];
 	}
@@ -121,6 +128,118 @@ bool SampleDW( float3 uv, inout float2 value, int3 offset = int3(0,0,0) )
 	else return true;
 }
 
+float2 LoadDW( float3 uv )
+{
+	uint3 idx = uv * g_cf3VoxelReso;
+	return g_srvDepthWeight[idx];
+}
+
+MarchingResult MarchingVol( Ray eyeray, bool bColor)
+{
+	// calculate ray intersection with bounding box
+	float fTnear, fTfar;
+	bool bHit = IntersectBox(eyeray, cb_f3VolBBMin, cb_f3VolBBMax , fTnear, fTfar);
+	
+	// output nothing if ray didn't intesect with volume
+	MarchingResult r;
+	r.RGBD = float4(0.f,0.f,0.f,-1.f);
+	r.Normal = float4(0.f,0.f,0.f,-1.f);
+	if (!bHit)	return r;
+
+	// avoid artifact if eye are inside volume;
+	fTnear = fTnear < 0.f ? 0.f : fTnear;
+
+	// calculate intersection points and convert to texture space
+	float3 f3P = (eyeray.o.xyz + eyeray.d.xyz * fTnear) * cb_f3InvVolSize + 0.5f;
+	float3 f3Porg = f3P;
+	// ray length
+	float t = fTnear;
+	
+	float3 f3P_pre = f3P;
+	float3 f3Step = eyeray.d.xyz * cb_f3InvVolSize;
+
+	// read the first value and check whether it is bValid(is it in edges?)
+	float2 f2IntersectResult = float2(0.0f, 0.0f);
+	bool bValid_pre = SampleDW(f3P, f2IntersectResult);
+
+	// initialize depth pre and cur
+	float fDist_pre = f2IntersectResult.x*TRUNC_DIST;
+	float fDist_cur;
+
+	// ray marching
+	bool bSkip = true;
+	float fTstep = cb_fStepLen * 5.f;
+	[loop]
+	while(t<fTfar) {
+		// read depth and weight
+		//float2 f2DistWeight = float2(0.0f,0.0f);
+		//bool bValid = SampleDW(f3P, f2DistWeight);
+		float2 f2DistWeight = LoadDW(f3P);
+		fDist_pre = fDist_cur;
+		fDist_cur = f2DistWeight.x * TRUNC_DIST;
+		if (bSkip && fDist_pre * fDist_cur >= INVALID_VALUE && fDist_pre * fDist_cur <0){
+			t -= fTstep;
+			fTstep = cb_fStepLen;
+			bSkip = false;
+			f3P = f3P_pre;
+			fDist_cur = fDist_pre;
+		}else if(abs(fDist_cur - INVALID_VALUE*TRUNC_DIST)>EPSILON &&abs(fDist_pre - INVALID_VALUE*TRUNC_DIST)>EPSILON){
+			if (fDist_pre * fDist_cur < 0 )
+			{
+			//if ( fDist_pre < 0 ) return output;
+				
+					// get sub voxel txCoord
+					float3 f3VolUVW = f3P_pre + (f3P - f3P_pre) * fDist_pre / (fDist_pre - fDist_cur); 
+
+					// get surface pos in view space
+
+					// get and compute f3Normal
+					float2 temp0 = float2(0.0f, 0.0f);
+					float2 temp1 = float2(0.0f, 0.0f);
+					SampleDW(f3VolUVW, temp0, int3(1, 0, 0));
+					SampleDW(f3VolUVW, temp1, int3(-1, 0, 0));
+					float depth_dx = temp0.x - temp1.x;
+					SampleDW(f3VolUVW, temp0, int3(0, 1, 0));
+					SampleDW(f3VolUVW, temp1, int3(0, -1, 0));
+					float depth_dy = temp0.x - temp1.x;
+					SampleDW(f3VolUVW, temp0, int3(0, 0, 1));
+					SampleDW(f3VolUVW, temp1, int3(0, 0, -1));
+					float depth_dz = temp0.x - temp1.x;
+					// the normal is calculated and stored in view space
+					float3 f3Normal = normalize(float3 (depth_dx, depth_dy, depth_dz));
+
+					float4 f4SurfacePos = float4((f3VolUVW - 0.5f)*2.f * cb_f3VolHalfSize,1);
+					// get color (maybe later I will use color to guide ICP)
+					float4 f4Col = g_srvColor.SampleLevel(g_samLinear, f3VolUVW, 0);
+					// only if we want to shade from kinect's point of view
+					if (bColor){
+						// the light is calculated in view space, since the normal is in view space
+						float4 f4LightPos = mul(g_cf4LightOffset + float4 ( 0.f, 0.f, 0.f, 1.f ), cb_mInvView); 
+						float4 f4LightDir = f4LightPos - f4SurfacePos;
+						float fLightDist = length ( f4LightDir );
+						f4LightDir /= fLightDist;
+						f4LightDir.w = clamp ( 1.0f / ( g_cf4LightAtte.x + 
+											 g_cf4LightAtte.y * fLightDist + 
+											 g_cf4LightAtte.z * fLightDist * fLightDist ), 0.f, 1.f );
+						float fNdotL = clamp ( dot ( f3Normal, f4LightDir.xyz ), 0, 1 );
+						f4Col = f4Col * f4LightDir.w * fNdotL;
+					}
+
+					f4SurfacePos = mul(float4 (f3VolUVW, 1), cb_mInvKinectWorld);
+					// output RGBD
+					r.RGBD = float4(f4Col.xyz, f4SurfacePos.z);
+					r.Normal = float4(f3Normal, 0.f) * 0.5f + 0.5f;
+					return r;
+				
+			}
+		}
+		f3P_pre = f3P;
+		t += fTstep;
+		f3P = f3Porg+(t-fTnear)*f3Step;
+	}
+	r.RGBD = float4(0.05f, 0.05f, 0.05f, -1.f);
+	return r;
+}
 //--------------------------------------------------------------------------------------
 // Compute Shaders
 //--------------------------------------------------------------------------------------
@@ -140,105 +259,12 @@ void CS_KinectView(uint3 DTid : SV_DispatchThreadID)
 	eyeray.d.y = ( eyeray.d.y == 0.f ) ? 1e-15f : eyeray.d.y;
 	eyeray.d.z = ( eyeray.d.z == 0.f ) ? 1e-15f : eyeray.d.z;
 
-	// calculate ray intersection with bounding box
-	float fTnear, fTfar;
-	bool bHit = IntersectBox(eyeray, cb_f3VolBBMin, cb_f3VolBBMax , fTnear, fTfar);
-	
-	// output nothing if ray didn't intesect with volume
-	if (!bHit){
-		g_uavKinectRGBD[DTid.xy] = float4(0.f,0.f,0.f,-1.f);
-		g_uavKinectNorm[DTid.xy] = float4(0.f,0.f,0.f,-1.f);
-		if(cb_bKinectShade) g_uavKinectShade[DTid.xy] = float4(0.f,0.f,0.f,0.f);
-		return;
-	}
-
-	// avoid artifact if eye are inside volume;
-	if( fTnear < 0.f ) fTnear = 0.f;
-
-	// calculate the fIteration count need to sample the volume
-	float fIteration = (fTfar-fTnear)/cb_fStepLen;
-
-	// calculate intersection points
-	float3 f3P = eyeray.o.xyz + eyeray.d.xyz * fTnear;
-
-	//float t = fTnear;
-	
-	float3 f3P_pre = f3P;
-	float3 f3Step = eyeray.d.xyz * cb_fStepLen;
-
-	// read the first value and check whether it is bValid(is it in edges?)
-	float2 f2IntersectResult = float2(0.0f, 0.0f);
-	bool bValid_pre = SampleDW(f3P*cb_f3InvVolSize + 0.5f, f2IntersectResult);
-
-	// initialize depth pre and cur
-	float fDist_pre = f2IntersectResult.x*TRUNC_DIST;
-	float fDist_cur;
-
-	// ray marching
-	[fastopt]
-	for(float i = 0; i <fIteration; i=i+1.f) {
-		// convert to texture space
-		float3 f3txCoord = f3P * cb_f3InvVolSize + 0.5f;
-		// read depth and weight
-		float2 f2DistWeight = float2(0.0f,0.0f);
-		bool bValid = SampleDW(f3txCoord, f2DistWeight);
-
-		fDist_pre = fDist_cur;
-		fDist_cur = f2DistWeight.x * TRUNC_DIST;
-		if (abs(fDist_cur - INVALID_VALUE*TRUNC_DIST)>1e-8 &&abs(fDist_pre - INVALID_VALUE*TRUNC_DIST)>1e-8){
-			//if ( fDist_pre < 0 ) return output;
-			if ( fDist_pre * fDist_cur < 0 )
-			{
-				// get sub voxel txCoord
-				float3 f3SurfacePos = f3P_pre + (f3P - f3P_pre) * fDist_pre / (fDist_pre - fDist_cur); 
-				f3txCoord = f3SurfacePos * cb_f3InvVolSize + 0.5f;
-
-				// get surface pos in view space
-				float4 f4SurfacePos = mul(float4 (f3SurfacePos, 1), cb_mInvKinectWorld);
-
-				// get and compute f3Normal
-				float2 temp0 = float2(0.0f, 0.0f);
-				float2 temp1 = float2(0.0f, 0.0f);
-				SampleDW(f3txCoord, temp0, int3(1, 0, 0));
-				SampleDW(f3txCoord, temp1, int3(-1, 0, 0));
-				float depth_dx = temp0.x - temp1.x;
-				SampleDW(f3txCoord, temp0, int3(0, 1, 0));
-				SampleDW(f3txCoord, temp1, int3(0, -1, 0));
-				float depth_dy = temp0.x - temp1.x;
-				SampleDW(f3txCoord, temp0, int3(0, 0, 1));
-				SampleDW(f3txCoord, temp1, int3(0, 0, -1));
-				float depth_dz = temp0.x - temp1.x;
-				// the normal is calculated and stored in view space
-				float3 f3Normal = normalize(mul(float3 (depth_dx, depth_dy, depth_dz),cb_mInvKinectWorld));
-
-				// get color (maybe later I will use color to guide ICP)
-				float4 f4ColOrg = g_srvColor.SampleLevel ( g_samLinear, f3txCoord, 0);
-				// only if we want to shade from kinect's point of view
-				if(cb_bKinectShade){
-					// the light is calculated in view space, since the normal is in view space
-					float4 f4LightPos = g_cf4LightOffset + float4 ( 0.f, 0.f, 0.f, 1.f ); 
-					float4 f4LightDir = f4LightPos - float4 ( f3SurfacePos, 1.f );
-					float fLightDist = length ( f4LightDir );
-					f4LightDir /= fLightDist;
-					f4LightDir.w = clamp ( 1.0f / ( g_cf4LightAtte.x + 
-										 g_cf4LightAtte.y * fLightDist + 
-										 g_cf4LightAtte.z * fLightDist * fLightDist ), 0.f, 1.f );
-					float fNdotL = clamp ( dot ( f3Normal, f4LightDir.xyz ), 0, 1 );
-					float4 f4Color = f4ColOrg * f4LightDir.w * fNdotL;
-					// output shaded image
-					g_uavKinectShade[DTid.xy] = f4Color;
-				}
-
-				// output RGBD
-				g_uavKinectRGBD[DTid.xy] = float4(f4ColOrg.xyz, f4SurfacePos.z);
-				g_uavKinectNorm[DTid.xy] = float4(f3Normal, 0.f) * 0.5f + 0.5f;
-				return ;
-			}
-		}
-		f3P_pre = f3P;
-		f3P += f3Step;
-	}
+	MarchingResult r = MarchingVol(eyeray, cb_bKinectShade);
+	g_uavKinectRGBD[DTid.xy] = r.RGBD;
+	g_uavKinectNorm[DTid.xy] = mul(r.Normal, cb_mInvKinectWorld);
+	if(cb_bKinectShade) g_uavKinectShade[DTid.xy] = r.RGBD;
 	return;
+	
 }
 
 /* CS for rendering the volume from free camera point of view */
@@ -257,95 +283,8 @@ void CS_FreeView(uint3 DTid : SV_DispatchThreadID)
 	eyeray.d.y = ( eyeray.d.y == 0.f ) ? 1e-15 : eyeray.d.y;
 	eyeray.d.z = ( eyeray.d.z == 0.f ) ? 1e-15 : eyeray.d.z;
 
-	// calculate ray intersection with bounding box+
-	float fTnear, fTfar;
-	bool bHit = IntersectBox(eyeray, cb_f3VolBBMin, cb_f3VolBBMax , fTnear, fTfar);
-	
-	// output nothing if ray didn't intesect with volume
-	if (!bHit){
-		g_uavFreeCamShade[DTid.xy] = float4(0.f, 0.f, 0.f, 0.f);
-		return;
-	}
-
-	// avoid artifact if eye are inside volume;
-	if (fTnear < 0.f) fTnear = 0.f;
-
-	// calculate the fIteration count need to sample the volume
-	float fIteration = (fTfar - fTnear) / cb_fStepLen;
-
-	// calculate intersection points
-	float3 f3P = eyeray.o.xyz + eyeray.d.xyz * fTnear;
-
-	//float t = fTnear;
-
-	float3 f3P_pre = f3P;
-	float3 f3Step = eyeray.d.xyz * cb_fStepLen;
-
-	// read the first value and check whether it is bValid(is it in edges?)
-	float2 f2IntersectResult = float2(0.0f, 0.0f);
-	bool bValid_pre = SampleDW(f3P*cb_f3InvVolSize + 0.5f, f2IntersectResult);
-
-	// initialize depth pre and cur
-	float fDist_pre = f2IntersectResult.x*TRUNC_DIST;
-	float fDist_cur;
-
-	// ray marching
-	[fastopt]
-	for (float i = 0; i <fIteration; i=i+1.f) {
-		// convert to texture space
-		float3 f3txCoord = f3P * cb_f3InvVolSize + 0.5f;
-		// read depth and weight
-		float2 f2DistWeight = float2(0.0f, 0.0f);
-		bool bValid = SampleDW(f3txCoord, f2DistWeight);
-
-		fDist_pre = fDist_cur;
-		fDist_cur = f2DistWeight.x * TRUNC_DIST;
-		if (abs(fDist_cur - INVALID_VALUE*TRUNC_DIST)>EPSILON &&abs(fDist_pre - INVALID_VALUE*TRUNC_DIST)>EPSILON){
-			if ( fDist_pre * fDist_cur < 0 )
-			{
-				// get sub voxel txCoord
-				float3 f3SurfacePos = f3P_pre + (f3P - f3P_pre) * fDist_pre / (fDist_pre - fDist_cur); 
-				f3txCoord = f3SurfacePos * cb_f3InvVolSize + 0.5f;
-
-				// get and compute f3Normal
-				float2 temp0 = float2(0.0f, 0.0f);
-				float2 temp1= float2(0.0f,0.0f);
-				SampleDW(f3txCoord, temp0, int3(1, 0, 0));
-				SampleDW(f3txCoord, temp1, int3(-1, 0, 0));
-				float depth_dx = temp0.x - temp1.x;
-				SampleDW(f3txCoord, temp0, int3(0, 1, 0));
-				SampleDW(f3txCoord, temp1, int3(0, -1, 0));
-				float depth_dy = temp0.x - temp1.x;
-				SampleDW(f3txCoord, temp0, int3(0, 0, 1));
-				SampleDW(f3txCoord, temp1, int3(0, 0, -1));
-				float depth_dz = temp0.x - temp1.x;
-				// the normal is calculated and stored in view space
-				float3 f3Normal = normalize(float3 (depth_dx, depth_dy, depth_dz));
-
-				// get color (maybe later I will use color to guide ICP)
-				float4 f4ColOrg = g_srvColor.SampleLevel ( g_samLinear, f3txCoord, 0);
-				
-				// shading part
-				float4 f4LightPos = mul(g_cf4LightOffset + float4 (0.f, 0.f, 0.f, 1.f), cb_mInvView);
-				float4 f4LightDir = f4LightPos - float4 ( f3SurfacePos, 1 );
-				float fLightDist = length ( f4LightDir );
-				f4LightDir /= fLightDist;
-				f4LightDir.w = clamp ( 1.0f / ( g_cf4LightAtte.x + 
-									g_cf4LightAtte.y * fLightDist + 
-									g_cf4LightAtte.z * fLightDist * fLightDist ), 0, 1 );
-				float fNdotL = clamp ( dot ( f3Normal, f4LightDir.xyz ), 0, 1 );
-				float4 f4Color = f4ColOrg * f4LightDir.w * fNdotL + g_cf4Ambient;
-
-				// output shaded image
-				g_uavFreeCamShade[DTid.xy] = f4Color;
-
-				return;
-			}
-		}
-		f3P_pre = f3P;
-		f3P += f3Step;
-	}
-	g_uavFreeCamShade[DTid.xy] = float4(0.f, 0.f, 0.f, 0.f);
+	MarchingResult r = MarchingVol(eyeray, true);
+	g_uavFreeCamShade[DTid.xy] = r.RGBD;
 	return;
 }
 

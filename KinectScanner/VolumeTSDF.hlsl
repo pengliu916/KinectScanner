@@ -88,6 +88,7 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 
 		return;
 	}
+	//tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(float2(R_F, 0.f));
 	return;
 }
 

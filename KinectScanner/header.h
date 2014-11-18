@@ -31,7 +31,7 @@
 #define VOXEL_NUM_Y 256
 #define VOXEL_NUM_Z 256
 #define TRUNC_DIST 0.02f //should be at least VOXEL_SIZE
-#define INVALID_VALUE (2.f)
+#define INVALID_VALUE (-1.f)
 
 #define COMPILE_FLAG D3DCOMPILE_ENABLE_STRICTNESS
 
