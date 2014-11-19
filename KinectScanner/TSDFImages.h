@@ -81,7 +81,7 @@ public:
 		m_CBperCall.VolumeHalfSize.x = pTSDFVolume->m_CBperCall.halfWidth * pTSDFVolume->m_CBperCall.voxelSize ;
 		m_CBperCall.VolumeHalfSize.y = pTSDFVolume->m_CBperCall.halfHeight * pTSDFVolume->m_CBperCall.voxelSize ;
 		m_CBperCall.VolumeHalfSize.z = pTSDFVolume->m_CBperCall.halfDepth * pTSDFVolume->m_CBperCall.voxelSize ;
-		m_CBperCall.Tstep = 0.5 * m_CBperCall.TruncDist;
+		m_CBperCall.Tstep = 0.5f * m_CBperCall.TruncDist;
 		m_CBperCall.InvVolumeSize.x = 1.0f / ( m_CBperCall.VolumeHalfSize.x * 2.0f );
 		m_CBperCall.InvVolumeSize.y = 1.0f / ( m_CBperCall.VolumeHalfSize.y * 2.0f );
 		m_CBperCall.InvVolumeSize.z = 1.0f / ( m_CBperCall.VolumeHalfSize.z * 2.0f );
@@ -285,8 +285,6 @@ public:
 
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Generate 3 img from Volume");
 
-		float ClearColor[4] = { 0.0f, 0.0f, 0.0f, -1.0f };
-
 		XMMATRIX mKinectTransform = m_pTSDFVolume->m_pInputPC->mPreFrame;
 		m_pGeneratedTPC->mCurFrame = mKinectTransform;
 		m_pGeneratedTPC->mCurRotation = m_pTSDFVolume->m_pInputPC->mPreRotation;
@@ -310,7 +308,7 @@ public:
 		pd3dImmediateContext->CSSetShaderResources( 1, 1, &m_pTSDFVolume->m_pColVolumeSRV);
 		UINT initCounts = 0;
 		pd3dImmediateContext->CSSetUnorderedAccessViews(0,3,m_pKinectOutUAV,&initCounts);
-		pd3dImmediateContext->Dispatch(ceil(D_W / (float)THREAD2D_X), ceil(D_H / (float)THREAD2D_Y), 1);
+		pd3dImmediateContext->Dispatch((UINT)ceil(D_W / (float)THREAD2D_X), (UINT)ceil(D_H / (float)THREAD2D_Y), 1);
 
 		ID3D11ShaderResourceView* ppSRVNULL[2] = { NULL,NULL };
 		pd3dImmediateContext->CSSetShaderResources( 0, 2, ppSRVNULL);

@@ -37,8 +37,8 @@ HRESULT Initial()
     V_RETURN( pointCloud.Initial() )
     V_RETURN( multiTexture.Initial() );
 	//multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
-	//multiTexture.AddTexture(pointCloud.m_TransformedPC.ppMeshNormalTexSRV, D_W, D_H);
-	//multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H); // Normal map from normal generated 
+	multiTexture.AddTexture(pointCloud.m_TransformedPC.ppMeshNormalTexSRV, D_W, D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H); // Normal map from normal generated 
 	//multiTexture.AddTexture(&tsdfImgs.m_pKinectOutSRV[2], D_W, D_H,"","<float4>", // Normal map from TSDF
 	multiTexture.AddTexture(&tsdfImgs.m_pFreeCamOutSRV,D_W,D_H,"","<float4>",
 							std::bind(&TSDFImages::Resize, &tsdfImgs, _1, _2, _3),
@@ -156,7 +156,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	pointCloud.Render(pd3dImmediateContext);
 
 	// Get RGBD and Normal data from TSDF with new pose 
-	//tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
+	tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
 	if(g_bRender) tsdfImgs.GetRaycastImg(pd3dImmediateContext);
 
 	//meshVolume.Integrate(pd3dImmediateContext);

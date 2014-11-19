@@ -95,9 +95,9 @@ public:
 
 		// Create the texture
 		D3D11_TEXTURE3D_DESC dstex;
-		dstex.Width = m_CBperCall.halfWidth * 2;
-		dstex.Height = m_CBperCall.halfHeight * 2;
-		dstex.Depth = m_CBperCall.halfDepth * 2;
+		dstex.Width = (UINT)m_CBperCall.halfWidth * 2.f;
+		dstex.Height = (UINT)m_CBperCall.halfHeight * 2.f;
+		dstex.Depth = (UINT)m_CBperCall.halfDepth * 2.f;
 		dstex.MipLevels = 1;
 		dstex.Format = DXGI_FORMAT_R16G16_TYPELESS;// the texture file should have 32bit typeless format
 		dstex.Usage = D3D11_USAGE_DEFAULT;

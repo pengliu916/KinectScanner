@@ -425,15 +425,15 @@ public:
 		}
 
 		// Update the real resolution of each subtexture
-		int subWidth = m_RTviewport.Width / m_uTileCount_x;
-		int subHeight = m_RTviewport.Height / m_uTileCount_y;
+		int subWidth = (int)m_RTviewport.Width / m_uTileCount_x;
+		int subHeight = (int)m_RTviewport.Height / m_uTileCount_y;
 		for (int i = 0; i < m_vecTiledObjs.size(); i++){
 			m_vecTiledObjs[i].iOutWidth = subWidth;
 			m_vecTiledObjs[i].iOutHeight = subHeight;
 			m_vecTiledObjs[i].iLTcorner_x *= subWidth;
 			m_vecTiledObjs[i].iLTcorner_y *= subHeight;
-			m_vecTiledObjs[i].iLTcorner_x += m_RTviewport.TopLeftX;
-			m_vecTiledObjs[i].iLTcorner_y += m_RTviewport.TopLeftY;
+			m_vecTiledObjs[i].iLTcorner_x += (int)m_RTviewport.TopLeftX;
+			m_vecTiledObjs[i].iLTcorner_y += (int)m_RTviewport.TopLeftY;
 		}
 
 		// Updating constant buffer
@@ -486,8 +486,8 @@ public:
 		POINT cursorPos;
 		GetCursorPos(&cursorPos);
 		ScreenToClient(hWnd, &cursorPos);
-		curse_x = cursorPos.x;
-		curse_y = cursorPos.y;
+		curse_x = (short)cursorPos.x;
+		curse_y = (short)cursorPos.y;
 
 		LPARAM nlParam = lParam;
 		for (int i = 0; i<m_vecTiledObjs.size(); i++){

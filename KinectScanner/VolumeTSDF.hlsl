@@ -68,7 +68,7 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 		float pre_tsdf = previousValue.x;
 
 		float3 Normal = (codedNormal - float4(0.5, 0.5, 0.5, 0)).xyz * 2.f;
-		float norAngle = dot(-normalize(currentVoxelPos), Normal) * 256;
+		float norAngle = dot(-normalize(currentVoxelPos.xyz), Normal) * 256;
 
 		//if( norAngle < 0.5f/sqrt(2)) discard;
 		//if( tsdf >= 1 && pre_tsdf < 1 ) return 0;
