@@ -307,7 +307,7 @@ public:
 		pd3dImmediateContext->CSSetShaderResources( 0, 1, &m_pTSDFVolume->m_pDWVolumeSRV);
 		pd3dImmediateContext->CSSetShaderResources( 1, 1, &m_pTSDFVolume->m_pColVolumeSRV);
 		UINT initCounts = 0;
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0,3,m_pKinectOutUAV,&initCounts);
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 3, m_pKinectOutUAV, &initCounts);
 		pd3dImmediateContext->Dispatch((UINT)ceil(D_W / (float)THREAD2D_X), (UINT)ceil(D_H / (float)THREAD2D_Y), 1);
 
 		ID3D11ShaderResourceView* ppSRVNULL[2] = { NULL,NULL };

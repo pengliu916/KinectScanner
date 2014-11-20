@@ -20,14 +20,8 @@ static const float4 g_cf4LightOffset = float4 ( 0.0f, 0.0f, 0.0f, 0.0f );
 static const float4 g_cf4Ambient = float4 ( 0.1f, 0.1f, 0.1f, 1.0f );
 static const float4 g_cf4LightAtte = float4 ( 1, 0, 0, 0 );
 
-//static const float KinectFTRpos_x = DEPTH_WIDTH * XSCALE * 0.5f; // Top right conner x_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
-//static const float KinectFTRpos_y = DEPTH_HEIGHT * XSCALE * 0.5f; // Top right conner y_pos in local space of Kinect's img plane = HalfDepthImgSize*XYScale
-
-static const float g_cf3InvVoxelSize = 1.f/VOXEL_SIZE;
 static const float3 g_cf3InvVoxelReso = float3(1.f / VOXEL_NUM_X, 1.f / VOXEL_NUM_Y, 1.f / VOXEL_NUM_Z);
 static const float3 g_cf3VoxelReso = float3(VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
-static const float2 g_cf2DepthImgReso = float2(D_W, D_H);
-static const float2 g_cf2DepthRange = float2(R_N, R_F);
 static const float2 g_cf2DepthF = float2(F_X, -F_Y);
 static const float2 g_cf2DepthC = float2(C_X, C_Y);
 
@@ -47,7 +41,7 @@ static const int3 cb_QuadrantOffset[8] =
 //--------------------------------------------------------------------------------------
 cbuffer cbInit : register( b0 )
 {
-	float cb_fTruncDist;
+	float cb_fTruncDist; // not referenced 
 	float3 cb_f3VolHalfSize; //  = volumeRes * voxelSize / 2
 	float cb_fStepLen; // step length in meters of ray casting algorithm
 	float3 cb_f3InvVolSize; // = 1 / ( volumeRes * voxelSize )
@@ -109,22 +103,22 @@ bool IntersectBox(Ray r, float3 VolBBMin, float3 VolBBMax, out float fTnear, out
 	return fTnear<=fTfar;
 }
 
-// pos is f3 in world space, value contain f2IntersectResult value, the function will return false
-// if sample data contain invalide value, otherwise will return true
-bool SampleDW( float3 uv, inout float2 value, int3 offset = int3(0,0,0) )
+// 'uv' is f3 in texture space, variable 'value' contain the interpolated sample result
+// the function will return false is any of neighbor sample point contian INVALID_VALUE
+bool SampleDW( float3 uv, inout float2 value, int3 offset = int3(0,0,0))
 {
+	// count for the half pixel offset
 	float3 fIdx = uv - g_cf3InvVoxelReso *0.5f;
 	float neighbor[8];
 	float2 sum = 0;
-	int invalidCount = 0;
 	// return Invalid value if the sample point is in voxel which contain invalid value;
 	[unroll]for(int i=0; i<8; i++){
 		neighbor[i] = g_srvDepthWeight.SampleLevel(g_samLinear, fIdx, 0,cb_QuadrantOffset[i]+offset).x;
-		if (abs(neighbor[i] - INVALID_VALUE) < EPSILON) invalidCount++;
+		if (neighbor[i] - INVALID_VALUE < EPSILON) return false;
 		else sum+=neighbor[i];
 	}
-	value = sum / (8.f - invalidCount);
-	return (invalidCount > 0) ? false : true;
+	value = sum / 8.f;
+	return true;
 }
 
 float2 LoadDW( float3 uv )
@@ -150,7 +144,7 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 
 	// calculate intersection points and convert to texture space
 	float3 f3Porg = (eyeray.o.xyz + eyeray.d.xyz * fTnear) * cb_f3InvVolSize + 0.5f;
-	float3 f3P =f3Porg;
+	float3 f3P = f3Porg;
 	float3 f3P_pre;
 	// ray length
 	float t = fTnear;
@@ -192,14 +186,14 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 			// get and compute f3Normal
 			float2 temp0 = float2(0.0f, 0.0f);
 			float2 temp1 = float2(0.0f, 0.0f);
-			SampleDW(f3VolUVW, temp0, int3(1, 0, 0));
-			SampleDW(f3VolUVW, temp1, int3(-1, 0, 0));
+			if(!SampleDW(f3VolUVW, temp0, int3(1, 0, 0))) return r;
+			if (!SampleDW(f3VolUVW, temp1, int3(-1, 0, 0))) return r;
 			float depth_dx = temp0.x - temp1.x;
-			SampleDW(f3VolUVW, temp0, int3(0, 1, 0));
-			SampleDW(f3VolUVW, temp1, int3(0, -1, 0));
+			if (!SampleDW(f3VolUVW, temp0, int3(0, 1, 0))) return r;
+			if (!SampleDW(f3VolUVW, temp1, int3(0, -1, 0))) return r;
 			float depth_dy = temp0.x - temp1.x;
-			SampleDW(f3VolUVW, temp0, int3(0, 0, 1));
-			SampleDW(f3VolUVW, temp1, int3(0, 0, -1));
+			if (!SampleDW(f3VolUVW, temp0, int3(0, 0, 1))) return r;
+			if (!SampleDW(f3VolUVW, temp1, int3(0, 0, -1))) return r;
 			float depth_dz = temp0.x - temp1.x;
 			// the normal is calculated and stored in view space
 			float3 f3Normal = normalize(float3 (depth_dx, depth_dy, depth_dz));
@@ -219,7 +213,7 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 									 g_cf4LightAtte.z * fLightDist * fLightDist ), 0.f, 1.f );
 				//float fNdotL = clamp(dot(f3Normal, f4LightDir.xyz), 0, 1);
 				float fNdotL = abs(dot(f3Normal, f4LightDir.xyz));
-				f4Col = f4Col * f4LightDir.w * fNdotL;
+				f4Col = f4Col * f4LightDir.w * fNdotL + g_cf4Ambient;
 			}
 
 			f4SurfacePos = mul(f4SurfacePos, cb_mInvKinectWorld);
@@ -254,8 +248,8 @@ void CS_KinectView(uint3 DTid : SV_DispatchThreadID)
 	g_uavKinectRGBD[DTid.xy] = r.RGBD;
 	g_uavKinectNorm[DTid.xy] = r.Normal;
 	if(cb_bKinectShade) g_uavKinectShade[DTid.xy] = r.RGBD;
+
 	return;
-	
 }
 
 /* CS for rendering the volume from free camera point of view */
