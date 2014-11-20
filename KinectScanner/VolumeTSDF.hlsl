@@ -32,7 +32,7 @@ cbuffer cbFrameUpdate : register ( b1 )
 void CS(uint3 DTid: SV_DispatchThreadID)
 {
 	// Current voxel pos in local space
-	float4 currentVoxelPos = float4((DTid - HalfVoxelRes + 0.5f) * VoxelSize,1);
+	float4 currentVoxelPos = float4((DTid - HalfVoxelRes + 0.5f) * VoxelSize,1.f);
 	// Convert to kinect sensor space
 	currentVoxelPos = mul(currentVoxelPos, inversedWorld_kinect);
 	// Discard if current z value is outside the valid kinect frustum
@@ -40,8 +40,8 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 	// Project current voxel onto img plane
 	float2 backProjectedXY = currentVoxelPos.xy / currentVoxelPos.z * f + c;
 	// Discard if UV is outside the valid range
-	if (backProjectedXY.x > reso.x || backProjectedXY.x < 0 ||
-		backProjectedXY.y > reso.y || backProjectedXY.y < 0)
+	if (backProjectedXY.x > reso.x || backProjectedXY.x < 0.f ||
+		backProjectedXY.y > reso.y || backProjectedXY.y < 0.f)
 		return;
 
 	// Read RGBD data
@@ -56,7 +56,7 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 			// Discard if normal is invalid
 			//if(codedNormal.a < 0) discard;
 
-		float weight = 1;
+		float weight = 1.f;
 		float tsdf;
 		tsdf = min(1, z_dif / TRUNC_DIST);
 
@@ -67,8 +67,8 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 		float pre_weight = previousValue.y;
 		float pre_tsdf = previousValue.x;
 
-		float3 Normal = (codedNormal - float4(0.5, 0.5, 0.5, 0)).xyz * 2.f;
-		float norAngle = dot(-normalize(currentVoxelPos.xyz), Normal) * 256;
+		float3 Normal = (codedNormal - float4(0.5f, 0.5f, 0.5f, 0.f)).xyz * 2.f;
+		float norAngle = dot(-normalize(currentVoxelPos.xyz), Normal) * 256.f;
 
 		//if( norAngle < 0.5f/sqrt(2)) discard;
 		//if( tsdf >= 1 && pre_tsdf < 1 ) return 0;

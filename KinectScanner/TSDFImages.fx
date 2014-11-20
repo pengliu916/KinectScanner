@@ -129,7 +129,7 @@ bool SampleDW( float3 uv, inout float2 value, int3 offset = int3(0,0,0) )
 
 float2 LoadDW( float3 uv )
 {
-	uint3 idx = uv * g_cf3VoxelReso;
+	uint3 idx = floor(uv * g_cf3VoxelReso);
 	return g_srvDepthWeight[idx];
 }
 
@@ -142,19 +142,19 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 	// output nothing if ray didn't intesect with volume
 	MarchingResult r;
 	r.RGBD = float4(0.f,0.f,0.f,-1.f);
-	r.Normal = (float4(0.f,0.f,0.f,-1.f) - 0.5f) * 2.f;
+	r.Normal = float4(0.f,0.f,0.f,-1.f);
 	if (!bHit)	return r;
 
 	// avoid artifact if eye are inside volume;
 	fTnear = fTnear < 0.f ? 0.f : fTnear;
 
 	// calculate intersection points and convert to texture space
-	float3 f3P = (eyeray.o.xyz + eyeray.d.xyz * fTnear) * cb_f3InvVolSize + 0.5f;
-	float3 f3Porg = f3P;
+	float3 f3Porg = (eyeray.o.xyz + eyeray.d.xyz * fTnear) * cb_f3InvVolSize + 0.5f;
+	float3 f3P =f3Porg;
+	float3 f3P_pre;
 	// ray length
 	float t = fTnear;
 	
-	float3 f3P_pre = f3P;
 	float3 f3Step = eyeray.d.xyz * cb_f3InvVolSize;
 
 	// read the first value
@@ -167,18 +167,24 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 	// ray marching
 	bool bSkip = true;
 	float fTstep = cb_fStepLen * 5.f;
-	[loop]while(t<fTfar) {
+	[loop]while(t<fTfar){
+		// recored previous footprint, and move one step in the volume
+		f3P_pre = f3P;
+		fDist_pre = fDist_cur;
+		t += fTstep;
+		f3P = f3Porg + (t - fTnear)*f3Step;
 		// read depth and weight
 		float2 f2DistWeight = LoadDW(f3P);
-		fDist_pre = fDist_cur;
 		fDist_cur = f2DistWeight.x * TRUNC_DIST;
-		// check whether we cross the suface or not, if crossed, switch to small step
-		if (bSkip && fDist_pre * fDist_cur >= INVALID_VALUE && fDist_pre * fDist_cur <0){
+		// check whether we cross the suface or not, if crossed, step back and switch to small step
+		if(bSkip){
+			if(fDist_pre * fDist_cur >= INVALID_VALUE && fDist_pre * fDist_cur <0){
 			t -= fTstep;
 			fTstep = cb_fStepLen;
 			bSkip = false;
 			f3P = f3P_pre;
 			fDist_cur = fDist_pre;
+			}
 		}else if(fDist_cur > INVALID_VALUE*TRUNC_DIST && fDist_pre > INVALID_VALUE*TRUNC_DIST && fDist_pre * fDist_cur < 0 ){
 			// get sub voxel txCoord
 			float3 f3VolUVW = f3P_pre + (f3P - f3P_pre) * fDist_pre / (fDist_pre - fDist_cur); 
@@ -219,14 +225,13 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 			f4SurfacePos = mul(f4SurfacePos, cb_mInvKinectWorld);
 			// output RGBD
 			r.RGBD = float4(f4Col.xyz, f4SurfacePos.z);
-			r.Normal = float4(f3Normal, 0.f);
+			r.Normal = mul(float4(f3Normal, 0.f), cb_mInvKinectWorld);
+			r.Normal.w=0.f;
+			r.Normal = r.Normal* 0.5f + 0.5f;
 			return r;
 		}
-		f3P_pre = f3P;
-		t += fTstep;
-		f3P = f3Porg+(t-fTnear)*f3Step;
 	}
-	r.RGBD = float4(0.05f, 0.05f, 0.05f, -1.f);
+	//r.RGBD = float4(0.05f, 0.05f, 0.05f, -1.f);
 	return r;
 }
 //--------------------------------------------------------------------------------------
@@ -247,7 +252,7 @@ void CS_KinectView(uint3 DTid : SV_DispatchThreadID)
 
 	MarchingResult r = MarchingVol(eyeray, cb_bKinectShade);
 	g_uavKinectRGBD[DTid.xy] = r.RGBD;
-	g_uavKinectNorm[DTid.xy] = mul(r.Normal, cb_mInvKinectWorld)*0.5f + 0.5f;
+	g_uavKinectNorm[DTid.xy] = r.Normal;
 	if(cb_bKinectShade) g_uavKinectShade[DTid.xy] = r.RGBD;
 	return;
 	

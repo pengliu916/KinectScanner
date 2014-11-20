@@ -125,7 +125,7 @@ public:
    
     void Render(ID3D11DeviceContext* pd3dimmediateContext)
     {
-        m_bUpdated = true;//m_kinect->UpdateTextures(pd3dimmediateContext);
+        m_bUpdated = m_kinect->UpdateTextures(pd3dimmediateContext);
         //m_kinect.UpdateDepthTexture(pd3dimmediateContext);
         //m_bUpdated = m_kinect.m_bDepthReceived;
 
