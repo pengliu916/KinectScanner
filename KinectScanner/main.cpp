@@ -27,9 +27,15 @@ TiledTextures					multiTexture = TiledTextures();
 FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
 VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
+
 PoseEstimator                   poseEstimator = PoseEstimator(D_W,D_H);
 HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(&meshVolume);
 bool                            g_bFirstFrame = true;
+
+
+bool bTracked = true;
+
+
 //--------------------------------------------------------------------------------------
 //Global Variables only for test purpose..... 
 //--------------------------------------------------------------------------------------
@@ -52,6 +58,7 @@ HRESULT Initial()
     HRESULT hr = S_OK;
     V_RETURN( pointCloud.Initial() )
     V_RETURN( multiTexture.Initial() );
+
 	// Use TSDFImages's Generated RGBD
 	V_RETURN(poseEstimator.Initial(tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 	// Use HistoPyramidMC's Generated RGBD
@@ -61,9 +68,6 @@ HRESULT Initial()
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H); 
     multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
-	multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
-							std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
-							std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
 
     swprintf(g_debugLine1,100,L"Debug Line 1...");
     swprintf(g_debugLine2,100,L"Debug Line 2...");
@@ -124,8 +128,8 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     V_RETURN( pointCloud.CreateResource( pd3dDevice ));
     V_RETURN( meshVolume.CreateResource(pd3dDevice,&pointCloud.m_TransformedPC));
     V_RETURN( tsdfImgs.CreateResource(pd3dDevice));
+
 	V_RETURN(poseEstimator.CreateResource(pd3dDevice));
-	V_RETURN(histoPyraimdMC.CreateResource(pd3dDevice,meshVolume.m_pColVolumeSRV,meshVolume.m_pDWVolumeSRV));
     V_RETURN( multiTexture.CreateResource( pd3dDevice) );
 
 	// Setup the debug layer
@@ -187,7 +191,7 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     if ( !g_bStepMode ) g_bGetNextFrame = true;
 
 	// Update the virtual cam of the model viewer of HistoPyramidMC
-	histoPyraimdMC.Update(fElapsedTime);
+	//histoPyraimdMC.Update(fElapsedTime);
 	tsdfImgs.Update(fElapsedTime);
 }
 
@@ -201,7 +205,6 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     if ( g_bGetNextFrame ){
         g_bGetNextFrame = false;
 
-        bool bTracked = false;
 
 		// Get new depth and color frmae from RGBD sensor
 		pointCloud.Render(pd3dImmediateContext);
@@ -218,11 +221,11 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
                 pointCloud.m_TransformedPC.mPreRotation = pointCloud.m_TransformedPC.mCurRotation;
 
 				// Get RGBD and Normal data from TSDF with new pose 
-                tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
 
 				// Find transformation matrix, return false if can't find one
-                bTracked = poseEstimator.Processing ( pd3dImmediateContext );
 
+                if ( bTracked ) tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
+                bTracked = poseEstimator.Processing ( pd3dImmediateContext );
                 if ( bTracked ){
 					// Update the Sensor Pose info
                     pointCloud.m_TransformedPC.vRotation += poseEstimator.m_vIncRotate;
@@ -243,7 +246,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
                     //g_bStepMode = true;
                     swprintf(g_debugLine3,100,L"Track failed!!  Singular Matrix");
                 }
-            }while(bTracked && iIterationCount<15);
+            }while(bTracked && iIterationCount<5);
             if ( bTracked ) {
                 float rnorm = norm ( vectorR );
                 float tnorm = norm ( vectorT );
@@ -266,9 +269,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
         }
     }
 
-
 	// Render the in-process mesh
-	histoPyraimdMC.Render(pd3dImmediateContext,false);
+	//histoPyraimdMC.Render(pd3dImmediateContext,false);
 
 	// Render all sub texture to screen
     multiTexture.Render( pd3dImmediateContext );
@@ -284,7 +286,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 void CALLBACK OnD3D11ReleasingSwapChain( void* pUserContext )
 {
     g_DialogResourceManager.OnD3D11ReleasingSwapChain();
-	histoPyraimdMC.Release();
+	tsdfImgs.Release();
+	//histoPyraimdMC.Release();
 }
 
 
@@ -295,11 +298,11 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
 {
     multiTexture.Release();
     pointCloud.Release();
-    tsdfImgs.Release();
+    tsdfImgs.Destory();
     meshVolume.Release();
     poseEstimator.Release();
 
-	histoPyraimdMC.Destory();
+	//histoPyraimdMC.Destory();
 
     
     g_DialogResourceManager.OnD3D11DestroyDevice();
@@ -420,7 +423,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
     Initial();
 
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0, true, 1280, 800 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0, true, 800, 600 );
     DXUTMainLoop(); // Enter into the DXUT ren  der loop
 
     // Perform any application-level cleanup here

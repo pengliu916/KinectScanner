@@ -7,12 +7,12 @@
   <ItemGroup>
     <FxCompile Include="NormalGenerator.fx" />
     <FxCompile Include="RayCast.fx" />
-    <FxCompile Include="TSDFImages.fx" />
     <FxCompile Include="Reduction.fx" />
     <FxCompile Include="PoseEstimator.fx" />
     <FxCompile Include="HistoPyramidMC.fx" />
     <FxCompile Include="BilateralFilter_Blurriness.fx" />
     <FxCompile Include="VolumeTSDF.hlsl" />
+    <FxCompile Include="TSDFImages.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FilteredPCL.h" />
