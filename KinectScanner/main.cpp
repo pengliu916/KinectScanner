@@ -29,19 +29,15 @@ VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X,
 TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
 
 PoseEstimator                   poseEstimator = PoseEstimator(D_W,D_H);
-HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(&meshVolume);
+
 bool                            g_bFirstFrame = true;
 
 
-bool bTracked = true;
-
+D3D11_VIEWPORT                  m_RTviewport;
 
 //--------------------------------------------------------------------------------------
 //Global Variables only for test purpose..... 
 //--------------------------------------------------------------------------------------
-
-bool g_bGetNextFrame = false;
-bool g_bStepMode = STEP_MODE;
 
 float norm ( XMVECTOR vector )
 {
@@ -64,10 +60,8 @@ HRESULT Initial()
 	// Use HistoPyramidMC's Generated RGBD
 	//V_RETURN(poseEstimator.Initial(histoPyraimdMC.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 
-	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV,D_W,D_H);
-	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H); 
     multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV,D_W,D_H);
-	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
+	multiTexture.AddTexture(poseEstimator.m_pTsdfTPC->ppMeshNormalTexSRV, D_W, D_H);
 
     swprintf(g_debugLine1,100,L"Debug Line 1...");
     swprintf(g_debugLine2,100,L"Debug Line 2...");
@@ -178,6 +172,16 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 	multiTexture.Resize(pd3dDevice, pBackBufferSurfaceDesc);
     poseEstimator.Resize(pd3dimmediateContext);
     SAFE_RELEASE(pd3dimmediateContext);
+
+	int winWidth = pBackBufferSurfaceDesc->Width;
+	int winHeight = pBackBufferSurfaceDesc->Height;
+
+	m_RTviewport.Width = (float)winWidth;
+	m_RTviewport.Height = (float)winHeight;
+	m_RTviewport.MinDepth = 0.0f;
+	m_RTviewport.MaxDepth = 1.0f;
+	m_RTviewport.TopLeftX = 0;
+	m_RTviewport.TopLeftY = 0;
     return S_OK;
 }
 
@@ -188,7 +192,6 @@ HRESULT CALLBACK OnD3D11ResizedSwapChain( ID3D11Device* pd3dDevice, IDXGISwapCha
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
 	// whether to get the next frame or not
-    if ( !g_bStepMode ) g_bGetNextFrame = true;
 
 	// Update the virtual cam of the model viewer of HistoPyramidMC
 	//histoPyraimdMC.Update(fElapsedTime);
@@ -202,80 +205,29 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext,
                                   double fTime, float fElapsedTime, void* pUserContext )
 {
-    if ( g_bGetNextFrame ){
-        g_bGetNextFrame = false;
-
-
+	if(g_bFirstFrame){
 		// Get new depth and color frmae from RGBD sensor
+		g_bFirstFrame = false;
 		pointCloud.Render(pd3dImmediateContext);
+		tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
+	}
+	for(int i=0;i<15;i++) poseEstimator.Processing ( pd3dImmediateContext );
 
-		// Only run the algorithm if we get new data
-        if ( pointCloud.m_bUpdated ){
-            XMVECTOR vectorR = XMVectorZero();
-			XMVECTOR vectorT = XMVectorZero();
+	swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", poseEstimator.m_fXoffset, poseEstimator.m_fYoffset, poseEstimator.m_fZoffset);
+	swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", poseEstimator.m_fAlpha, poseEstimator.m_fBeta, poseEstimator.m_fGamma);
 
-            int iIterationCount = 0;
+    swprintf(g_debugLine3,100,L"Track success");
 
-            do{
-                pointCloud.m_TransformedPC.mPreFrame = pointCloud.m_TransformedPC.mCurFrame;
-                pointCloud.m_TransformedPC.mPreRotation = pointCloud.m_TransformedPC.mCurRotation;
+	ID3D11RenderTargetView* rtv= DXUTGetD3D11RenderTargetView();
+	float ClearColor[4] = { 0.f, 0.f, 0.f, 0.0f };
+	pd3dImmediateContext->ClearRenderTargetView(rtv, ClearColor);
 
-				// Get RGBD and Normal data from TSDF with new pose 
-
-				// Find transformation matrix, return false if can't find one
-
-                if ( bTracked ) tsdfImgs.Get3ImgForKinect ( pd3dImmediateContext );
-                bTracked = poseEstimator.Processing ( pd3dImmediateContext );
-                if ( bTracked ){
-					// Update the Sensor Pose info
-                    pointCloud.m_TransformedPC.vRotation += poseEstimator.m_vIncRotate;
-                    XMMATRIX Ri = XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );  
-                    pointCloud.m_TransformedPC.vTranslation = XMVector3Transform ( pointCloud.m_TransformedPC.vTranslation, Ri ) + poseEstimator.m_vIncTran;
-
-					// Apply the new Sensor Pose
-                    pointCloud.m_TransformedPC.mCurRotation *= XMMatrixRotationRollPitchYawFromVector ( poseEstimator.m_vIncRotate );
-                    pointCloud.m_TransformedPC.mCurFrame = pointCloud.m_TransformedPC.mCurRotation * XMMatrixTranslationFromVector ( pointCloud.m_TransformedPC.vTranslation );
-
-					// Keep track of the incremental transformation for this data frame
-                    vectorR += poseEstimator.m_vIncRotate;
-                    vectorT += poseEstimator.m_vIncTran;
-                
-					// Increase the iteration counter for termination condition checking
-                    iIterationCount++; 
-                }else if ( poseEstimator.m_bSigularMatrix ){
-                    //g_bStepMode = true;
-                    swprintf(g_debugLine3,100,L"Track failed!!  Singular Matrix");
-                }
-            }while(bTracked && iIterationCount<5);
-            if ( bTracked ) {
-                float rnorm = norm ( vectorR );
-                float tnorm = norm ( vectorT );
-
-				XMFLOAT3 r_overall;
-				XMFLOAT3 t_overall;
-				XMStoreFloat3(&r_overall, (pointCloud.m_TransformedPC.vRotation) * 180.0f / XM_PI);
-				XMStoreFloat3(&t_overall, (pointCloud.m_TransformedPC.vTranslation) * 100.0f);
-				swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", t_overall.x, t_overall.y, t_overall.z);
-				swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", r_overall.x, r_overall.y, r_overall.z);
-
-                swprintf(g_debugLine3,100,L"Track success  % 6.5f", tnorm + rnorm);
-                if (  rnorm + tnorm > 0.001f ) meshVolume.Integrate( pd3dImmediateContext );
-            }
-			// If this is the first frame, then update the TSDF anyway
-			if(g_bFirstFrame){
-				g_bFirstFrame = false;
-				meshVolume.Integrate(pd3dImmediateContext);
-			}
-        }
-    }
-
-	// Render the in-process mesh
-	//histoPyraimdMC.Render(pd3dImmediateContext,false);
-
-	// Render all sub texture to screen
     multiTexture.Render( pd3dImmediateContext );
 
 	// Render the text
+	pd3dImmediateContext->OMSetRenderTargets(1, &rtv, NULL); 
+	pd3dImmediateContext->RSSetViewports(1, &m_RTviewport);
+
     RenderText();
 }
 
@@ -330,31 +282,7 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
     pointCloud.HandleMessages( hWnd, uMsg, wParam, lParam );
     poseEstimator.HandleMessages( hWnd, uMsg, wParam, lParam );
 	meshVolume.HandleMessages(hWnd, uMsg, wParam, lParam);
-    switch(uMsg)
-    {
-    case WM_KEYDOWN:
-        {
-            int nKey = static_cast<int>(wParam);
-
-            if (nKey == 'O')
-            {
-                g_bStepMode=!g_bStepMode;
-               /* if( g_bStepMode )
-                {
-                    multiTexture.m_ppInputSRV[3] = &tsdfImgs.m_pFreeCamOutSRV;
-                }
-                else
-                {
-                    multiTexture.m_ppInputSRV[3] = &tsdfImgs.m_pKinectOutSRV[2];
-                }*/
-            }
-            if (nKey == 'I')
-            {
-                g_bGetNextFrame=true;
-            }
-            break;
-        }
-    }
+    
     return 0;
 }
 
