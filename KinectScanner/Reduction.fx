@@ -49,14 +49,15 @@ void CS(uint Tid : SV_GroupIndex, uint3 GTid : SV_GroupID)
 
 	// do reduction in shared memory
 	for(uint i=1;i<THREAD1D;i*=2){
-		if(tid%(2*i)==0){
-			share_buf[tid].f4DataElm0 += share_buf[tid + i].f4DataElm0;
-			share_buf[tid].f4DataElm1 += share_buf[tid + i].f4DataElm1;
-			share_buf[tid].f4DataElm2 += share_buf[tid + i].f4DataElm2;
-			share_buf[tid].f4DataElm3 += share_buf[tid + i].f4DataElm3;
-			share_buf[tid].f4DataElm4 += share_buf[tid + i].f4DataElm4;
-			share_buf[tid].f4DataElm5 += share_buf[tid + i].f4DataElm5;
-			share_buf[tid].f4DataElm6 += share_buf[tid + i].f4DataElm6;
+		uint index = 2*i*tid;
+		if(index<THREAD1D){
+			share_buf[index].f4DataElm0 += share_buf[index + i].f4DataElm0;
+			share_buf[index].f4DataElm1 += share_buf[index + i].f4DataElm1;
+			share_buf[index].f4DataElm2 += share_buf[index + i].f4DataElm2;
+			share_buf[index].f4DataElm3 += share_buf[index + i].f4DataElm3;
+			share_buf[index].f4DataElm4 += share_buf[index + i].f4DataElm4;
+			share_buf[index].f4DataElm5 += share_buf[index + i].f4DataElm5;
+			share_buf[index].f4DataElm6 += share_buf[index + i].f4DataElm6;
 		}
 		GroupMemoryBarrierWithGroupSync();
 	}
