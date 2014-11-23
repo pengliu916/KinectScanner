@@ -34,9 +34,9 @@ public:
 	ID3D11Buffer*					m_pCBperFrame;
 
 	//For Intermediate Data
-	ID3D11Buffer*					m_pInterDataBuf[3];
-	ID3D11UnorderedAccessView*		m_pInterDataUAV[3];
-	ID3D11ShaderResourceView*		m_pInterDataSRV[3];
+	ID3D11Buffer*					m_pInterDataBuf[3][7];
+	ID3D11UnorderedAccessView*		m_pInterDataUAV[3][7];
+	ID3D11ShaderResourceView*		m_pInterDataSRV[3][7];
 
 	Reduction						m_Reduction;
 
@@ -109,17 +109,23 @@ public:
 		BUFDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 		BUFDesc.CPUAccessFlags = 0;
 		BUFDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-		BUFDesc.StructureByteStride = sizeof(InterData);
+		BUFDesc.StructureByteStride = sizeof(XMFLOAT4);
 		BUFDesc.Usage = D3D11_USAGE_DEFAULT;
-		BUFDesc.ByteWidth = m_uDim_x * m_uDim_y * sizeof(InterData);
-		V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[0]));
-		DXUT_SetDebugName(m_pInterDataBuf[0], "m_pInterDataBuf[0]");
-		BUFDesc.ByteWidth = (m_uDim_x/2) * (m_uDim_y/2) * sizeof(InterData);
-		V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[1]));
-		DXUT_SetDebugName(m_pInterDataBuf[1], "m_pInterDataBuf[1]");
-		BUFDesc.ByteWidth = (m_uDim_x/4) * (m_uDim_y/4) * sizeof(InterData);
-		V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[2]));
-		DXUT_SetDebugName(m_pInterDataBuf[2], "m_pInterDataBuf[2]");
+		BUFDesc.ByteWidth = m_uDim_x * m_uDim_y * sizeof(XMFLOAT4);
+		for(int i=0;i<7;i++){
+			V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[0][i]));
+			//DXUT_SetDebugName(m_pInterDataBuf[0][i], "m_pInterDataBuf[0]");
+		}
+		BUFDesc.ByteWidth = (m_uDim_x / 2) * (m_uDim_y / 2) * sizeof(XMFLOAT4);
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[1][i]));
+			//DXUT_SetDebugName(m_pInterDataBuf[1][i], "m_pInterDataBuf[1]");
+		}
+		BUFDesc.ByteWidth = (m_uDim_x / 4) * (m_uDim_y / 4) * sizeof(XMFLOAT4); 
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[2][i]));
+			//DXUT_SetDebugName(m_pInterDataBuf[2][i], "m_pInterDataBuf[2]");
+		}
 
 		// Create the resource view
 		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
@@ -127,30 +133,42 @@ public:
 		SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
 		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 		SRVDesc.Buffer.FirstElement = 0;
-		SRVDesc.Buffer.NumElements = m_uDim_x * m_uDim_y * sizeof(InterData) / BUFDesc.StructureByteStride;
-		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[0], &SRVDesc, &m_pInterDataSRV[0]));
-		DXUT_SetDebugName(m_pInterDataSRV[0], "m_pInterDataSRV[0]");
-		SRVDesc.Buffer.NumElements = (m_uDim_x / 2) * (m_uDim_y / 2) * sizeof(InterData) / BUFDesc.StructureByteStride;
-		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[1], &SRVDesc, &m_pInterDataSRV[1]));
-		DXUT_SetDebugName(m_pInterDataSRV[1], "m_pInterDataSRV[1]");
-		SRVDesc.Buffer.NumElements = (m_uDim_x / 4) * (m_uDim_y / 4) * sizeof(InterData) / BUFDesc.StructureByteStride;
-		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[2], &SRVDesc, &m_pInterDataSRV[2]));
-		DXUT_SetDebugName(m_pInterDataSRV[2], "m_pInterDataSRV[2]");
+		SRVDesc.Buffer.NumElements = m_uDim_x * m_uDim_y * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[0][i], &SRVDesc, &m_pInterDataSRV[0][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[0], "m_pInterDataSRV[0]");
+		}
+		SRVDesc.Buffer.NumElements = (m_uDim_x / 2) * (m_uDim_y / 2) * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[1][i], &SRVDesc, &m_pInterDataSRV[1][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[1], "m_pInterDataSRV[1]");
+		}
+		SRVDesc.Buffer.NumElements = (m_uDim_x / 4) * (m_uDim_y / 4) * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[2][i], &SRVDesc, &m_pInterDataSRV[2][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[2], "m_pInterDataSRV[2]");
+		}
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 		ZeroMemory(&UAVDesc, sizeof(UAVDesc));
 		UAVDesc.Format = DXGI_FORMAT_UNKNOWN;
 		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 		UAVDesc.Buffer.FirstElement = 0;
-		UAVDesc.Buffer.NumElements = m_uDim_x * m_uDim_y * sizeof(InterData) / BUFDesc.StructureByteStride;
-		V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[0], &UAVDesc, &m_pInterDataUAV[0]));
-		DXUT_SetDebugName(m_pInterDataSRV[0], "m_pInterDataSRV[0]");
-		UAVDesc.Buffer.NumElements = (m_uDim_x / 2) * (m_uDim_y / 2) * sizeof(InterData) / BUFDesc.StructureByteStride;
-		V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[1], &UAVDesc, &m_pInterDataUAV[1]));
-		DXUT_SetDebugName(m_pInterDataSRV[1], "m_pInterDataSRV[1]");
-		UAVDesc.Buffer.NumElements = (m_uDim_x / 4) * (m_uDim_y / 4) * sizeof(InterData) / BUFDesc.StructureByteStride;
-		V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[2], &UAVDesc, &m_pInterDataUAV[2]));
-		DXUT_SetDebugName(m_pInterDataSRV[2], "m_pInterDataSRV[2]");
+		UAVDesc.Buffer.NumElements = m_uDim_x * m_uDim_y * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[0][i], &UAVDesc, &m_pInterDataUAV[0][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[0], "m_pInterDataSRV[0]");
+		}
+		UAVDesc.Buffer.NumElements = (m_uDim_x / 2) * (m_uDim_y / 2) * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[1][i], &UAVDesc, &m_pInterDataUAV[1][i]));
+			//XUT_SetDebugName(m_pInterDataSRV[1], "m_pInterDataSRV[1]");
+		}
+		UAVDesc.Buffer.NumElements = (m_uDim_x / 4) * (m_uDim_y / 4) * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[2][i], &UAVDesc, &m_pInterDataUAV[2][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[2], "m_pInterDataSRV[2]");
+		}
 
 		V_RETURN(m_Reduction.CreateResource(pd3dDevice));
 		return hr;
@@ -170,16 +188,12 @@ public:
 		m_Reduction.Release();
 		SAFE_RELEASE(m_pCS);
 		SAFE_RELEASE(m_pCBperFrame);
-
-		SAFE_RELEASE(m_pInterDataBuf[0]);
-		SAFE_RELEASE(m_pInterDataSRV[0]);
-		SAFE_RELEASE(m_pInterDataUAV[0]);
-		SAFE_RELEASE(m_pInterDataBuf[1]);
-		SAFE_RELEASE(m_pInterDataSRV[1]);
-		SAFE_RELEASE(m_pInterDataUAV[1]);
-		SAFE_RELEASE(m_pInterDataBuf[2]);
-		SAFE_RELEASE(m_pInterDataSRV[2]);
-		SAFE_RELEASE(m_pInterDataUAV[2]);
+		for(int i=0;i<3;i++)
+			for(int j=0;j<7;j++){
+				SAFE_RELEASE(m_pInterDataBuf[i][j]);
+				SAFE_RELEASE(m_pInterDataSRV[i][j]);
+				SAFE_RELEASE(m_pInterDataUAV[i][j]);
+			}
 	}
 
 	bool Processing(ID3D11DeviceContext* pd3dImmediateContext, AccessSize Asize = AccessSize::fullSize;)
@@ -197,7 +211,7 @@ public:
 		pd3dImmediateContext->UpdateSubresource(m_pCBperFrame,0,NULL,&m_CBperFrame,0,0);
 
 		UINT initCounts = 0;
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0,1,&m_pInterDataUAV[(int)Asize], &initCounts);
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0,7,m_pInterDataUAV[(int)Asize], &initCounts);
 		ID3D11ShaderResourceView* srvs[4] = {*m_pKinectTPC->ppMeshRGBZTexSRV, *m_pTsdfTPC->ppMeshRGBZTexSRV,*m_pKinectTPC->ppMeshNormalTexSRV,*m_pTsdfTPC->ppMeshNormalTexSRV};
 		pd3dImmediateContext->CSSetShaderResources(0, 4, srvs);
 
@@ -206,8 +220,8 @@ public:
 		ID3D11ShaderResourceView* ppSRVNULLs[4] = { NULL,NULL,NULL,NULL};
 		pd3dImmediateContext->CSSetShaderResources( 0, 4, ppSRVNULLs );
 
-		ID3D11UnorderedAccessView* ppUAViewNULL[2] = { NULL,NULL };
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 1, ppUAViewNULL, &initCounts);
+		ID3D11UnorderedAccessView* ppUAViewNULL[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 7, ppUAViewNULL, &initCounts);
 
 		m_Reduction.Processing(pd3dImmediateContext,
 							   m_pInterDataUAV[(int)Asize],

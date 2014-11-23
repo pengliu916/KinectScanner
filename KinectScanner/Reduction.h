@@ -88,13 +88,13 @@ public:
 	}
 
 	void Processing(ID3D11DeviceContext* pd3dImmediateContext, 
-					ID3D11UnorderedAccessView* uav, 
-					ID3D11Buffer* buf,UINT elementCount)
+					ID3D11UnorderedAccessView* uav[], 
+					ID3D11Buffer* buf[],UINT elementCount)
 	{
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Reduction");
 		pd3dImmediateContext->CSSetShader( m_pCS, NULL, 0 );
 		UINT initCount = 0;
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0,1,&uav,&initCount);
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0,8,uav,&initCount);
 		pd3dImmediateContext->CSSetConstantBuffers(0,1,&m_pCBperFrame);
 
 		UINT uThreadGroup = elementCount;
@@ -105,17 +105,19 @@ public:
 			pd3dImmediateContext->Dispatch(uThreadGroup, 1, 1);
 		}while(uThreadGroup>1);
 
-		ID3D11UnorderedAccessView* ppUAViewNULL[2] = { NULL, NULL };
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 1, ppUAViewNULL, &initCount);
+		ID3D11UnorderedAccessView* ppUAViewNULL[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 8, ppUAViewNULL, &initCount);
 
 		D3D11_BOX region;
-		region.left = 0;
 		region.front = 0;
 		region.top = 0;
-		region.right = sizeof(InterData);
 		region.back = 1;
 		region.bottom = 1;
-		pd3dImmediateContext->CopySubresourceRegion(m_pSumForCPU,0,0,0,0,buf,0,&region);
+		region.left = 0;
+		region.right = sizeof(XMFLOAT4);
+		for(int i=0;i<7;i++){
+			pd3dImmediateContext->CopySubresourceRegion(m_pSumForCPU,0,i*sizeof(XMFLOAT4),0,0,buf[i],0,&region);
+		}
 		D3D11_MAPPED_SUBRESOURCE subresource;
 		pd3dImmediateContext->Map(m_pSumForCPU, D3D11CalcSubresource(0, 0, 1), D3D11_MAP_READ, 0, &subresource);
 		m_structSum = *reinterpret_cast<InterData*>(subresource.pData);
