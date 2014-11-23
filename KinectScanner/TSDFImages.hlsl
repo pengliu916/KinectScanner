@@ -135,8 +135,8 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 	
 	// output nothing if ray didn't intesect with volume
 	MarchingResult r;
-	r.RGBD = float4(0.f,0.f,0.f,-1.f);
-	r.Normal = float4(0.f,0.f,0.f,-1.f);
+	r.RGBD = float4(0.f,0.f,0.f,-1.f); 
+	r.Normal = float4(0.f,0.f,0.f,-1.f);//  any negative value for normal w component means normal is invalid
 	if (!bHit)	return r;
 
 	// avoid artifact if eye are inside volume;

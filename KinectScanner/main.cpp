@@ -213,10 +213,18 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 	}
 	for(int i=0;i<15;i++) poseEstimator.Processing ( pd3dImmediateContext );
 
-	swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", poseEstimator.m_fXoffset, poseEstimator.m_fYoffset, poseEstimator.m_fZoffset);
-	swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", poseEstimator.m_fAlpha, poseEstimator.m_fBeta, poseEstimator.m_fGamma);
+	swprintf(g_debugLine1, 100, L"% 6.5f % 6.5f % 6.5f % 6.5f % 6.5f % 6.5f % 6.5f",
+			 poseEstimator.m_Reduction.m_structSum.f4Data0.x, 
+			 poseEstimator.m_Reduction.m_structSum.f4Data1.x, 
+			 poseEstimator.m_Reduction.m_structSum.f4Data2.x, 
+			 poseEstimator.m_Reduction.m_structSum.f4Data3.x, 
+			 poseEstimator.m_Reduction.m_structSum.f4Data4.x, 
+			 poseEstimator.m_Reduction.m_structSum.f4Data5.x,
+			 poseEstimator.m_Reduction.m_structSum.f4Data6.x);
+	//swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", poseEstimator.m_fXoffset, poseEstimator.m_fYoffset, poseEstimator.m_fZoffset);
+	//swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", poseEstimator.m_fAlpha, poseEstimator.m_fBeta, poseEstimator.m_fGamma);
 
-    swprintf(g_debugLine3,100,L"Track success");
+    //swprintf(g_debugLine3,100,L"Track success");
 
 	ID3D11RenderTargetView* rtv= DXUTGetD3D11RenderTargetView();
 	float ClearColor[4] = { 0.f, 0.f, 0.f, 0.0f };
@@ -351,7 +359,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
     Initial();
 
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0, true, 800, 600 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_11_0, true, 1000, 600 );
     DXUTMainLoop(); // Enter into the DXUT ren  der loop
 
     // Perform any application-level cleanup here
