@@ -101,7 +101,7 @@ public:
 		do{
 			m_CBperFrame.u4ElmCount.x = uThreadGroup;
 			pd3dImmediateContext->UpdateSubresource(m_pCBperFrame, 0, NULL, &m_CBperFrame, 0, 0);
-			uThreadGroup = ceil((float)uThreadGroup / THREAD1D);
+			uThreadGroup = ceil((float)uThreadGroup / THREAD1D /2);
 			pd3dImmediateContext->Dispatch(uThreadGroup, 1, 1);
 		}while(uThreadGroup>1);
 
