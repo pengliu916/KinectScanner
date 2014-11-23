@@ -20,8 +20,6 @@ ID3D11Debug *d3dDebug = nullptr;
 CDXUTDialogResourceManager      g_DialogResourceManager;
 CDXUTTextHelper*                g_pTxtHelper = NULL;
 wchar_t                         g_debugLine1[100];
-wchar_t                         g_debugLine2[100];
-wchar_t                         g_debugLine3[100];
 
 TiledTextures					multiTexture = TiledTextures();
 FilteredPCL                     pointCloud = FilteredPCL(D_W,D_H);
@@ -64,8 +62,6 @@ HRESULT Initial()
 	multiTexture.AddTexture(poseEstimator.m_pTsdfTPC->ppMeshNormalTexSRV, D_W, D_H);
 
     swprintf(g_debugLine1,100,L"Debug Line 1...");
-    swprintf(g_debugLine2,100,L"Debug Line 2...");
-    swprintf(g_debugLine3,100,L"Debug Line 3...");
 
     return hr;
 }
@@ -80,10 +76,6 @@ void RenderText()
     //g_pTxtHelper->DrawTextLine( DXUTGetFrameStats( DXUTIsVsyncEnabled() ) );
     g_pTxtHelper->SetInsertionPos( 2, 10 );
     g_pTxtHelper->DrawTextLine(g_debugLine1);
-    g_pTxtHelper->SetInsertionPos( 2, 30 );
-    g_pTxtHelper->DrawTextLine(g_debugLine2);
-    g_pTxtHelper->SetInsertionPos( 2, 50 );
-    g_pTxtHelper->DrawTextLine(g_debugLine3);
     g_pTxtHelper->End();
 }
 
