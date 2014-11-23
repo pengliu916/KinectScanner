@@ -94,19 +94,19 @@ public:
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Reduction");
 		pd3dImmediateContext->CSSetShader( m_pCS, NULL, 0 );
 		UINT initCount = 0;
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0,8,uav,&initCount);
 		pd3dImmediateContext->CSSetConstantBuffers(0,1,&m_pCBperFrame);
-
-		UINT uThreadGroup = elementCount;
-		do{
-			m_CBperFrame.u4ElmCount.x = uThreadGroup;
-			pd3dImmediateContext->UpdateSubresource(m_pCBperFrame, 0, NULL, &m_CBperFrame, 0, 0);
-			uThreadGroup = ceil((float)uThreadGroup / THREAD1D /2);
-			pd3dImmediateContext->Dispatch(uThreadGroup, 1, 1);
-		}while(uThreadGroup>1);
-
+		for (int i = 0; i < 7; i++){
+			pd3dImmediateContext->CSSetUnorderedAccessViews(0, 1, &uav[i], &initCount);
+			UINT uThreadGroup = elementCount;
+			do{
+				m_CBperFrame.u4ElmCount.x = uThreadGroup;
+				pd3dImmediateContext->UpdateSubresource(m_pCBperFrame, 0, NULL, &m_CBperFrame, 0, 0);
+				uThreadGroup = ceil((float)uThreadGroup / THREAD1D / 2);
+				pd3dImmediateContext->Dispatch(uThreadGroup, 1, 1);
+			} while (uThreadGroup > 1);
+		}
 		ID3D11UnorderedAccessView* ppUAViewNULL[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 8, ppUAViewNULL, &initCount);
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 1, ppUAViewNULL, &initCount);
 
 		D3D11_BOX region;
 		region.front = 0;
