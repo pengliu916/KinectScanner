@@ -25,6 +25,8 @@ groupshared InterData sdata[THREAD1D];
 cbuffer cbPerFrame :register(b0){
 	uint4 cb_u4ElmCount;
 };
+
+
 //--------------------------------------------------------------------------------------
 // Compute Shader
 //--------------------------------------------------------------------------------------
@@ -56,7 +58,7 @@ void CS(uint3 threadIdx : SV_GroupThreadID, uint3 groupIdx : SV_GroupID)
 	GroupMemoryBarrierWithGroupSync();
 
 	// do reduction in shared memory
-	for(uint s=THREAD1D/2;s>0;s>>=1){
+	for(uint s=THREAD1D/2;s>32;s>>=1){
 		if(tid<s){
 			sdata[tid].f4DataElm0 += sdata[tid + s].f4DataElm0;
 			sdata[tid].f4DataElm1 += sdata[tid + s].f4DataElm1;
@@ -67,6 +69,55 @@ void CS(uint3 threadIdx : SV_GroupThreadID, uint3 groupIdx : SV_GroupID)
 			sdata[tid].f4DataElm6 += sdata[tid + s].f4DataElm6;
 		}
 		GroupMemoryBarrierWithGroupSync();
+	}
+	if(tid<32){
+		sdata[tid].f4DataElm0 += sdata[tid + 32].f4DataElm0;
+		sdata[tid].f4DataElm1 += sdata[tid + 32].f4DataElm1;
+		sdata[tid].f4DataElm2 += sdata[tid + 32].f4DataElm2;
+		sdata[tid].f4DataElm3 += sdata[tid + 32].f4DataElm3;
+		sdata[tid].f4DataElm4 += sdata[tid + 32].f4DataElm4;
+		sdata[tid].f4DataElm5 += sdata[tid + 32].f4DataElm5;
+		sdata[tid].f4DataElm6 += sdata[tid + 32].f4DataElm6;
+
+		sdata[tid].f4DataElm0 += sdata[tid + 16].f4DataElm0;
+		sdata[tid].f4DataElm1 += sdata[tid + 16].f4DataElm1;
+		sdata[tid].f4DataElm2 += sdata[tid + 16].f4DataElm2;
+		sdata[tid].f4DataElm3 += sdata[tid + 16].f4DataElm3;
+		sdata[tid].f4DataElm4 += sdata[tid + 16].f4DataElm4;
+		sdata[tid].f4DataElm5 += sdata[tid + 16].f4DataElm5;
+		sdata[tid].f4DataElm6 += sdata[tid + 16].f4DataElm6;
+
+		sdata[tid].f4DataElm0 += sdata[tid + 8].f4DataElm0;
+		sdata[tid].f4DataElm1 += sdata[tid + 8].f4DataElm1;
+		sdata[tid].f4DataElm2 += sdata[tid + 8].f4DataElm2;
+		sdata[tid].f4DataElm3 += sdata[tid + 8].f4DataElm3;
+		sdata[tid].f4DataElm4 += sdata[tid + 8].f4DataElm4;
+		sdata[tid].f4DataElm5 += sdata[tid + 8].f4DataElm5;
+		sdata[tid].f4DataElm6 += sdata[tid + 8].f4DataElm6;
+
+		sdata[tid].f4DataElm0 += sdata[tid + 4].f4DataElm0;
+		sdata[tid].f4DataElm1 += sdata[tid + 4].f4DataElm1;
+		sdata[tid].f4DataElm2 += sdata[tid + 4].f4DataElm2;
+		sdata[tid].f4DataElm3 += sdata[tid + 4].f4DataElm3;
+		sdata[tid].f4DataElm4 += sdata[tid + 4].f4DataElm4;
+		sdata[tid].f4DataElm5 += sdata[tid + 4].f4DataElm5;
+		sdata[tid].f4DataElm6 += sdata[tid + 4].f4DataElm6;
+
+		sdata[tid].f4DataElm0 += sdata[tid + 2].f4DataElm0;
+		sdata[tid].f4DataElm1 += sdata[tid + 2].f4DataElm1;
+		sdata[tid].f4DataElm2 += sdata[tid + 2].f4DataElm2;
+		sdata[tid].f4DataElm3 += sdata[tid + 2].f4DataElm3;
+		sdata[tid].f4DataElm4 += sdata[tid + 2].f4DataElm4;
+		sdata[tid].f4DataElm5 += sdata[tid + 2].f4DataElm5;
+		sdata[tid].f4DataElm6 += sdata[tid + 2].f4DataElm6;
+
+		sdata[tid].f4DataElm0 += sdata[tid + 1].f4DataElm0;
+		sdata[tid].f4DataElm1 += sdata[tid + 1].f4DataElm1;
+		sdata[tid].f4DataElm2 += sdata[tid + 1].f4DataElm2;
+		sdata[tid].f4DataElm3 += sdata[tid + 1].f4DataElm3;
+		sdata[tid].f4DataElm4 += sdata[tid + 1].f4DataElm4;
+		sdata[tid].f4DataElm5 += sdata[tid + 1].f4DataElm5;
+		sdata[tid].f4DataElm6 += sdata[tid + 1].f4DataElm6;
 	}
 	if(tid==0) g_idata[groupIdx.x] = sdata[0];
 }
