@@ -269,7 +269,7 @@ public:
 		m_bBadDepthMap = false;
 
 
-		//m_dDet = m_mA.determinant();
+		m_dDet = m_mA.determinant();
 	
 		if(fabs(m_dDet) < 1e-15){
 		//if(m_dDet < 1e-6){
@@ -277,7 +277,7 @@ public:
 			return false;
 		}
 		m_bSigularMatrix = false;
-		//m_vX = m_mA.llt().solve(m_vB).cast<float>();
+		m_vX = m_mA.llt().solve(m_vB).cast<float>();
 
 		m_vIncRotate = XMLoadFloat3 ( &XMFLOAT3 ( m_vX(0), m_vX(1), m_vX(2) ) );
 		m_vIncTran = XMLoadFloat3 ( &XMFLOAT3 ( m_vX(3), m_vX(4), m_vX(5) ) );

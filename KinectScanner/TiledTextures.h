@@ -456,6 +456,10 @@ public:
 	void Render(ID3D11DeviceContext* pd3dImmediateContext)
 	{
 		this->SetupPipeline(pd3dImmediateContext);
+		// Clear the three render targets
+		float ClearColor[4] = { 0.02f, 0.02f, 0.02f, -1.0f };
+
+		pd3dImmediateContext->ClearRenderTargetView(m_pOutRTV, ClearColor);
 		pd3dImmediateContext->Draw(m_uTexCount, 0);
 		pd3dImmediateContext->PSSetShaderResources(0, m_uTexCount, m_ppNullSRVs);
 	}

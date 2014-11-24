@@ -4,9 +4,6 @@
 // for more detail
 //--------------------------------------------------------------------------------------
 #include "header.h"
-//--------------------------------------------------------------------------------------
-// Structures
-//--------------------------------------------------------------------------------------
 
 RWStructuredBuffer<float4> g_idata0 : register(u0);
 
@@ -15,7 +12,6 @@ groupshared float4 sdata0[THREAD1D];
 cbuffer cbPerFrame :register(b0){
 	uint4 cb_u4ElmCount;
 };
-
 
 //--------------------------------------------------------------------------------------
 // Compute Shader
@@ -41,18 +37,11 @@ void CS(uint3 threadIdx : SV_GroupThreadID, uint3 groupIdx : SV_GroupID)
 	}
 	if(tid<32){
 		sdata0[tid] += sdata0[tid + 32];
-
 		sdata0[tid] += sdata0[tid + 16];
-
 		sdata0[tid] += sdata0[tid + 8];
-
 		sdata0[tid] += sdata0[tid + 4];
-
 		sdata0[tid] += sdata0[tid + 2];
-
 		sdata0[tid] += sdata0[tid + 1];
 	}
-	if(tid==0){
-		g_idata0[groupIdx.x] = sdata0[0];
-	}
+	if(tid==0) g_idata0[groupIdx.x] = sdata0[0];
 }
