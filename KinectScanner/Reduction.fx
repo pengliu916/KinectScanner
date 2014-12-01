@@ -1,76 +1,47 @@
-Texture2D<float4> txInput  : register(t0);
-cbuffer cbRTResolution :register( b0 )
-{
-	int4 compressed;
+//--------------------------------------------------------------------------------------
+// GPU algorithm for parallel reduction see 
+// http://channel9.msdn.com/Blogs/gclassy/DirectCompute-Lecture-Series-210-GPU-Optimizations-and-Performance 
+// for more detail
+//--------------------------------------------------------------------------------------
+#include "header.h"
+
+RWStructuredBuffer<float4> g_idata0 : register(u0);
+
+groupshared float4 sdata0[THREAD1D];
+
+cbuffer cbPerFrame :register(b0){
+	uint4 cb_u4ElmCount;
 };
 
 //--------------------------------------------------------------------------------------
-// Structures
+// Compute Shader
 //--------------------------------------------------------------------------------------
-struct GS_INPUT
+[numthreads(THREAD1D,1,1)]
+void CS(uint3 threadIdx : SV_GroupThreadID, uint3 groupIdx : SV_GroupID)
 {
-};
+	// each thread loads one element from global to share memory
+	uint tid = threadIdx.x;
+	uint i = groupIdx.x * THREAD1D*2 + threadIdx.x;
+	if(i+THREAD1D<cb_u4ElmCount.x) sdata0[tid] = g_idata0[i] + g_idata0[i + THREAD1D];
+	else if (i<cb_u4ElmCount.x) sdata0[tid] = g_idata0[i];
+	else sdata0[tid] = float4(0.f, 0.f, 0.f, 0.f);
+	
+	GroupMemoryBarrierWithGroupSync();
 
-struct PS_INPUT
-{
-    float4 Pos : SV_POSITION;
-    float2 Tex : TEXCOORD0;
-};
-
-//--------------------------------------------------------------------------------------
-// Vertex Shader
-//--------------------------------------------------------------------------------------
-GS_INPUT VS( )
-{
-    GS_INPUT output = (GS_INPUT)0;
- 
-    return output;
-}
-
-//--------------------------------------------------------------------------------------
-// Geometry Shader 
-//--------------------------------------------------------------------------------------
-[maxvertexcount(4)]
-void GS(point GS_INPUT particles[1], inout TriangleStream<PS_INPUT> triStream)
-{
-    PS_INPUT output;
-	output.Pos=float4(-1.0f,1.0f,0.0f,1.0f);
-	output.Tex=float2(0.0f,0.0f);
-	triStream.Append(output);
-
-	output.Pos=float4(1.0f,1.0f,0.0f,1.0f);
-	output.Tex=float2(compressed.z,0.0f);
-	triStream.Append(output);
-
-	output.Pos=float4(-1.0f,-1.0f,0.0f,1.0f);
-	output.Tex=float2(0.0f,compressed.w);
-	triStream.Append(output);
-
-	output.Pos=float4(1.0f,-1.0f,0.0f,1.0f);
-	output.Tex=float2(compressed.z,compressed.w);
-	triStream.Append(output);
-}
-
-//--------------------------------------------------------------------------------------
-// Pixel Shader
-//--------------------------------------------------------------------------------------
-
-float4 PS(PS_INPUT input) : SV_Target
-{
-	int3 currentLocation = int3(input.Tex.xy,0);
-
-	float4 output = float4(0,0,0,0);
-	[unroll]
-	for( int y = 0; y <= 2; y++ )
-	{
-		[unroll]
-		for( int x = 0; x <= 2; x++ )
-		{
-			int3 newLocation = currentLocation*3+int3(x,y,0);
-			float4 value = txInput.Load(newLocation);
-			output+=value;
+	// do reduction in shared memory
+	[unroll]for(uint s=THREAD1D/2;s>32;s>>=1){
+		if(tid<s){
+			sdata0[tid] += sdata0[tid + s];
 		}
+		GroupMemoryBarrierWithGroupSync();
 	}
-
-	return output;
+	if(tid<32){
+		sdata0[tid] += sdata0[tid + 32];
+		sdata0[tid] += sdata0[tid + 16];
+		sdata0[tid] += sdata0[tid + 8];
+		sdata0[tid] += sdata0[tid + 4];
+		sdata0[tid] += sdata0[tid + 2];
+		sdata0[tid] += sdata0[tid + 1];
+	}
+	if(tid==0) g_idata0[groupIdx.x] = sdata0[0];
 }

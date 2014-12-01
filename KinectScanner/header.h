@@ -1,4 +1,4 @@
-#define USING_KINECT 0				// Set to 0 will instead use prerecorded RGBD video as input
+#define USING_KINECT 1				// Set to 0 will instead use prerecorded RGBD video as input
 #define KINECT2 1					// Set to 0 will use Kinect1 params instead of Kinect2
 #define PASSIVE_STREAM 1			// Set to 1 will guanrrante every frame get processed
 #define SKIP_FRAME_NUM 1			// Number of first frames to skip due to bad Kinect Startup bug
@@ -17,19 +17,20 @@
 
 #define EPSILON 1e-8f
 
-#define SUB_TEXTUREWIDTH 800
-#define SUB_TEXTUREHEIGHT 600
+#define SUB_TEXTUREWIDTH 600
+#define SUB_TEXTUREHEIGHT 450
 
 #define THREAD_X 8
 #define THREAD_Y 8
 #define THREAD_Z 8
 #define THREAD2D_X 8
 #define THREAD2D_Y 8
+#define THREAD1D 128
 
 #define VOXEL_SIZE  0.007f
-#define VOXEL_NUM_X 384
-#define VOXEL_NUM_Y 384
-#define VOXEL_NUM_Z 384
+#define VOXEL_NUM_X 256
+#define VOXEL_NUM_Y 256
+#define VOXEL_NUM_Z 256
 #define TRUNC_DIST 0.021f //should be at least VOXEL_SIZE
 #define INVALID_VALUE (-1.f)
 

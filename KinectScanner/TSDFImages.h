@@ -321,7 +321,6 @@ public:
 
 	void GetRaycastImg( ID3D11DeviceContext* pd3dImmediateContext, bool phong = true )
 	{
-
 		if (m_bEmptyTSDF)
 		{
 			m_pTSDFVolume->Integrate(pd3dImmediateContext);

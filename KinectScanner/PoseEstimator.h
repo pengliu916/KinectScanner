@@ -11,42 +11,32 @@
 #include "header.h"
 
 using namespace DirectX;
-struct CB_PoseEstimator_PerCall
-{
-	int txRTWidth;
-	int txRTHeight;
-	int NIU0;//Not in use
-	int NIU1;
-};
 struct CB_PoseEstimator_PerFrame
 {
-	XMMATRIX mKinectMesh;
-	XMMATRIX mTsdfMesh;
+	XMMATRIX mKinect;
+	XMINT2 uUAVDim;
+	UINT uStepLen;
+	UINT NIU;
+};
+
+enum class AccessSize{
+	fullSize = 0,
+	halfSize = 1,
+	quaterSize = 2,
 };
 
 class PoseEstimator
 {
 public:
-
-	ID3D11VertexShader*				m_pPassVS;
-	ID3D11PixelShader*				m_pPS_I;
-	ID3D11PixelShader*				m_pPS_II;
-	ID3D11GeometryShader*			m_pGS;
-	ID3D11InputLayout*				m_pScreenQuadIL;
-	ID3D11Buffer*					m_pScreenQuadVB; 
-
-	CB_PoseEstimator_PerCall		m_CBperCall;
-	ID3D11Buffer*					m_pCBperCall;
+	ID3D11ComputeShader*			m_pCS;
 
 	CB_PoseEstimator_PerFrame		m_CBperFrame;
 	ID3D11Buffer*					m_pCBperFrame;
 
-	D3D11_VIEWPORT					m_ViewPort;
-
 	//For Intermediate Data
-	ID3D11Texture2D*				m_pSumOfCoordTex[7];
-	ID3D11RenderTargetView*			m_pSumOfCoordRTV[7];
-	ID3D11ShaderResourceView*		m_pSumOfCoordSRV[7];
+	ID3D11Buffer*					m_pInterDataBuf[3][7];
+	ID3D11UnorderedAccessView*		m_pInterDataUAV[3][7];
+	ID3D11ShaderResourceView*		m_pInterDataSRV[3][7];
 
 	Reduction						m_Reduction;
 
@@ -54,8 +44,8 @@ public:
 	TransformedPointClould*			m_pTsdfTPC;
 	TransformedPointClould*			m_pKinectTPC;
 
-	UINT			m_uOutputTexSize_x;
-	UINT			m_uOutputTexSize_y;
+	UINT			m_uDim_x;
+	UINT			m_uDim_y;
 
 	bool			m_bSigularMatrix;
 	bool			m_bBadDepthMap;
@@ -80,8 +70,8 @@ public:
 	PoseEstimator(UINT _inputWidth, UINT _inputHeight)
 	{
 		m_mA = Eigen::MatrixXf::Identity(6,6);
-		m_uOutputTexSize_x = _inputWidth;
-		m_uOutputTexSize_y = _inputHeight;
+		m_uDim_x = _inputWidth;
+		m_uDim_y = _inputHeight;
 		m_fPreNpairs = 1;
 	}
 
@@ -99,108 +89,88 @@ public:
 	{
 		HRESULT hr=S_OK;
 
-		m_CBperCall.txRTWidth = m_uOutputTexSize_x;
-		m_CBperCall.txRTHeight = m_uOutputTexSize_y;
+		ID3DBlob* pCSBlob = NULL;
+		V_RETURN(DXUTCompileFromFile(L"PoseEstimator.fx", nullptr, "CS", "cs_5_0", COMPILE_FLAG, 0, &pCSBlob));
+		V_RETURN(pd3dDevice->CreateComputeShader(pCSBlob->GetBufferPointer(),pCSBlob->GetBufferSize(),NULL,&m_pCS));
+		DXUT_SetDebugName(m_pCS,"m_pCS");
 
-
-		ID3DBlob* pVSBlob = NULL;
-		V_RETURN(DXUTCompileFromFile(L"PoseEstimator.fx", nullptr, "VS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob));
-		V_RETURN(pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(),pVSBlob->GetBufferSize(),NULL,&m_pPassVS));
-		DXUT_SetDebugName(m_pPassVS,"m_pPassVS");
-
-		ID3DBlob* pGSBlob = NULL;
-		V_RETURN(DXUTCompileFromFile(L"PoseEstimator.fx", nullptr, "GS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
-		V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pGS));
-		DXUT_SetDebugName(m_pGS, "m_pGS");
-		pGSBlob->Release();
-
-		ID3DBlob* pPSBlob = NULL;
-		V_RETURN(DXUTCompileFromFile(L"PoseEstimator.fx", nullptr, "PS_I", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
-		V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPS_I));
-		DXUT_SetDebugName(m_pPS_I, "m_pPS_I");
-		V_RETURN(DXUTCompileFromFile(L"PoseEstimator.fx", nullptr, "PS_II", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
-		V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pPS_II));
-		DXUT_SetDebugName(m_pPS_II, "m_pPS_II");
-		pPSBlob->Release();
-
-		D3D11_INPUT_ELEMENT_DESC layout[] = { { "POSITION", 0, DXGI_FORMAT_R16_SINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 } };
-		V_RETURN(pd3dDevice->CreateInputLayout(layout,ARRAYSIZE(layout),pVSBlob->GetBufferPointer(),pVSBlob->GetBufferSize(),&m_pScreenQuadIL));
-		pVSBlob->Release();
-		DXUT_SetDebugName( m_pScreenQuadIL, "m_pScreenQuadIL");
-
-
+		// create constant buffer
 		D3D11_BUFFER_DESC bd = {0};
 		bd.Usage = D3D11_USAGE_DEFAULT;
 		bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		bd.CPUAccessFlags = 0;
-		bd.ByteWidth = sizeof(CB_PoseEstimator_PerCall);
-		V_RETURN(pd3dDevice->CreateBuffer( &bd, NULL, &m_pCBperCall ));
-		DXUT_SetDebugName( m_pCBperCall, "m_pCBperCall");
-
 		bd.ByteWidth = sizeof(CB_PoseEstimator_PerFrame);
 		V_RETURN(pd3dDevice->CreateBuffer( &bd, NULL, &m_pCBperFrame ));
 		DXUT_SetDebugName( m_pCBperFrame, "m_pCBperFrame");
 
-		// Create the vertex buffer
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(short);
-		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-
-		V_RETURN(pd3dDevice->CreateBuffer(&bd, NULL, &m_pScreenQuadVB));
-		DXUT_SetDebugName( m_pScreenQuadVB, "m_pScreenQuadVB");
-
-
-		D3D11_TEXTURE2D_DESC tmdesc;
-		ZeroMemory( &tmdesc, sizeof( D3D11_TEXTURE2D_DESC ) );
-		tmdesc.ArraySize = 1;
-		tmdesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-		tmdesc.Usage = D3D11_USAGE_DEFAULT;
-		tmdesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-		tmdesc.Width = m_uOutputTexSize_x;
-		tmdesc.Height = m_uOutputTexSize_y;
-		tmdesc.MipLevels = 1;
-		tmdesc.SampleDesc.Count = 1;
-
-		char temp[100];
+		// create InterData buffer
+		D3D11_BUFFER_DESC BUFDesc;
+		ZeroMemory(&BUFDesc, sizeof(BUFDesc));
+		BUFDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+		BUFDesc.CPUAccessFlags = 0;
+		BUFDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+		BUFDesc.StructureByteStride = sizeof(XMFLOAT4);
+		BUFDesc.Usage = D3D11_USAGE_DEFAULT;
+		BUFDesc.ByteWidth = m_uDim_x * m_uDim_y * sizeof(XMFLOAT4);
 		for(int i=0;i<7;i++){
-			V_RETURN( pd3dDevice->CreateTexture2D( &tmdesc, NULL, &m_pSumOfCoordTex[i] ) );
-			sprintf_s(temp,"PoseEstimator_m_pSumOfCoordTex_%d",i);
-			DXUT_SetDebugName( m_pSumOfCoordTex[0], temp);
+			V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[0][i]));
+			//DXUT_SetDebugName(m_pInterDataBuf[0][i], "m_pInterDataBuf[0]");
+		}
+		BUFDesc.ByteWidth = (m_uDim_x / 2) * (m_uDim_y / 2) * sizeof(XMFLOAT4);
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[1][i]));
+			//DXUT_SetDebugName(m_pInterDataBuf[1][i], "m_pInterDataBuf[1]");
+		}
+		BUFDesc.ByteWidth = (m_uDim_x / 4) * (m_uDim_y / 4) * sizeof(XMFLOAT4); 
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateBuffer(&BUFDesc, nullptr, &m_pInterDataBuf[2][i]));
+			//DXUT_SetDebugName(m_pInterDataBuf[2][i], "m_pInterDataBuf[2]");
 		}
 
-		// Create the render target view
-		D3D11_RENDER_TARGET_VIEW_DESC DescRT;
-		DescRT.Format = tmdesc.Format;
-		DescRT.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-		DescRT.Texture2D.MipSlice = 0;
-
-		for(int i=0;i<7;i++){
-			V_RETURN( pd3dDevice->CreateRenderTargetView( m_pSumOfCoordTex[i], &DescRT, &m_pSumOfCoordRTV[i] ) );
-			sprintf_s(temp,"PoseEstimator_m_pSumOfCoordRTV_%d",i);
-			DXUT_SetDebugName( m_pSumOfCoordRTV[i],temp );
+		// Create the resource view
+		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+		ZeroMemory(&SRVDesc, sizeof(SRVDesc));
+		SRVDesc.Format = DXGI_FORMAT_UNKNOWN;
+		SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+		SRVDesc.Buffer.FirstElement = 0;
+		SRVDesc.Buffer.NumElements = m_uDim_x * m_uDim_y * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[0][i], &SRVDesc, &m_pInterDataSRV[0][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[0], "m_pInterDataSRV[0]");
+		}
+		SRVDesc.Buffer.NumElements = (m_uDim_x / 2) * (m_uDim_y / 2) * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[1][i], &SRVDesc, &m_pInterDataSRV[1][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[1], "m_pInterDataSRV[1]");
+		}
+		SRVDesc.Buffer.NumElements = (m_uDim_x / 4) * (m_uDim_y / 4) * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateShaderResourceView(m_pInterDataBuf[2][i], &SRVDesc, &m_pInterDataSRV[2][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[2], "m_pInterDataSRV[2]");
 		}
 
-		D3D11_SHADER_RESOURCE_VIEW_DESC nSRVDesc;
-		nSRVDesc.Format = tmdesc.Format;
-		nSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		nSRVDesc.Texture2D.MipLevels = 1;
-		nSRVDesc.Texture2D.MostDetailedMip = 0;
-		for(int i=0;i<7;i++){
-			V_RETURN( pd3dDevice->CreateShaderResourceView( m_pSumOfCoordTex[0], &nSRVDesc, &m_pSumOfCoordSRV[i] ) );
-			sprintf_s(temp,"PoseEstimator_m_pSumOfCoordSRV_%d",i);
-			DXUT_SetDebugName( m_pSumOfCoordSRV[i],temp );
+		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+		ZeroMemory(&UAVDesc, sizeof(UAVDesc));
+		UAVDesc.Format = DXGI_FORMAT_UNKNOWN;
+		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+		UAVDesc.Buffer.FirstElement = 0;
+		UAVDesc.Buffer.NumElements = m_uDim_x * m_uDim_y * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[0][i], &UAVDesc, &m_pInterDataUAV[0][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[0], "m_pInterDataSRV[0]");
+		}
+		UAVDesc.Buffer.NumElements = (m_uDim_x / 2) * (m_uDim_y / 2) * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[1][i], &UAVDesc, &m_pInterDataUAV[1][i]));
+			//XUT_SetDebugName(m_pInterDataSRV[1], "m_pInterDataSRV[1]");
+		}
+		UAVDesc.Buffer.NumElements = (m_uDim_x / 4) * (m_uDim_y / 4) * sizeof(XMFLOAT4) / BUFDesc.StructureByteStride;
+		for (int i = 0; i < 7; i++){
+			V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pInterDataBuf[2][i], &UAVDesc, &m_pInterDataUAV[2][i]));
+			//DXUT_SetDebugName(m_pInterDataSRV[2], "m_pInterDataSRV[2]");
 		}
 
-		m_Reduction.CreateResource(pd3dDevice, m_pSumOfCoordTex,7);
-
-		m_ViewPort.Width = m_uOutputTexSize_x;
-		m_ViewPort.Height = m_uOutputTexSize_y;
-		m_ViewPort.MinDepth = 0.0f;
-		m_ViewPort.MaxDepth = 1.0f;
-		m_ViewPort.TopLeftX = 0;
-		m_ViewPort.TopLeftY = 0; 
-
+		V_RETURN(m_Reduction.CreateResource(pd3dDevice));
 		return hr;
 	}
 
@@ -211,96 +181,84 @@ public:
 
 	void Resize(ID3D11DeviceContext* pd3dimmediateContext,const DXGI_SURFACE_DESC* pBackBufferSurfaceDesc = NULL)
 	{
-		pd3dimmediateContext->UpdateSubresource(m_pCBperCall,0,NULL,&m_CBperCall,0,0);
 	}
 
 	void Release()
 	{
 		m_Reduction.Release();
-		SAFE_RELEASE(m_pPassVS);
-		SAFE_RELEASE(m_pPS_I);
-		SAFE_RELEASE(m_pPS_II);
-		SAFE_RELEASE(m_pGS);
-		SAFE_RELEASE(m_pScreenQuadIL);
-		SAFE_RELEASE(m_pScreenQuadVB);
-		SAFE_RELEASE(m_pCBperCall);
+		SAFE_RELEASE(m_pCS);
 		SAFE_RELEASE(m_pCBperFrame);
-
-		for(int i=0;i<7;i++){
-			SAFE_RELEASE(m_pSumOfCoordTex[i]);
-			SAFE_RELEASE(m_pSumOfCoordRTV[i]);
-			SAFE_RELEASE(m_pSumOfCoordSRV[i]);
-		}
+		for(int i=0;i<3;i++)
+			for(int j=0;j<7;j++){
+				SAFE_RELEASE(m_pInterDataBuf[i][j]);
+				SAFE_RELEASE(m_pInterDataSRV[i][j]);
+				SAFE_RELEASE(m_pInterDataUAV[i][j]);
+			}
 	}
 
-	bool Processing(ID3D11DeviceContext* pd3dImmediateContext)
+	bool Processing(ID3D11DeviceContext* pd3dImmediateContext, AccessSize Asize = AccessSize::fullSize;)
 	{
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"PoseEstimat Computing");
 
-		pd3dImmediateContext->IASetInputLayout(m_pScreenQuadIL);
-		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-		UINT stride = 0;
-		UINT offset = 0;
-		pd3dImmediateContext->IASetVertexBuffers(0, 1, &m_pScreenQuadVB, &stride, &offset);
-		pd3dImmediateContext->VSSetShader( m_pPassVS, NULL, 0 );
-		pd3dImmediateContext->RSSetViewports( 1, &m_ViewPort );
-		pd3dImmediateContext->PSSetConstantBuffers(1,1,&m_pCBperFrame);
-		pd3dImmediateContext->GSSetConstantBuffers(0,1,&m_pCBperCall);
-		//Every frame overwrite the whole texture, so no need to clear rendertarget
-		pd3dImmediateContext->GSSetShader(m_pGS,NULL,0);	
-		pd3dImmediateContext->PSSetShader( m_pPS_I, NULL, 0 );
+		UINT uStepSize = pow(2,(int)Asize);
+		pd3dImmediateContext->CSSetConstantBuffers(0, 1, &m_pCBperFrame);
+		pd3dImmediateContext->CSSetShader( m_pCS, NULL, 0 );
 		
-		m_CBperFrame.mKinectMesh = XMMatrixTranspose ( m_pKinectTPC->mCurFrame );
-		m_CBperFrame.mTsdfMesh = XMMatrixTranspose ( m_pTsdfTPC->mCurFrame );
+		m_CBperFrame.mKinect = XMMatrixTranspose ( m_pKinectTPC->mCurFrame );
+		m_CBperFrame.uStepLen = uStepSize;
+		m_CBperFrame.uUAVDim.x = m_uDim_x / uStepSize;
+		m_CBperFrame.uUAVDim.y = m_uDim_y / uStepSize;
 		pd3dImmediateContext->UpdateSubresource(m_pCBperFrame,0,NULL,&m_CBperFrame,0,0);
 
-		pd3dImmediateContext->OMSetRenderTargets(4,&m_pSumOfCoordRTV[0],NULL);
-		pd3dImmediateContext->PSSetShaderResources(0, 1, m_pKinectTPC->ppMeshRGBZTexSRV);
-		pd3dImmediateContext->PSSetShaderResources(1, 1, m_pTsdfTPC->ppMeshRGBZTexSRV);
-		pd3dImmediateContext->PSSetShaderResources(2, 1, m_pKinectTPC->ppMeshNormalTexSRV);
-		pd3dImmediateContext->PSSetShaderResources(3, 1, m_pTsdfTPC->ppMeshNormalTexSRV);
-		pd3dImmediateContext->Draw(1,0);
-		pd3dImmediateContext->PSSetShader(m_pPS_II,NULL,0);
-		pd3dImmediateContext->OMSetRenderTargets(3,&m_pSumOfCoordRTV[4],NULL);
-		pd3dImmediateContext->Draw(1,0);
+		UINT initCounts = 0;
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0,7,m_pInterDataUAV[(int)Asize], &initCounts);
+		ID3D11ShaderResourceView* srvs[4] = {*m_pKinectTPC->ppMeshRGBZTexSRV, *m_pTsdfTPC->ppMeshRGBZTexSRV,*m_pKinectTPC->ppMeshNormalTexSRV,*m_pTsdfTPC->ppMeshNormalTexSRV};
+		pd3dImmediateContext->CSSetShaderResources(0, 4, srvs);
 
+		pd3dImmediateContext->Dispatch((UINT)ceil((float)m_CBperFrame.uUAVDim.x / uStepSize / THREAD2D_X), (UINT)ceil((float)m_CBperFrame.uUAVDim.y/uStepSize / THREAD2D_Y), 1);
 
 		ID3D11ShaderResourceView* ppSRVNULLs[4] = { NULL,NULL,NULL,NULL};
-		pd3dImmediateContext->PSSetShaderResources( 0, 4, ppSRVNULLs );
+		pd3dImmediateContext->CSSetShaderResources( 0, 4, ppSRVNULLs );
 
-		m_Reduction.Processing(pd3dImmediateContext);
+		ID3D11UnorderedAccessView* ppUAViewNULL[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 7, ppUAViewNULL, &initCounts);
 
-		m_mA(0,0) = m_Reduction.m_vfAnswer[0].x;
-		m_mA(1,0) = m_mA(0,1) = m_Reduction.m_vfAnswer[0].y;
-		m_mA(2,0) = m_mA(0,2) = m_Reduction.m_vfAnswer[0].z;
-		m_mA(3,0) = m_mA(0,3) = m_Reduction.m_vfAnswer[0].w;
-		m_mA(4,0) = m_mA(0,4) = m_Reduction.m_vfAnswer[1].x;
-		m_mA(5,0) = m_mA(0,5) = m_Reduction.m_vfAnswer[1].y;
-		m_mA(1,1) = m_Reduction.m_vfAnswer[1].z;
-		m_mA(2,1) = m_mA(1,2) = m_Reduction.m_vfAnswer[1].w;
-		m_mA(3,1) = m_mA(1,3) = m_Reduction.m_vfAnswer[2].x;
-		m_mA(4,1) = m_mA(1,4) = m_Reduction.m_vfAnswer[2].y;
-		m_mA(5,1) = m_mA(1,5) = m_Reduction.m_vfAnswer[2].z;
-		m_mA(2,2) = m_Reduction.m_vfAnswer[2].w;
-		m_mA(3,2) = m_mA(2,3) = m_Reduction.m_vfAnswer[3].x;
-		m_mA(4,2) = m_mA(2,4) = m_Reduction.m_vfAnswer[3].y;
-		m_mA(5,2) = m_mA(2,5) = m_Reduction.m_vfAnswer[3].z;
-		m_mA(3,3) = m_Reduction.m_vfAnswer[3].w;
-		m_mA(4,3) = m_mA(3,4) = m_Reduction.m_vfAnswer[4].x;
-		m_mA(5,3) = m_mA(3,5) = m_Reduction.m_vfAnswer[4].y;
-		m_mA(4,4) = m_Reduction.m_vfAnswer[4].z;
-		m_mA(5,4) = m_mA(4,5) = m_Reduction.m_vfAnswer[4].w;
-		m_mA(5,5) = m_Reduction.m_vfAnswer[5].x;
+		m_Reduction.Processing(pd3dImmediateContext,
+							   m_pInterDataUAV[(int)Asize],
+							   m_pInterDataBuf[(int)Asize],
+							   m_CBperFrame.uUAVDim.x*m_CBperFrame.uUAVDim.y);
+
+		m_mA(0,0) = m_Reduction.m_structSum.f4Data0.x;
+		m_mA(1,0) = m_mA(0,1) = m_Reduction.m_structSum.f4Data0.y;
+		m_mA(2,0) = m_mA(0,2) = m_Reduction.m_structSum.f4Data0.z;
+		m_mA(3,0) = m_mA(0,3) = m_Reduction.m_structSum.f4Data0.w;
+		m_mA(4,0) = m_mA(0,4) = m_Reduction.m_structSum.f4Data1.x;
+		m_mA(5,0) = m_mA(0,5) = m_Reduction.m_structSum.f4Data1.y;
+		m_mA(1,1) = m_Reduction.m_structSum.f4Data1.z;
+		m_mA(2,1) = m_mA(1,2) = m_Reduction.m_structSum.f4Data1.w;
+		m_mA(3,1) = m_mA(1,3) = m_Reduction.m_structSum.f4Data2.x;
+		m_mA(4,1) = m_mA(1,4) = m_Reduction.m_structSum.f4Data2.y;
+		m_mA(5,1) = m_mA(1,5) = m_Reduction.m_structSum.f4Data2.z;
+		m_mA(2,2) = m_Reduction.m_structSum.f4Data2.w;
+		m_mA(3,2) = m_mA(2,3) = m_Reduction.m_structSum.f4Data3.x;
+		m_mA(4,2) = m_mA(2,4) = m_Reduction.m_structSum.f4Data3.y;
+		m_mA(5,2) = m_mA(2,5) = m_Reduction.m_structSum.f4Data3.z;
+		m_mA(3,3) = m_Reduction.m_structSum.f4Data3.w;
+		m_mA(4,3) = m_mA(3,4) = m_Reduction.m_structSum.f4Data4.x;
+		m_mA(5,3) = m_mA(3,5) = m_Reduction.m_structSum.f4Data4.y;
+		m_mA(4,4) = m_Reduction.m_structSum.f4Data4.z;
+		m_mA(5,4) = m_mA(4,5) = m_Reduction.m_structSum.f4Data4.w;
+		m_mA(5,5) = m_Reduction.m_structSum.f4Data5.x;
 		 
-		m_vB(0,0) = -m_Reduction.m_vfAnswer[5].y;
-		m_vB(1,0) = -m_Reduction.m_vfAnswer[5].z;
-		m_vB(2,0) = -m_Reduction.m_vfAnswer[5].w;
-		m_vB(3,0) = -m_Reduction.m_vfAnswer[6].x;
-		m_vB(4,0) = -m_Reduction.m_vfAnswer[6].y;
-		m_vB(5,0) = -m_Reduction.m_vfAnswer[6].z;
+		m_vB(0,0) = -m_Reduction.m_structSum.f4Data5.y;
+		m_vB(1,0) = -m_Reduction.m_structSum.f4Data5.z;
+		m_vB(2,0) = -m_Reduction.m_structSum.f4Data5.w;
+		m_vB(3,0) = -m_Reduction.m_structSum.f4Data6.x;
+		m_vB(4,0) = -m_Reduction.m_structSum.f4Data6.y;
+		m_vB(5,0) = -m_Reduction.m_structSum.f4Data6.z;
 
 		m_fPreNpairs = m_fNpairs;
-		m_fNpairs = m_Reduction.m_vfAnswer[6].w;
+		m_fNpairs = m_Reduction.m_structSum.f4Data6.w;
 
 		/*if( m_fNpairs / m_fPreNpairs < 0.7 )
 		{
