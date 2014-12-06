@@ -28,13 +28,15 @@
 #define THREAD1D 128
 
 #define VOXEL_SIZE  0.007f
-#define VOXEL_NUM_X 256
-#define VOXEL_NUM_Y 256
-#define VOXEL_NUM_Z 256
+#define VOXEL_NUM_X 384
+#define VOXEL_NUM_Y 384
+#define VOXEL_NUM_Z 384
 #define TRUNC_DIST 0.021f //should be at least VOXEL_SIZE
 #define INVALID_VALUE (-1.f)
 
-#define COMPILE_FLAG D3DCOMPILE_ENABLE_STRICTNESS
+#define CELLRATIO 8 // for fast raycasting, the ratio of voxel:cell in one dimension
+
+#define COMPILE_FLAG D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_PREFER_FLOW_CONTROL
 
 // New interface
 #if KINECT2

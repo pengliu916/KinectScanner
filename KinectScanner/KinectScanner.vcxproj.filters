@@ -13,6 +13,7 @@
     <FxCompile Include="BilateralFilter_Blurriness.fx" />
     <FxCompile Include="VolumeTSDF.hlsl" />
     <FxCompile Include="TSDFImages.hlsl" />
+    <FxCompile Include="TSDFImages.fx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FilteredPCL.h" />

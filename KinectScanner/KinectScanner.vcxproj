@@ -260,7 +260,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;PROFILE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;DEBUG;PROFILE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>\.;..\;..\DirectXTK\Inc;..\DXUT\Core;..\DXUT\Optional;$(KINECTSDK10_DIR)inc;$(KINECT_TOOLKIT_DIR)inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -312,6 +312,32 @@
     <FxCompile Include="PoseEstimator.fx" />
     <FxCompile Include="RayCast.fx" />
     <FxCompile Include="Reduction.fx" />
+    <FxCompile Include="TSDFImages.fx">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Fc "test.html"  /Cc /Ni %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/Fc "test.html"  /Cc /Ni %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">/Fc "test.html"  /Cc /Ni %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Fc "test.html"  /Cc /Ni %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/Fc "test.html"  /Cc /Ni %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">/Fc "test.html"  /Cc /Ni %(AdditionalOptions)</AdditionalOptions>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">RaymarchPS</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">RaymarchPS</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">RaymarchPS</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RaymarchPS</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">RaymarchPS</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">RaymarchPS</EntryPointName>
+    </FxCompile>
     <FxCompile Include="TSDFImages.hlsl" />
     <FxCompile Include="VolumeTSDF.hlsl" />
   </ItemGroup>

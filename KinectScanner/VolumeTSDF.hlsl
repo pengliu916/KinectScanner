@@ -3,6 +3,8 @@
 // UAV to write to
 RWTexture3D<uint> tex_DistWeight : register(u0);
 RWTexture3D<uint> tex_RGBColor : register(u1);
+RWTexture3D<int> tex_BrickFront : register(u2);
+RWTexture3D<int> tex_BrickBack : register(u3);
 // SRV to read from
 Texture2D<float4> txRGBD  : register(t0); // Contain color and depth(alpha channel)
 Texture2D<float4> txNormal : register(t1); // Contain normal, for bad data rejection
@@ -81,7 +83,12 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 
 		tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(DepthWeight);
 
-		//if( norAngle < previousColor.z) return 0;
+		if(DepthWeight.x < 0.f){
+			tex_BrickFront[DTid / CELLRATIO] = 1;
+		}else{
+			tex_BrickBack[DTid / CELLRATIO] = -1;
+		}
+			//if( norAngle < previousColor.z) return 0;
 		if (dot(RGBD.xyz, RGBD.xyz)<0.001) return;
 		float3 col = (RGBD.xyz * weight + previousColor.xyz * pre_weight) / (weight + pre_weight);
 		tex_RGBColor[DTid] = D3DX_FLOAT4_to_R10G10B10A2_UNORM(float4(col, norAngle));
@@ -97,4 +104,11 @@ void ResetCS(uint3 DTid: SV_DispatchThreadID)
 {
 	tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(float2(INVALID_VALUE,0.f));
 	tex_RGBColor[DTid] = D3DX_FLOAT4_to_R10G10B10A2_UNORM(float4(0, 0, 0, 0));
+}
+
+[numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
+void RefreshCellCS(uint3 DTid: SV_DispatchThreadID)
+{
+	tex_BrickFront[DTid] = 0;
+	tex_BrickBack[DTid] = 0;
 }
