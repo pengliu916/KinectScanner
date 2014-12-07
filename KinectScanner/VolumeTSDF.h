@@ -181,7 +181,7 @@ public:
 		pd3dImmediateContext->Dispatch(VOXEL_NUM_X / THREAD_X, VOXEL_NUM_Y / THREAD_Y, VOXEL_NUM_Z / THREAD_Z);
 
 		pd3dImmediateContext->CSSetShader(m_pRefreshCellCS, NULL, 0);
-		pd3dImmediateContext->Dispatch(VOXEL_NUM_X / CELLRATIO / THREAD_X, VOXEL_NUM_Y / CELLRATIO / THREAD_Y, VOXEL_NUM_Z / CELLRATIO / THREAD_Z);
+		pd3dImmediateContext->Dispatch(ceil((float)VOXEL_NUM_X / CELLRATIO / THREAD_X), ceil((float)VOXEL_NUM_Y / CELLRATIO / THREAD_Y), ceil((float)VOXEL_NUM_Z / CELLRATIO / THREAD_Z));
 
 		m_bResetVol = false;
 		DXUT_EndPerfEvent();
@@ -216,7 +216,7 @@ public:
 	{
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"UpdateVolume");
 
-		if(m_bResetVol ) ClearVolume(pd3dImmediateContext);
+		if(m_bResetVol) ClearVolume(pd3dImmediateContext);
 
 		ID3D11UnorderedAccessView* uavs[4] = { m_pDWVolumeUAV, m_pColVolumeUAV, m_pBrickVolUAV[0], m_pBrickVolUAV[1] };
 
@@ -231,7 +231,7 @@ public:
 		UINT initCounts = 0;
 		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 4, uavs, &initCounts);
 		pd3dImmediateContext->CSSetShader(m_pRefreshCellCS, NULL, 0);
-		pd3dImmediateContext->Dispatch(VOXEL_NUM_X / CELLRATIO / THREAD_X, VOXEL_NUM_Y / CELLRATIO / THREAD_Y, VOXEL_NUM_Z / CELLRATIO / THREAD_Z);
+		pd3dImmediateContext->Dispatch(ceil((float)VOXEL_NUM_X / CELLRATIO / THREAD_X), ceil((float)VOXEL_NUM_Y / CELLRATIO / THREAD_Y), ceil((float)VOXEL_NUM_Z / CELLRATIO / THREAD_Z));
 
 		pd3dImmediateContext->CSSetShader(m_pCS, NULL, 0);
 		pd3dImmediateContext->Dispatch(VOXEL_NUM_X / THREAD_X, VOXEL_NUM_Y / THREAD_Y, VOXEL_NUM_Z / THREAD_Z);

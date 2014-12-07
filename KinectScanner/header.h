@@ -31,7 +31,7 @@
 #define VOXEL_NUM_X 384
 #define VOXEL_NUM_Y 384
 #define VOXEL_NUM_Z 384
-#define TRUNC_DIST 0.021f //should be at least VOXEL_SIZE
+#define TRUNC_DIST 0.021 //should be at least VOXEL_SIZE
 #define INVALID_VALUE (-1.f)
 
 #define CELLRATIO 8 // for fast raycasting, the ratio of voxel:cell in one dimension

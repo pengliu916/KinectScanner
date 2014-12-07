@@ -61,7 +61,7 @@ HRESULT Initial()
 	multiTexture.AddTexture(&tsdfImgs.m_pFarNearSRV, D_W, D_H,
 							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
 							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
-							 else color = abs(result.a - result.r)*0.2f*float4(1,1,1,1);\n\
+							 else color = abs(result.a - result.r)*0.5f*float4(1,1,1,1);\n\
 							 return color;\n","<float4>",
 							nullptr, std::bind(&TSDFImages::HandleMessages, &tsdfImgs, _1, _2, _3, _4));
 	multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV, D_W, D_H);
@@ -207,7 +207,7 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	// Get new depth and color frmae from RGBD sensor
 	pointCloud.Render(pd3dImmediateContext);
 
-	for(int i=0;i<15;i++) tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
+	tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
 	meshVolume.Integrate(pd3dImmediateContext);
 	
 	// Render all sub texture to screen
@@ -262,7 +262,6 @@ void CALLBACK OnD3D11DestroyDevice(void* pUserContext)
 LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 						 bool* pbNoFurtherProcessing, void* pUserContext)
 {
-	tsdfImgs.HandleMessages(hWnd, uMsg, wParam, lParam);
 	multiTexture.HandleMessages(hWnd, uMsg, wParam, lParam);
 	pointCloud.HandleMessages(hWnd, uMsg, wParam, lParam);
 	poseEstimator.HandleMessages(hWnd, uMsg, wParam, lParam);

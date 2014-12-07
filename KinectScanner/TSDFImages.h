@@ -40,6 +40,16 @@ struct m_CB_TSDFImg_FreecamPerFrame
 class TSDFImages
 {
 public:
+#if DEBUG
+	ID3D11GeometryShader*			m_pDebug_CellGS;
+	ID3D11PixelShader*				m_pDebug_CellPS;
+	ID3D11Texture2D*				m_pDebug_CellTex;
+	ID3D11ShaderResourceView*		m_pDebug_CellSRV;
+	ID3D11RenderTargetView*			m_pDebug_CellRTV;
+
+	ID3D11Texture2D*				m_pDebug_DSTex;
+	ID3D11DepthStencilView*			m_pDebug_DSSV;
+#endif
 	CModelViewerCamera				m_cCamera;
 	D3D11_VIEWPORT					m_cKinectViewport;
 
@@ -57,9 +67,9 @@ public:
 
 	ID3D11BlendState*				m_pBlendState;
 
-	ID3D11Texture2D*				m_pKinectOutTex[3]; // 0-2 depth, normal, shaded
-	ID3D11ShaderResourceView*		m_pKinectOutSRV[3];
-	ID3D11RenderTargetView*			m_pKinectOutRTV[3];
+	ID3D11Texture2D*				m_pKinectOutTex[2]; // 0-2 depth, normal, shaded
+	ID3D11ShaderResourceView*		m_pKinectOutSRV[2];
+	ID3D11RenderTargetView*			m_pKinectOutRTV[2];
 
 	ID3D11Texture2D*				m_pFarNearTex;
 	ID3D11ShaderResourceView*		m_pFarNearSRV;
@@ -142,6 +152,13 @@ public:
 		V_RETURN(DXUTCompileFromFile(L"TSDFImages.fx", nullptr, "RaymarchPS", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
 		V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pRayCastingPS));
 		DXUT_SetDebugName(m_pRayCastingPS, "m_pRayCastingPS");
+
+#if DEBUG
+		// debug layer, show cell grid
+		V_RETURN(DXUTCompileFromFile(L"TSDFImages.fx", nullptr, "Debug_CellPS", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
+		V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pDebug_CellPS));
+		DXUT_SetDebugName(m_pDebug_CellPS, "m_pDebug_CellPS");
+#endif
 		pPSBlob->Release();
 
 		
@@ -157,10 +174,15 @@ public:
 			0, NULL, &m_pActiveCellAndSOGS));*/
 		DXUT_SetDebugName(m_pActiveCellAndSOGS, "m_pActiveCellAndSOGS");
 
-
 		V_RETURN(DXUTCompileFromFile(L"TSDFImages.fx", nullptr, "RaymarchGS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
 		V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pRaymarchGS));
 		DXUT_SetDebugName(m_pRaymarchGS, "m_pRaymarchGS");
+
+#if DEBUG
+		V_RETURN(DXUTCompileFromFile(L"TSDFImages.fx", nullptr, "Debug_CellGS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
+		V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pDebug_CellGS));
+		DXUT_SetDebugName(m_pDebug_CellGS, "m_pDebug_CellGS");
+#endif
 		pGSBlob->Release();
 
 
@@ -219,24 +241,39 @@ public:
 		TEXDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pKinectOutTex[0])); DXUT_SetDebugName(m_pKinectOutTex[0], "m_pKinectOutTex[0]"); // RGBZ tex
 		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pKinectOutTex[1])); DXUT_SetDebugName(m_pKinectOutTex[1], "m_pKinectOutTex[1]");// Normal tex
-
-
 		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pFarNearTex)); DXUT_SetDebugName(m_pFarNearTex, "m_pFarNearTex");// Normal tex
-
-
-		TEXDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
-		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pKinectOutTex[2])); DXUT_SetDebugName(m_pKinectOutTex[2], "m_pKinectOutTex[2]");// Shaded tex
+#if DEBUG
+		V_RETURN(pd3dDevice->CreateTexture2D(&TEXDesc, NULL, &m_pDebug_CellTex)); DXUT_SetDebugName(m_pDebug_CellTex, "m_pDebug_CellTex");
+#endif
 
 		V_RETURN(pd3dDevice->CreateRenderTargetView(m_pKinectOutTex[0], nullptr, &m_pKinectOutRTV[0])); DXUT_SetDebugName(m_pKinectOutRTV[0], "m_pKinectOutRTV[0]");
 		V_RETURN(pd3dDevice->CreateRenderTargetView(m_pKinectOutTex[1], nullptr, &m_pKinectOutRTV[1])); DXUT_SetDebugName(m_pKinectOutRTV[1], "m_pKinectOutRTV[1]");
-		V_RETURN(pd3dDevice->CreateRenderTargetView(m_pKinectOutTex[2], nullptr, &m_pKinectOutRTV[2])); DXUT_SetDebugName(m_pKinectOutRTV[2], "m_pKinectOutRTV[2]");
 		V_RETURN(pd3dDevice->CreateRenderTargetView(m_pFarNearTex, nullptr, &m_pFarNearRTV)); DXUT_SetDebugName(m_pFarNearRTV, "m_pFarNearRTV");
+#if DEBUG
+		V_RETURN(pd3dDevice->CreateRenderTargetView(m_pDebug_CellTex, nullptr, &m_pDebug_CellRTV)); DXUT_SetDebugName(m_pDebug_CellRTV, "m_pDebug_CellRTV");
+#endif
 
 		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pKinectOutTex[0], nullptr, &m_pKinectOutSRV[0])); DXUT_SetDebugName(m_pKinectOutSRV[0], "m_pKinectOutSRV[0]");
 		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pKinectOutTex[1], nullptr, &m_pKinectOutSRV[1])); DXUT_SetDebugName(m_pKinectOutSRV[1], "m_pKinectOutSRV[1]");
-		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pKinectOutTex[2], nullptr, &m_pKinectOutSRV[2])); DXUT_SetDebugName(m_pKinectOutSRV[2], "m_pKinectOutSRV[2]");
 		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pFarNearTex, nullptr, &m_pFarNearSRV)); DXUT_SetDebugName(m_pFarNearSRV, "m_pFarNearSRV");
+#if DEBUG
+		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pDebug_CellTex, nullptr, &m_pDebug_CellSRV)); DXUT_SetDebugName(m_pDebug_CellSRV, "m_pDebug_CellSRV");
 
+		D3D11_TEXTURE2D_DESC DSDesc;
+		ZeroMemory(&DSDesc,sizeof(DSDesc));
+		DSDesc.MipLevels = 1;
+		DSDesc.ArraySize = 1;
+		DSDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		DSDesc.SampleDesc.Count = 1;
+		DSDesc.Usage = D3D11_USAGE_DEFAULT;
+		DSDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		DSDesc.Width = D_W;
+		DSDesc.Height = D_H;
+		V_RETURN(pd3dDevice->CreateTexture2D(&DSDesc,NULL,&m_pDebug_DSTex));
+		DXUT_SetDebugName(m_pDebug_DSTex,"m_pDebug_DSTex");
+		V_RETURN(pd3dDevice->CreateDepthStencilView(m_pDebug_DSTex,NULL,&m_pDebug_DSSV));
+		DXUT_SetDebugName(m_pDebug_DSSV,"m_pDebug_DSSV");
+#endif
 		// rasterizer state
 		D3D11_RASTERIZER_DESC rsDesc;
 		rsDesc.FillMode = D3D11_FILL_WIREFRAME;
@@ -287,7 +324,9 @@ public:
 		XMVECTORF32 vecEye = { 0.0f, 0.0f, -2.0f };
 		XMVECTORF32 vecAt = { 0.0f, 0.0f, -0.0f };
 		m_cCamera.SetViewParams( vecEye, vecAt );
-
+		m_cCamera.SetWindow(D_W, D_H);
+		m_cCamera.SetButtonMasks(MOUSE_MIDDLE_BUTTON, MOUSE_WHEEL, MOUSE_LEFT_BUTTON);
+		m_cCamera.SetRadius(2.f, 0.1f, 10.f);
 		return hr;
 	}
 
@@ -317,17 +356,25 @@ public:
 
 		SAFE_RELEASE( m_pKinectOutTex[0] );
 		SAFE_RELEASE( m_pKinectOutTex[1] );
-		SAFE_RELEASE( m_pKinectOutTex[2] );
 		SAFE_RELEASE( m_pKinectOutSRV[0] );
 		SAFE_RELEASE( m_pKinectOutSRV[1] );
-		SAFE_RELEASE( m_pKinectOutSRV[2] );
 		SAFE_RELEASE( m_pKinectOutRTV[0] );
 		SAFE_RELEASE( m_pKinectOutRTV[1] );
-		SAFE_RELEASE( m_pKinectOutRTV[2] );
 
 		SAFE_RELEASE(m_pFarNearTex);
 		SAFE_RELEASE(m_pFarNearSRV);
 		SAFE_RELEASE(m_pFarNearRTV);
+
+#if DEBUG
+		SAFE_RELEASE(m_pDebug_CellGS);
+		SAFE_RELEASE(m_pDebug_CellPS);
+		SAFE_RELEASE(m_pDebug_CellTex);
+		SAFE_RELEASE(m_pDebug_CellSRV);
+		SAFE_RELEASE(m_pDebug_CellRTV);
+
+		SAFE_RELEASE(m_pDebug_DSTex);
+		SAFE_RELEASE(m_pDebug_DSSV);
+#endif
 
 		SAFE_RELEASE( m_pGenSampler);
 		
@@ -360,15 +407,6 @@ public:
 
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Generate 3 img from Volume");
 
-		// Clear the render targets and depth view
-		float ClearColor[4] = { 0.0f, 0.0f, 0.0f, -1.0f };
-		float ClearColor1[4] = { 50.0f, 0.0f, 0.0f, -10.0f };
-
-		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[0], ClearColor);
-		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[1], ClearColor);
-		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[2], ClearColor);
-		pd3dImmediateContext->ClearRenderTargetView(m_pFarNearRTV, ClearColor1);
-
 		// Update infor for GPU
 		XMMATRIX mKinectTransform = m_pTSDFVolume->m_pInputPC->mPreFrame;
 		m_pGeneratedTPC->mCurFrame = mKinectTransform;
@@ -381,10 +419,9 @@ public:
 		XMStoreFloat4( &pos, t);
 
 		// uncomment the following to allow mouth interactive kinect point of view
-		/*view = m_cCamera.GetViewMatrix();
+		view = m_cCamera.GetViewMatrix();
 		XMStoreFloat4(&pos,m_cCamera.GetEyePt());
-		mKinectTransform = XMMatrixInverse(&t,view);*/
-		
+		mKinectTransform = XMMatrixInverse(&t,view);
 		
 		m_CB_KinectPerFrame.KinectTransform = XMMatrixTranspose( mKinectTransform );
 		m_CB_KinectPerFrame.InvKinectTransform = XMMatrixTranspose( view );
@@ -392,9 +429,17 @@ public:
 		m_CB_KinectPerFrame.KinectViewProj = XMMatrixTranspose(view*m_mKinectProj);
 
 		pd3dImmediateContext->UpdateSubresource( m_pCB_KinectPerFrame, 0, NULL, &m_CB_KinectPerFrame, 0, 0 );
-		
+
 		// render the near_far texture for later raymarching
-		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Render the tNear");
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Render the tNearFar");
+		// Clear the render targets and depth view
+		float ClearColor[4] = { 0.0f, 0.0f, 0.0f, -1.0f };
+		float ClearColor1[4] = { 50.0f, 0.0f, 0.0f, -10.0f };
+
+		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[0], ClearColor);
+		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[1], ClearColor);
+		pd3dImmediateContext->ClearRenderTargetView(m_pFarNearRTV, ClearColor1);
+		
 		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
 		pd3dImmediateContext->OMSetRenderTargets(1, &m_pFarNearRTV, NULL);
@@ -417,16 +462,39 @@ public:
 		UINT StencilRef;
 		pd3dImmediateContext->OMGetBlendState(&bs,blendFactor,&StencilRef);
 		pd3dImmediateContext->OMSetBlendState(m_pBlendState,NULL,0xffffffff);
+
 		pd3dImmediateContext->Draw(VOXEL_NUM_X * VOXEL_NUM_Y * VOXEL_NUM_Z / CELLRATIO / CELLRATIO / CELLRATIO, 0);
+
 		pd3dImmediateContext->OMSetBlendState(bs,blendFactor,StencilRef);
 		SAFE_RELEASE(bs);
 		DXUT_EndPerfEvent();
 
+#if DEBUG
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR2, L"Rendering active cell grid");
+		pd3dImmediateContext->ClearDepthStencilView(m_pDebug_DSSV, D3D11_CLEAR_DEPTH, 1.0, 0);
+		//pd3dImmediateContext->ClearRenderTargetView(m_pDebug_CellRTV, ClearColor);
+		pd3dImmediateContext->GSSetShader(m_pDebug_CellGS,NULL,0);
+		pd3dImmediateContext->PSSetShader(m_pDebug_CellPS,NULL,0);
+		pd3dImmediateContext->OMSetRenderTargets(1, &m_pKinectOutRTV[0], m_pDebug_DSSV);
+		pd3dImmediateContext->Draw(VOXEL_NUM_X * VOXEL_NUM_Y * VOXEL_NUM_Z / CELLRATIO / CELLRATIO / CELLRATIO, 0);
+		/*	ID3D11RasterizerState* rs;
+			pd3dImmediateContext->RSGetState(&rs);
+			pd3dImmediateContext->RSSetState(m_pBackFaceRS);
+
+
+			pd3dImmediateContext->RSSetState(rs);
+			SAFE_RELEASE(rs);*/
+		DXUT_EndPerfEvent();
+#endif
 		// render through raymarching
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Raymarching");
 		pd3dImmediateContext->GSSetShader(m_pRaymarchGS,NULL,0);
 		pd3dImmediateContext->PSSetShader(m_pRayCastingPS, NULL, 0);
+#if DEBUG
+		pd3dImmediateContext->OMSetRenderTargets(2,m_pKinectOutRTV,m_pDebug_DSSV);
+#else
 		pd3dImmediateContext->OMSetRenderTargets(2, m_pKinectOutRTV,NULL);
+#endif
 		pd3dImmediateContext->PSSetConstantBuffers(0, 1, &m_pCBperCall);
 		pd3dImmediateContext->PSSetConstantBuffers(1, 1, &m_pCB_KinectPerFrame);
 		pd3dImmediateContext->PSSetShaderResources(0, 1, &m_pTSDFVolume->m_pDWVolumeSRV);

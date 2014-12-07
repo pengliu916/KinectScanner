@@ -155,7 +155,7 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 	float2 f2IntersectResult = LoadDW(f3P);
 
 	// initialize depth pre and cur
-	float fDist_pre = f2IntersectResult.x*TRUNC_DIST;
+	float fDist_pre = f2IntersectResult.x*cb_fTruncDist;
 	float fDist_cur;
 
 	// ray marching
@@ -169,7 +169,7 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 		f3P = f3Porg + (t - fTnear)*f3Step;
 		// read depth and weight
 		float2 f2DistWeight = LoadDW(f3P);
-		fDist_cur = f2DistWeight.x * TRUNC_DIST;
+		fDist_cur = f2DistWeight.x * cb_fTruncDist;
 		// check whether we cross the suface or not, if crossed, step back and switch to small step
 		if(bSkip){
 			if(fDist_pre * fDist_cur >= INVALID_VALUE && fDist_pre * fDist_cur <0){
@@ -179,7 +179,7 @@ MarchingResult MarchingVol( Ray eyeray, bool bColor)
 			f3P = f3P_pre;
 			fDist_cur = fDist_pre;
 			}
-		}else if(fDist_cur > INVALID_VALUE*TRUNC_DIST && fDist_pre > INVALID_VALUE*TRUNC_DIST && fDist_pre * fDist_cur < 0 ){
+		}else if(fDist_cur > INVALID_VALUE*cb_fTruncDist && fDist_pre > INVALID_VALUE*cb_fTruncDist && fDist_pre * fDist_cur < 0 ){
 			// get sub voxel txCoord
 			float3 f3VolUVW = f3P_pre + (f3P - f3P_pre) * fDist_pre / (fDist_pre - fDist_cur); 
 
@@ -307,7 +307,7 @@ void CS_Raycast(uint3 DTid : SV_DispatchThreadID)
 	float3 f3P_pre = f3P;
 	float3 f3Step = eyeray.d.xyz * cb_fStepLen;
 	
-	float fDist_pre = g_srvDepthWeight.SampleLevel(g_samLinear,f3P * cb_f3InvVolSize + 0.5f,0.f).x * TRUNC_DIST;
+	float fDist_pre = g_srvDepthWeight.SampleLevel(g_samLinear,f3P * cb_f3InvVolSize + 0.5f,0.f).x * cb_fTruncDist;
 	float fDist_cur;
 	
 	float4 output = float4(0.03f,0.03f,0.03f,0.03f);

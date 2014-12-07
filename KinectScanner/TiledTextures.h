@@ -503,6 +503,8 @@ public:
 					curse_y < m_vecTiledObjs[i].iLTcorner_y + m_vecTiledObjs[i].iOutHeight){
 					short new_x = curse_x - m_vecTiledObjs[i].iLTcorner_x;
 					short new_y = curse_y - m_vecTiledObjs[i].iLTcorner_y;
+					new_x *= (float)m_vecTiledObjs[i].iResWidth / m_vecTiledObjs[i].iOutWidth;
+					new_y *= (float)m_vecTiledObjs[i].iResHeight / m_vecTiledObjs[i].iOutHeight;
 					nlParam = ((long)new_y << 16) | (long)new_x;
 					m_vecTiledObjs[i].msgFunc(hWnd, uMsg, wParam, nlParam);
 				}
