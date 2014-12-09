@@ -62,10 +62,10 @@ HRESULT Initial()
 							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
 							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
 							 else color = abs(result.a - result.r)*0.5f*float4(1,1,1,1);\n\
-							 return color;\n","<float4>",
-							nullptr, std::bind(&TSDFImages::HandleMessages, &tsdfImgs, _1, _2, _3, _4));
+							 return color;\n");
 	multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV, D_W, D_H);
-	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H, "", "<float4>",
+							nullptr, std::bind(&TSDFImages::HandleMessages, &tsdfImgs, _1, _2, _3, _4));
 	//multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
 	/*multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
 	std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),

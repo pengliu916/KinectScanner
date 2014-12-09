@@ -68,3 +68,7 @@
 // Threas hold
 #define ANGLE_THRES sin (20.f * 3.14159254f / 180.f)
 #define DIST_THRES 0.1f
+
+
+
+#define DEBUG 1

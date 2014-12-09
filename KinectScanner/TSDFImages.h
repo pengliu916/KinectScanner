@@ -225,12 +225,11 @@ public:
 		V_RETURN(pd3dDevice->CreateSamplerState( &sampDesc, &m_pGenSampler ));
 		DXUT_SetDebugName(m_pGenSampler, "m_pGenSampler");
 
-		// Create resource for freeCam
+		// Create resource for texture
 		D3D11_TEXTURE2D_DESC	TEXDesc;
 		ZeroMemory( &TEXDesc, sizeof(TEXDesc));
 		TEXDesc.MipLevels = 1;
 		TEXDesc.ArraySize = 1;
-		TEXDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;
 		TEXDesc.SampleDesc.Count = 1;
 		TEXDesc.Usage = D3D11_USAGE_DEFAULT;
 		TEXDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -422,7 +421,7 @@ public:
 		view = m_cCamera.GetViewMatrix();
 		XMStoreFloat4(&pos,m_cCamera.GetEyePt());
 		mKinectTransform = XMMatrixInverse(&t,view);
-		
+
 		m_CB_KinectPerFrame.KinectTransform = XMMatrixTranspose( mKinectTransform );
 		m_CB_KinectPerFrame.InvKinectTransform = XMMatrixTranspose( view );
 		m_CB_KinectPerFrame.KinectPos = pos;
@@ -434,7 +433,7 @@ public:
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Render the tNearFar");
 		// Clear the render targets and depth view
 		float ClearColor[4] = { 0.0f, 0.0f, 0.0f, -1.0f };
-		float ClearColor1[4] = { 50.0f, 0.0f, 0.0f, -10.0f };
+		float ClearColor1[4] = { 50.0f, 50.0f, 50.0f, -10.0f };
 
 		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[0], ClearColor);
 		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[1], ClearColor);
@@ -492,6 +491,7 @@ public:
 		pd3dImmediateContext->PSSetShader(m_pRayCastingPS, NULL, 0);
 #if DEBUG
 		pd3dImmediateContext->OMSetRenderTargets(2,m_pKinectOutRTV,m_pDebug_DSSV);
+		//pd3dImmediateContext->OMSetRenderTargets(2, m_pKinectOutRTV, NULL);
 #else
 		pd3dImmediateContext->OMSetRenderTargets(2, m_pKinectOutRTV,NULL);
 #endif
