@@ -58,15 +58,26 @@ HRESULT Initial()
 	//V_RETURN(poseEstimator.Initial(histoPyraimdMC.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 
 	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV, D_W, D_H);
+	multiTexture.AddTexture(&tsdfImgs.m_pKinectOutSRV[2], D_W, D_H);
+	multiTexture.AddTexture(&tsdfImgs.m_pFarNearSRV, D_W, D_H,
+							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
+							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
+							 else color = result.a*0.5f*float4(1,1,1,1);\n\
+							 return color;\n");
+	multiTexture.AddTexture(&tsdfImgs.m_pFarNearSRV, D_W, D_H,
+							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
+							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
+							 else color = result.r*0.5f*float4(1,1,1,1);\n\
+							 return color;\n");
 	multiTexture.AddTexture(&tsdfImgs.m_pFarNearSRV, D_W, D_H,
 							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
 							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
 							 else color = abs(result.a - result.r)*0.5f*float4(1,1,1,1);\n\
 							 return color;\n");
-	multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV, D_W, D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H, "", "<float4>",
 							nullptr, std::bind(&TSDFImages::HandleMessages, &tsdfImgs, _1, _2, _3, _4));
-	//multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
+	multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV, D_W, D_H);
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
 	/*multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
 	std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
 	std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
@@ -204,17 +215,83 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext,
 								 double fTime, float fElapsedTime, void* pUserContext)
 {
-	// Get new depth and color frmae from RGBD sensor
-	pointCloud.Render(pd3dImmediateContext);
+	if (g_bGetNextFrame){
+		g_bGetNextFrame = false;
 
-	tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
-	meshVolume.Integrate(pd3dImmediateContext);
-	
+		bool bTracked = false;
+
+		// Get new depth and color frmae from RGBD sensor
+		pointCloud.Render(pd3dImmediateContext);
+
+		// Only run the algorithm if we get new data
+		if (pointCloud.m_bUpdated){
+			XMVECTOR vectorR = XMVectorZero();
+			XMVECTOR vectorT = XMVectorZero();
+
+			int iIterationCount = 0;
+
+			do{
+				pointCloud.m_TransformedPC.mPreFrame = pointCloud.m_TransformedPC.mCurFrame;
+				pointCloud.m_TransformedPC.mPreRotation = pointCloud.m_TransformedPC.mCurRotation;
+
+				// Get RGBD and Normal data from TSDF with new pose 
+				tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
+
+				// Find transformation matrix, return false if can't find one
+				bTracked = poseEstimator.Processing(pd3dImmediateContext);
+
+				if (bTracked){
+					// Update the Sensor Pose info
+					pointCloud.m_TransformedPC.vRotation += poseEstimator.m_vIncRotate;
+					XMMATRIX Ri = XMMatrixRotationRollPitchYawFromVector(poseEstimator.m_vIncRotate);
+					pointCloud.m_TransformedPC.vTranslation = XMVector3Transform(pointCloud.m_TransformedPC.vTranslation, Ri) + poseEstimator.m_vIncTran;
+
+					// Apply the new Sensor Pose
+					pointCloud.m_TransformedPC.mCurRotation *= XMMatrixRotationRollPitchYawFromVector(poseEstimator.m_vIncRotate);
+					pointCloud.m_TransformedPC.mCurFrame = pointCloud.m_TransformedPC.mCurRotation * XMMatrixTranslationFromVector(pointCloud.m_TransformedPC.vTranslation);
+
+					// Keep track of the incremental transformation for this data frame
+					vectorR += poseEstimator.m_vIncRotate;
+					vectorT += poseEstimator.m_vIncTran;
+
+					// Increase the iteration counter for termination condition checking
+					iIterationCount++;
+				} else if (poseEstimator.m_bSigularMatrix){
+					//g_bStepMode = true;
+					swprintf(g_debugLine3, 100, L"Track failed!!  Singular Matrix");
+				}
+			} while (bTracked && iIterationCount<15);
+			if (bTracked) {
+				float rnorm = norm(vectorR);
+				float tnorm = norm(vectorT);
+
+				XMFLOAT3 r_overall;
+				XMFLOAT3 t_overall;
+				XMStoreFloat3(&r_overall, (pointCloud.m_TransformedPC.vRotation) * 180.0f / XM_PI);
+				XMStoreFloat3(&t_overall, (pointCloud.m_TransformedPC.vTranslation) * 100.0f);
+				swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", t_overall.x, t_overall.y, t_overall.z);
+				swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", r_overall.x, r_overall.y, r_overall.z);
+
+				swprintf(g_debugLine3, 100, L"Track success  % 6.5f", tnorm + rnorm);
+				if (rnorm + tnorm > 0.001f) meshVolume.Integrate(pd3dImmediateContext);
+			}
+			// If this is the first frame, then update the TSDF anyway
+			if (g_bFirstFrame){
+				g_bFirstFrame = false;
+				meshVolume.Integrate(pd3dImmediateContext);
+			}
+		}
+	}
+
+
+	// Render the in-process mesh
+	//histoPyraimdMC.Render(pd3dImmediateContext,false);
+
 	// Render all sub texture to screen
 	multiTexture.Render(pd3dImmediateContext);
 
 	// Render the text
-	RenderText();
+	//RenderText();
 }
 
 

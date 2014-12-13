@@ -83,10 +83,26 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 
 		tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(DepthWeight);
 
-		if(DepthWeight.x < 0.f){
-			tex_BrickFront[DTid / CELLRATIO] = 1;
+		float3 f3CellVolIdx = (float3)DTid / CELLRATIO;
+		int3 i3CellVolIdx = DTid / CELLRATIO;
+
+		float3 f3o = f3CellVolIdx - i3CellVolIdx - 0.5f;
+		float3 f3 = abs(f3o);
+		float fFactor = 4.f;
+		int3 i3NeighborIdx;
+		if(f3.z>=f3.y){
+			if(f3.y>=f3.x) i3NeighborIdx = int3(0,0,f3o.z*fFactor);
+			else if(f3.x>f3.z) i3NeighborIdx = int3(f3o.x*fFactor,0,0);
 		}else{
-			tex_BrickBack[DTid / CELLRATIO] = -1;
+			if(f3.y>=f3.x) i3NeighborIdx = int3(0,f3o.y*fFactor,0);
+			else i3NeighborIdx = int3(f3o.x*fFactor,0,0);
+		}
+		if(DepthWeight.x < 0.f){
+			tex_BrickFront[i3CellVolIdx] = 1;
+			tex_BrickFront[i3CellVolIdx + i3NeighborIdx] = 1;
+		}else{ 
+			tex_BrickBack[i3CellVolIdx] = -1;
+			tex_BrickBack[i3CellVolIdx + i3NeighborIdx] = -1;
 		}
 			//if( norAngle < previousColor.z) return 0;
 		if (dot(RGBD.xyz, RGBD.xyz)<0.001) return;
@@ -95,7 +111,6 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 
 		return;
 	}
-	//tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(float2(R_F, 0.f));
 	return;
 }
 

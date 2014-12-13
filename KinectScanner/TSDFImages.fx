@@ -151,6 +151,7 @@ struct PS_3_OUT
 {
 	float4 RGBD : SV_TARGET0;
 	float4 Normal : SV_TARGET1;
+	float4 Debug : SV_TARGET2;
 	float DepthOut : SV_Depth;
 };
 
@@ -336,26 +337,17 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 	output.RGBD = float4 ( 0,0,0,-1 );
 	output.Normal = float4 ( 0,0,0,-1 );
 	output.DepthOut = 1000.f;
+	output.Debug = float4 (0, 0, 0, -1);
 
 	// read the raymarching start t(tNear) and end t(tFar) from the precomputed FarNear tex
 	int3 i3Idx = int3(input.Tex,0);
-	float4 resu = g_srvFarNear.Load(i3Idx);// now resu hold depth near and depth far in view space
+	// now f2NearFar hold depth near and depth far in view space from g_srvFarNear in red and alpha channel
+	float2 f2NearFar = g_srvFarNear.Load(i3Idx).ra;
 
-	float3 nearPos = float3((input.Tex - float2(D_W, D_H)*0.5f) / float2(F_X, F_Y) * resu.r, resu.r);
-	float3 farPos = float3((input.Tex - float2(D_W, D_H)*0.5f) / float2(F_X, F_Y) * resu.a, resu.a);
-	
-	resu.ra = sqrt(float2(dot(nearPos,nearPos),dot(farPos,farPos)));//now resu hold t near and t far in view space
-
-	float2 f2NearFar = resu.ra;
-	// for debug purpose
-	/*output.RGBD = float4(1,1,1,1)*(f2NearFar.y - f2NearFar.x)*0.5f;
-	if(resu.g > 0.2) output.RGBD.b = 1;
-	output.DepthOut = 0;
-	return output;*/
-
-	//if(resu.g < 0.5) return output;
-
-
+	float3 nearPos = float3((input.Tex - float2(D_W, D_H)*0.5f) / float2(F_X, F_Y) * f2NearFar.x, f2NearFar.x);
+	float3 farPos = float3((input.Tex - float2(D_W, D_H)*0.5f) / float2(F_X, F_Y) * f2NearFar.y, f2NearFar.y);
+	//now f2NearFar hold t near and t far in view space
+	f2NearFar = float2(length(nearPos), length(farPos));
 
 	// initial the pixel ray's data structure in world space
 	Ray eyeray;
@@ -363,17 +355,15 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 	eyeray.d = input.Pos - eyeray.o;
 	eyeray.d = float4(normalize(eyeray.d.xyz),0);//world space
 
-	// calculate ray intersection with bounding box
-	float tnear,tfar;
-	// eyeray.o + eyeray.d*tnear is the near intersection point in the world space
-	// eyeray.o + eyeray.d*tfar is the far intersection point in the world space
-	bool hit = IntersectBox(eyeray,cb_f3VolBBMin,cb_f3VolBBMax,tnear,tfar);
-	if (!hit) return output;
-	if (tnear < 0) tnear = 0;
+	//// calculate ray intersection with bounding box
+	//float tnear,tfar;
+	//// eyeray.o + eyeray.d*tnear is the near intersection point in the world space
+	//// eyeray.o + eyeray.d*tfar is the far intersection point in the world space
+	//bool hit = IntersectBox(eyeray,cb_f3VolBBMin,cb_f3VolBBMax,tnear,tfar);
+	//if (!hit) return output;
+	//if (tnear < 0) tnear = 0;
 	//f2NearFar = float2(tnear,tfar);
-
-
-
+	
 	// calculate intersection points and convert to texture space
 	/* if eyeray.o is in range [-halfVolSize,halfVolSize]
 	 * then f3Porg should be in range [(0,0,0),(1,1,1)]
@@ -387,8 +377,6 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 	// since eyeray.d is unit vector;
 	float t = f2NearFar.x;
 	
-
-
 	// convert normalized step vector into texture space
 	float3 f3EyerayDirInTspace = eyeray.d.xyz * cb_f3InvVolSize;
 
@@ -457,6 +445,7 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 			output.Normal = output.Normal* 0.5f+0.5f;
 			// output RGBD
 			output.RGBD = float4(f4Col.xyz, f4SurfacePos.z);
+			output.Debug = float4(f4Col.xyz, f4SurfacePos.z);
 			output.DepthOut  = f4SurfacePos.z/10.f;
 			return output;
 		}
