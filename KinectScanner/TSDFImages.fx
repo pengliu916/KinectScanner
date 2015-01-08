@@ -50,7 +50,7 @@ cbuffer cbInit : register(b0)
 	float3 cb_f3VolBBMin;// Volume bonding box front left bottom pos in world space
 	bool cb_bKinectShade;// Whether shading from Kinect's point of view
 	float3 cb_f3VolBBMax;// Volume bonding box back right top pos in world space
-	float NIU1;
+	bool cb_bOldMethod;
 	float2 cb_f2RTReso;
 	float2 NIU2;
 };
@@ -341,6 +341,7 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 
 	// read the raymarching start t(tNear) and end t(tFar) from the precomputed FarNear tex
 	int3 i3Idx = int3(input.Tex,0);
+	output.Debug = float4(i3Idx,0.f);
 	// now f2NearFar hold depth near and depth far in view space from g_srvFarNear in red and alpha channel
 	float2 f2NearFar = g_srvFarNear.Load(i3Idx).ra;
 
@@ -355,14 +356,14 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 	eyeray.d = input.Pos - eyeray.o;
 	eyeray.d = float4(normalize(eyeray.d.xyz),0);//world space
 
-	//// calculate ray intersection with bounding box
-	//float tnear,tfar;
-	//// eyeray.o + eyeray.d*tnear is the near intersection point in the world space
-	//// eyeray.o + eyeray.d*tfar is the far intersection point in the world space
-	//bool hit = IntersectBox(eyeray,cb_f3VolBBMin,cb_f3VolBBMax,tnear,tfar);
-	//if (!hit) return output;
-	//if (tnear < 0) tnear = 0;
-	//f2NearFar = float2(tnear,tfar);
+	// calculate ray intersection with bounding box
+	float tnear,tfar;
+	// eyeray.o + eyeray.d*tnear is the near intersection point in the world space
+	// eyeray.o + eyeray.d*tfar is the far intersection point in the world space
+	bool hit = IntersectBox(eyeray,cb_f3VolBBMin,cb_f3VolBBMax,tnear,tfar);
+	if (!hit) return output;
+	if (tnear < 0) tnear = 0;
+	if(cb_bOldMethod) f2NearFar = float2(tnear,tfar);
 	
 	// calculate intersection points and convert to texture space
 	/* if eyeray.o is in range [-halfVolSize,halfVolSize]
@@ -433,7 +434,10 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 			if (!SampleDW(f3VolUVW,f2Temp1,int3(0,0,-1))) return output;
 			float fDepth_dz = f2Temp0.x - f2Temp1.x;
 			// the following normal vector is in world space now
-			float3 f3Normal = normalize(float3 (fDepth_dx,fDepth_dy,fDepth_dz));
+			float3 rawNor = float3 (fDepth_dx,fDepth_dy,fDepth_dz);
+			if(dot(rawNor,rawNor)<0.001f) return output;
+			float3 f3Normal = normalize(rawNor);
+			//output.Debug = float4(fDepth_dx,fDepth_dy,fDepth_dz,0.f);
 			// convert the sub voxel surface intersection point into world space
 			float4 f4SurfacePos = float4((f3VolUVW - 0.5f)*2.f * cb_f3VolHalfSize,1);
 //[Bug Here?] convert the normal vector from world space into view space
@@ -445,8 +449,10 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 			output.Normal = output.Normal* 0.5f+0.5f;
 			// output RGBD
 			output.RGBD = float4(f4Col.xyz, f4SurfacePos.z);
-			output.Debug = float4(f4Col.xyz, f4SurfacePos.z);
 			output.DepthOut  = f4SurfacePos.z/10.f;
+			if(isnan(f4SurfacePos.z)||isinf(f4SurfacePos.z))output.RGBD = float4(1,0,0,f4SurfacePos.z);
+			else output.RGBD = float4(f4SurfacePos.zzz/5.f,f4SurfacePos.z);
+
 			return output;
 		}
 	}

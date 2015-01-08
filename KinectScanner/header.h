@@ -1,8 +1,8 @@
-#define USING_KINECT 1				// Set to 0 will instead use prerecorded RGBD video as input
+#define USING_KINECT 0				// Set to 0 will instead use prerecorded RGBD video as input
 #define KINECT2 1					// Set to 0 will use Kinect1 params instead of Kinect2
 #define PASSIVE_STREAM 1			// Set to 1 will guanrrante every frame get processed
 #define SKIP_FRAME_NUM 1			// Number of first frames to skip due to bad Kinect Startup bug
-#define STEP_MODE 0					// Set to 1 the iteration will be triggered by pressing 'i'
+#define STEP_MODE 1					// Set to 1 the iteration will be triggered by pressing 'i'
 #define X_OFFSET -0.0f
 #define Y_OFFSET -0.0f
 #define Z_OFFSET -0.9f

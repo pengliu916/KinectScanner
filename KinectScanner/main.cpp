@@ -26,8 +26,10 @@ wchar_t                         g_debugLine3[100];
 TiledTextures					multiTexture = TiledTextures();
 FilteredPCL                     pointCloud = FilteredPCL(D_W, D_H);
 VolumeTSDF                      meshVolume = VolumeTSDF(VOXEL_SIZE, VOXEL_NUM_X, VOXEL_NUM_Y, VOXEL_NUM_Z);
-TSDFImages                      tsdfImgs = TSDFImages(&meshVolume);
+TSDFImages                      tsdfImgs = TSDFImages(&meshVolume,false);
+TSDFImages                      tsdfImgs1 = TSDFImages(&meshVolume,false);
 PoseEstimator                   poseEstimator = PoseEstimator(D_W, D_H);
+PoseEstimator                   poseEstimator1 = PoseEstimator(D_W, D_H);
 //HistoPyramidMC					histoPyraimdMC = HistoPyramidMC(&meshVolume);
 bool                            g_bFirstFrame = true;
 //--------------------------------------------------------------------------------------
@@ -36,6 +38,11 @@ bool                            g_bFirstFrame = true;
 
 bool g_bGetNextFrame = false;
 bool g_bStepMode = STEP_MODE;
+UINT g_uFrameCount = 0;
+
+UINT g_uPauseFrame = 461;
+bool g_bRepeat = false;
+bool g_bIteration = true;
 
 float norm(XMVECTOR vector)
 {
@@ -54,11 +61,12 @@ HRESULT Initial()
 		V_RETURN(multiTexture.Initial());
 	// Use TSDFImages's Generated RGBD
 	V_RETURN(poseEstimator.Initial(tsdfImgs.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
+	V_RETURN(poseEstimator1.Initial(tsdfImgs1.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 	// Use HistoPyramidMC's Generated RGBD
 	//V_RETURN(poseEstimator.Initial(histoPyraimdMC.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 
 	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV, D_W, D_H);
-	multiTexture.AddTexture(&tsdfImgs.m_pKinectOutSRV[2], D_W, D_H);
+	multiTexture.AddTexture(&tsdfImgs.m_pKinectOutSRV[2], D_W, D_H);/*
 	multiTexture.AddTexture(&tsdfImgs.m_pFarNearSRV, D_W, D_H,
 							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
 							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
@@ -68,16 +76,60 @@ HRESULT Initial()
 							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
 							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
 							 else color = result.r*0.5f*float4(1,1,1,1);\n\
-							 return color;\n");
+							 return color;\n");*/
 	multiTexture.AddTexture(&tsdfImgs.m_pFarNearSRV, D_W, D_H,
 							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
-							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
-							 else color = abs(result.a - result.r)*0.5f*float4(1,1,1,1);\n\
+							 if(any(isnan(result)||isinf(result))) return float4(1,0,0,0);\n\
+							 else if(result.r>20 && result.a<0) color = float4(0,1,0,0);\n\
+							 else if(result.a<result.r){\n\
+								color = abs(result.a - result.r)*0.5f*float4(1,0,0,1);\n\
+							}else{\n\
+								color = abs(result.a - result.r)*0.5f*float4(1,1,1,1);\n\
+							}\n\
 							 return color;\n");
-	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H, "", "<float4>",
+	multiTexture.AddTexture(&tsdfImgs1.m_pFarNearSRV, D_W, D_H,
+							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
+							 if(any(isnan(result)||isinf(result))) return float4(1,0,0,0);\n\
+							 else if(result.r>20 && result.a<0) color = float4(0,1,0,0);\n\
+							 else if(result.a<result.r){\n\
+								color = abs(result.a - result.r)*0.5f*float4(1,0,0,1);\n\
+							}else{\n\
+								color = abs(result.a - result.r)*0.5f*float4(1,1,1,1);\n\
+							}\n\
+							 return color;\n");
+	multiTexture.AddTexture(&poseEstimator.m_pInterDataSRV[0][0], D_W, D_H,
+							"int2 i2Idx = input.Tex*float2(512,424);\n\
+							 float4 result = texture.Load(i2Idx.x+i2Idx.y*512);\n\
+							 if(any(isnan(result)||isinf(result))) return float4(1,1,1,1);\n\
+							 else return result;\n", "StructuredBuffer<float4>");
+	multiTexture.AddTexture(&poseEstimator1.m_pInterDataSRV[0][0], D_W, D_H,
+							"int2 i2Idx = input.Tex*float2(512,424);\n\
+							 float4 result = texture.Load(i2Idx.x+i2Idx.y*512);\n\
+							 if(any(isnan(result)||isinf(result))) return float4(1,1,1,1);\n\
+							 else return result;\n", "StructuredBuffer<float4>");
+	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H, "", "Texture2D<float4>",
+							nullptr, std::bind(&TSDFImages::HandleMessages, &tsdfImgs, _1, _2, _3, _4));
+	multiTexture.AddTexture(tsdfImgs1.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H, "", "Texture2D<float4>",
 							nullptr, std::bind(&TSDFImages::HandleMessages, &tsdfImgs, _1, _2, _3, _4));
 	multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV, D_W, D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
+	multiTexture.AddTexture(tsdfImgs1.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
+	
+	
+	multiTexture.AddTexture(&tsdfImgs1.m_pFarNearSRV, D_W, D_H,
+							"float4 result = textures_2.Load(int3(input.Tex*float2(512,424),0));\n\
+							 float4 result1 = textures_3.Load(int3(input.Tex*float2(512,424),0));\n\
+							 if(any(isnan(result)||isinf(result))) return float4(1,0,0,0);\n\
+							 else if(result.r>20 && result.a<0) color = float4(0,1,0,0);\n\
+							 else if(result.a<result.r){\n\
+								color = abs(result.a - result.r)*0.5f*float4(1,0,0,1);\n\
+							}else{\n\
+								color = abs(result.a - result.r)*0.5f*float4(1,1,1,1);\n\
+							}\n\
+							 return color;\n");
+
+
+
 	/*multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
 	std::bind(&HistoPyramidMC::Resize,&histoPyraimdMC,_1,_2,_3),
 	std::bind(&HistoPyramidMC::HandleMessages,&histoPyraimdMC,_1,_2,_3,_4));
@@ -141,7 +193,9 @@ HRESULT CALLBACK OnD3D11CreateDevice(ID3D11Device* pd3dDevice, const DXGI_SURFAC
 	V_RETURN(pointCloud.CreateResource(pd3dDevice));
 	V_RETURN(meshVolume.CreateResource(pd3dDevice, &pointCloud.m_TransformedPC));
 	V_RETURN(tsdfImgs.CreateResource(pd3dDevice));
+	V_RETURN(tsdfImgs1.CreateResource(pd3dDevice));
 	V_RETURN(poseEstimator.CreateResource(pd3dDevice));
+	V_RETURN(poseEstimator1.CreateResource(pd3dDevice));
 	//V_RETURN(histoPyraimdMC.CreateResource(pd3dDevice,meshVolume.m_pColVolumeSRV,meshVolume.m_pDWVolumeSRV));
 	V_RETURN(multiTexture.CreateResource(pd3dDevice));
 
@@ -206,6 +260,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 	// Update the virtual cam of the model viewer of HistoPyramidMC
 	//histoPyraimdMC.Update(fElapsedTime);
 	tsdfImgs.Update(fElapsedTime);
+	tsdfImgs1.Update(fElapsedTime);
 }
 
 
@@ -221,7 +276,7 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 		bool bTracked = false;
 
 		// Get new depth and color frmae from RGBD sensor
-		pointCloud.Render(pd3dImmediateContext);
+		if(!g_bRepeat)pointCloud.Render(pd3dImmediateContext);
 
 		// Only run the algorithm if we get new data
 		if (pointCloud.m_bUpdated){
@@ -231,16 +286,33 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 			int iIterationCount = 0;
 
 			do{
-				pointCloud.m_TransformedPC.mPreFrame = pointCloud.m_TransformedPC.mCurFrame;
-				pointCloud.m_TransformedPC.mPreRotation = pointCloud.m_TransformedPC.mCurRotation;
+				if(!g_bRepeat){
+					pointCloud.m_TransformedPC.mPreFrame = pointCloud.m_TransformedPC.mCurFrame;
+					pointCloud.m_TransformedPC.mPreRotation = pointCloud.m_TransformedPC.mCurRotation;
+				}
 
 				// Get RGBD and Normal data from TSDF with new pose 
 				tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
+				tsdfImgs1.Get3ImgForKinect(pd3dImmediateContext);
 
 				// Find transformation matrix, return false if can't find one
+				bTracked = poseEstimator1.Processing(pd3dImmediateContext);
 				bTracked = poseEstimator.Processing(pd3dImmediateContext);
 
-				if (bTracked){
+
+
+
+				// Render all sub texture to screen
+				multiTexture.Render(pd3dImmediateContext);
+
+				// Render the text
+				swprintf(g_debugLine3, 100, L"Frame:%d", g_uFrameCount);
+				RenderText();
+				auto swapchain = DXUTGetDXGISwapChain();
+				swapchain->Present(0,0);
+				if(g_uFrameCount==g_uPauseFrame)g_bRepeat=true;
+
+				if (bTracked && !g_bRepeat){
 					// Update the Sensor Pose info
 					pointCloud.m_TransformedPC.vRotation += poseEstimator.m_vIncRotate;
 					XMMATRIX Ri = XMMatrixRotationRollPitchYawFromVector(poseEstimator.m_vIncRotate);
@@ -258,9 +330,10 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 					iIterationCount++;
 				} else if (poseEstimator.m_bSigularMatrix){
 					//g_bStepMode = true;
-					swprintf(g_debugLine3, 100, L"Track failed!!  Singular Matrix");
+					swprintf(g_debugLine3, 100, L"Frame:%d Track failed!!  Singular Matrix",g_uFrameCount);
 				}
-			} while (bTracked && iIterationCount<15);
+				if(!g_bRepeat) g_uFrameCount++;
+			} while (bTracked && iIterationCount < 10);
 			if (bTracked) {
 				float rnorm = norm(vectorR);
 				float tnorm = norm(vectorT);
@@ -272,7 +345,7 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 				swprintf(g_debugLine1, 100, L"%-8s x:% 6.5f y:% 6.5f z:% 6.5f", L"tran:", t_overall.x, t_overall.y, t_overall.z);
 				swprintf(g_debugLine2, 100, L"%-8s a:% 6.5f b:% 6.5f g:% 6.5f", L"rotate:", r_overall.x, r_overall.y, r_overall.z);
 
-				swprintf(g_debugLine3, 100, L"Track success  % 6.5f", tnorm + rnorm);
+				swprintf(g_debugLine3, 100, L"Frame:%d Track success  % 6.5f",g_uFrameCount, tnorm + rnorm);
 				if (rnorm + tnorm > 0.001f) meshVolume.Integrate(pd3dImmediateContext);
 			}
 			// If this is the first frame, then update the TSDF anyway
@@ -280,6 +353,7 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 				g_bFirstFrame = false;
 				meshVolume.Integrate(pd3dImmediateContext);
 			}
+
 		}
 	}
 
@@ -287,11 +361,6 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	// Render the in-process mesh
 	//histoPyraimdMC.Render(pd3dImmediateContext,false);
 
-	// Render all sub texture to screen
-	multiTexture.Render(pd3dImmediateContext);
-
-	// Render the text
-	//RenderText();
 }
 
 
@@ -303,6 +372,7 @@ void CALLBACK OnD3D11ReleasingSwapChain(void* pUserContext)
 	g_DialogResourceManager.OnD3D11ReleasingSwapChain();
 	//histoPyraimdMC.Release();
 	tsdfImgs.Release();
+	tsdfImgs1.Release();
 }
 
 
@@ -315,7 +385,9 @@ void CALLBACK OnD3D11DestroyDevice(void* pUserContext)
 	pointCloud.Release();
 	meshVolume.Release();
 	poseEstimator.Release();
+	poseEstimator1.Release();
 	tsdfImgs.Destory();
+	tsdfImgs1.Destory();
 	//histoPyraimdMC.Destory();
 
 
@@ -342,6 +414,7 @@ LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	multiTexture.HandleMessages(hWnd, uMsg, wParam, lParam);
 	pointCloud.HandleMessages(hWnd, uMsg, wParam, lParam);
 	poseEstimator.HandleMessages(hWnd, uMsg, wParam, lParam);
+	poseEstimator1.HandleMessages(hWnd, uMsg, wParam, lParam);
 	meshVolume.HandleMessages(hWnd, uMsg, wParam, lParam);
 	switch (uMsg)
 	{
@@ -436,7 +509,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	Initial();
 
-	DXUTCreateDevice(D3D_FEATURE_LEVEL_11_0, true, 1280, 800);
+	DXUTCreateDevice(D3D_FEATURE_LEVEL_11_0, true, 1920, 1080);
 	DXUTMainLoop(); // Enter into the DXUT ren  der loop
 
 	// Perform any application-level cleanup here

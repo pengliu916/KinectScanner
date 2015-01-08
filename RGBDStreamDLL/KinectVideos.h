@@ -112,10 +112,10 @@ KinectVideos::KinectVideos(bool active = true) : m_uCompileFlag(D3DCOMPILE_ENABL
 
 HRESULT KinectVideos::Initialize(){
     HRESULT hr = S_OK;
-	_colorCap.open("..\\Kinect2Recorder\\Kinect2Color.avi");
-	//_colorCap.open("..\\RGBDRecorder\\ColorChannel.avi");
-	_depthCap.open("..\\Kinect2Recorder\\Kinect2Depth.avi");
-	//_depthCap.open("..\\RGBDRecorder\\DepthChannel.avi");
+	//_colorCap.open("..\\Kinect2Recorder\\Kinect2Color.avi");
+	_colorCap.open("..\\RGBDRecorder\\ColorChannel.avi");
+	//_depthCap.open("..\\Kinect2Recorder\\Kinect2Depth.avi");
+	_depthCap.open("..\\RGBDRecorder\\DepthChannel.avi");
     if( !_colorCap.isOpened() || !_depthCap.isOpened()) return (HRESULT)-1L;
 
     _depthWidth = (UINT)_depthCap.get(CV_CAP_PROP_FRAME_WIDTH);

@@ -18,7 +18,7 @@ struct CB_TSDFImg_PerCall
 	XMFLOAT3 BoxMin;
 	bool KinectShade;
 	XMFLOAT3 BoxMax;
-	float NIU1;
+	bool OldMethod;
 	XMFLOAT2 RTreso;
 	XMFLOAT2 NIU2;
 };
@@ -93,7 +93,7 @@ public:
 
 	TransformedPointClould*			m_pGeneratedTPC;
 
-	TSDFImages( VolumeTSDF* pTSDFVolume, UINT RTwidth = SUB_TEXTUREWIDTH, UINT RTheight = SUB_TEXTUREHEIGHT, bool ShadeFromKinect = false )
+	TSDFImages( VolumeTSDF* pTSDFVolume, bool OldMethod = true, UINT RTwidth = SUB_TEXTUREWIDTH, UINT RTheight = SUB_TEXTUREHEIGHT, bool ShadeFromKinect = false )
 	{
 		m_pTSDFVolume = pTSDFVolume;
 		m_CBperCall.TruncDist = pTSDFVolume->m_CBperCall.truncDist;
@@ -111,6 +111,7 @@ public:
 		m_CBperCall.BoxMax.y = m_CBperCall.VolumeHalfSize.y;
 		m_CBperCall.BoxMax.z = m_CBperCall.VolumeHalfSize.z;
 		m_CBperCall.KinectShade = ShadeFromKinect;
+		m_CBperCall.OldMethod = OldMethod;
 
 		m_bEmptyTSDF = true;
 		

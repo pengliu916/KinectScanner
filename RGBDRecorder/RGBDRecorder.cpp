@@ -81,12 +81,12 @@ int main()
 	int iInfraredWidth, iInfraredHeight;
 	kinect->GetInfraredReso( iInfraredWidth, iInfraredHeight );
 
-    //colorWriter.open("ColorChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(iColorWidth,iColorHeight));
-    //depthWriter.open("DepthChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(iDepthWidth,iDepthHeight));
-    /*if(!colorWriter.isOpened()||!depthWriter.isOpened()){
+    colorWriter.open("ColorChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(iColorWidth,iColorHeight));
+    depthWriter.open("DepthChannel.avi",CV_FOURCC('L','A','G','S'),30,cv::Size(iDepthWidth,iDepthHeight));
+    if(!colorWriter.isOpened()||!depthWriter.isOpened()){
         cout<<"Cannot open video file to write."<<endl;
         exit(1);
-    }*/
+    }
 
 
     while('q'!=cv::waitKey(1)){
@@ -102,9 +102,9 @@ int main()
 			temp = matInfrared/65535.f;
 			cv::pow(temp,0.32,temp);
 			cv::imshow("KinectInfrared", temp);
-			//cv::imshow( "KinectDepth", matDepth );
-            //colorWriter << matColor;
-            //depthWriter << converted;
+			cv::imshow( "KinectDepth", matDepth );
+            colorWriter << matColor;
+            depthWriter << converted;
         }
     }
     //colorWriter.release();
