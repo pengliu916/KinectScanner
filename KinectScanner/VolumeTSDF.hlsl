@@ -83,11 +83,13 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 
 		tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(DepthWeight);
 
+#if NEW_METHOD
 		if(DepthWeight.x < 0.f){
 			tex_BrickFront[DTid / CELLRATIO] = 1;
 		}else{
 			tex_BrickBack[DTid / CELLRATIO] = -1;
 		}
+#endif
 			//if( norAngle < previousColor.z) return 0;
 		if (dot(RGBD.xyz, RGBD.xyz)<0.001) return;
 		float3 col = (RGBD.xyz * weight + previousColor.xyz * pre_weight) / (weight + pre_weight);

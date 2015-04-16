@@ -230,9 +230,10 @@ public:
 		pd3dImmediateContext->CSSetShaderResources( 1, 1, m_pInputPC->ppMeshNormalTexSRV );
 		UINT initCounts = 0;
 		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 4, uavs, &initCounts);
+#if NEW_METHOD
 		pd3dImmediateContext->CSSetShader(m_pRefreshCellCS, NULL, 0);
 		pd3dImmediateContext->Dispatch(ceil((float)VOXEL_NUM_X / CELLRATIO / THREAD_X), ceil((float)VOXEL_NUM_Y / CELLRATIO / THREAD_Y), ceil((float)VOXEL_NUM_Z / CELLRATIO / THREAD_Z));
-
+#endif
 		pd3dImmediateContext->CSSetShader(m_pCS, NULL, 0);
 		pd3dImmediateContext->Dispatch(VOXEL_NUM_X / THREAD_X, VOXEL_NUM_Y / THREAD_Y, VOXEL_NUM_Z / THREAD_Z);
 

@@ -90,6 +90,7 @@ public:
 	VolumeTSDF*						m_pTSDFVolume;
 
 	bool							m_bEmptyTSDF;
+	bool							m_bShowGrid;
 
 	TransformedPointClould*			m_pGeneratedTPC;
 
@@ -112,6 +113,7 @@ public:
 		m_CBperCall.BoxMax.z = m_CBperCall.VolumeHalfSize.z;
 		m_CBperCall.KinectShade = ShadeFromKinect;
 
+		m_bShowGrid = false;
 		m_bEmptyTSDF = true;
 		
 		m_pGeneratedTPC = new TransformedPointClould();
@@ -419,9 +421,9 @@ public:
 		XMStoreFloat4( &pos, t);
 
 		// uncomment the following to allow mouth interactive kinect point of view
-		view = m_cCamera.GetViewMatrix();
+		/*view = m_cCamera.GetViewMatrix();
 		XMStoreFloat4(&pos,m_cCamera.GetEyePt());
-		mKinectTransform = XMMatrixInverse(&t,view);
+		mKinectTransform = XMMatrixInverse(&t,view);*/
 		
 		m_CB_KinectPerFrame.KinectTransform = XMMatrixTranspose( mKinectTransform );
 		m_CB_KinectPerFrame.InvKinectTransform = XMMatrixTranspose( view );
@@ -431,18 +433,15 @@ public:
 		pd3dImmediateContext->UpdateSubresource( m_pCB_KinectPerFrame, 0, NULL, &m_CB_KinectPerFrame, 0, 0 );
 
 		// render the near_far texture for later raymarching
-		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Render the tNearFar");
+		pd3dImmediateContext->GSSetConstantBuffers(0, 1, &m_pCBperCall);
+		pd3dImmediateContext->GSSetConstantBuffers(1, 1, &m_pCB_KinectPerFrame);
 		// Clear the render targets and depth view
 		float ClearColor[4] = { 0.0f, 0.0f, 0.0f, -1.0f };
 		float ClearColor1[4] = { 50.0f, 0.0f, 0.0f, -10.0f };
 
 		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[0], ClearColor);
 		pd3dImmediateContext->ClearRenderTargetView(m_pKinectOutRTV[1], ClearColor);
-		pd3dImmediateContext->ClearRenderTargetView(m_pFarNearRTV, ClearColor1);
-		
 		pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-
-		pd3dImmediateContext->OMSetRenderTargets(1, &m_pFarNearRTV, NULL);
 		UINT offset[1] = { 0 };
 		//pd3dImmediateContext->SOSetTargets(1, &m_pOutVB, offset);
 		pd3dImmediateContext->IASetInputLayout(m_pOutVL);
@@ -450,9 +449,13 @@ public:
 		pd3dImmediateContext->IASetVertexBuffers(0, 1, &m_pPassVB, &stride, offset);
 		pd3dImmediateContext->RSSetViewports(1, &m_cKinectViewport);
 		pd3dImmediateContext->VSSetShader(m_pPassVS, NULL, 0);
+#if NEW_METHOD
+		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Render the tNearFar");
+		pd3dImmediateContext->ClearRenderTargetView(m_pFarNearRTV, ClearColor1);
+		
+
+		pd3dImmediateContext->OMSetRenderTargets(1, &m_pFarNearRTV, NULL);
 		pd3dImmediateContext->GSSetShader(m_pActiveCellAndSOGS, NULL, 0);
-		pd3dImmediateContext->GSSetConstantBuffers(0, 1, &m_pCBperCall);
-		pd3dImmediateContext->GSSetConstantBuffers(1, 1, &m_pCB_KinectPerFrame);
 		pd3dImmediateContext->GSSetShaderResources(2, 1, &m_pTSDFVolume->m_pBrickVolSRV[0]);
 		pd3dImmediateContext->GSSetShaderResources(3, 1, &m_pTSDFVolume->m_pBrickVolSRV[1]);
 		pd3dImmediateContext->PSSetShader(m_pFarNearPS, NULL, 0);
@@ -470,28 +473,32 @@ public:
 		DXUT_EndPerfEvent();
 
 #if DEBUG
-		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR2, L"Rendering active cell grid");
-		pd3dImmediateContext->ClearDepthStencilView(m_pDebug_DSSV, D3D11_CLEAR_DEPTH, 1.0, 0);
-		//pd3dImmediateContext->ClearRenderTargetView(m_pDebug_CellRTV, ClearColor);
-		pd3dImmediateContext->GSSetShader(m_pDebug_CellGS,NULL,0);
-		pd3dImmediateContext->PSSetShader(m_pDebug_CellPS,NULL,0);
-		pd3dImmediateContext->OMSetRenderTargets(1, &m_pKinectOutRTV[0], m_pDebug_DSSV);
-		pd3dImmediateContext->Draw(VOXEL_NUM_X * VOXEL_NUM_Y * VOXEL_NUM_Z / CELLRATIO / CELLRATIO / CELLRATIO, 0);
-		/*	ID3D11RasterizerState* rs;
-			pd3dImmediateContext->RSGetState(&rs);
-			pd3dImmediateContext->RSSetState(m_pBackFaceRS);
+		if (m_bShowGrid){
+			DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR2, L"Rendering active cell grid");
+			pd3dImmediateContext->ClearDepthStencilView(m_pDebug_DSSV, D3D11_CLEAR_DEPTH, 1.0, 0);
+			//pd3dImmediateContext->ClearRenderTargetView(m_pDebug_CellRTV, ClearColor);
+			pd3dImmediateContext->GSSetShader(m_pDebug_CellGS, NULL, 0);
+			pd3dImmediateContext->PSSetShader(m_pDebug_CellPS, NULL, 0);
+			pd3dImmediateContext->OMSetRenderTargets(1, &m_pKinectOutRTV[0], m_pDebug_DSSV);
+			pd3dImmediateContext->Draw(VOXEL_NUM_X * VOXEL_NUM_Y * VOXEL_NUM_Z / CELLRATIO / CELLRATIO / CELLRATIO, 0);
+			/*	ID3D11RasterizerState* rs;
+				pd3dImmediateContext->RSGetState(&rs);
+				pd3dImmediateContext->RSSetState(m_pBackFaceRS);
 
 
-			pd3dImmediateContext->RSSetState(rs);
-			SAFE_RELEASE(rs);*/
-		DXUT_EndPerfEvent();
+				pd3dImmediateContext->RSSetState(rs);
+				SAFE_RELEASE(rs);*/
+			DXUT_EndPerfEvent();
+		}
+#endif
 #endif
 		// render through raymarching
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Raymarching");
 		pd3dImmediateContext->GSSetShader(m_pRaymarchGS,NULL,0);
 		pd3dImmediateContext->PSSetShader(m_pRayCastingPS, NULL, 0);
 #if DEBUG
-		pd3dImmediateContext->OMSetRenderTargets(2,m_pKinectOutRTV,m_pDebug_DSSV);
+		if(m_bShowGrid)	pd3dImmediateContext->OMSetRenderTargets(2,m_pKinectOutRTV,m_pDebug_DSSV);
+		else pd3dImmediateContext->OMSetRenderTargets(2, m_pKinectOutRTV,NULL);
 #else
 		pd3dImmediateContext->OMSetRenderTargets(2, m_pKinectOutRTV,NULL);
 #endif
@@ -524,6 +531,11 @@ public:
 				{
 					m_bEmptyTSDF = true;
 					m_pGeneratedTPC->reset();
+				}
+
+				if (nKey == 'G')
+				{
+					m_bShowGrid = !m_bShowGrid;
 				}
 				break;
 			}

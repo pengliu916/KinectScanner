@@ -57,14 +57,6 @@ HRESULT Initial()
 	// Use HistoPyramidMC's Generated RGBD
 	//V_RETURN(poseEstimator.Initial(histoPyraimdMC.m_pGeneratedTPC, &pointCloud.m_TransformedPC));
 
-	multiTexture.AddTexture(pointCloud.m_ppRGBDSRV, D_W, D_H);
-	multiTexture.AddTexture(&tsdfImgs.m_pFarNearSRV, D_W, D_H,
-							"float4 result = texture.Load(int3(input.Tex*float2(512,424),0));\n\
-							 if(result.r>20 && result.a<0) color = float4(0,0,0,0);\n\
-							 else color = abs(result.a - result.r)*0.5f*float4(1,1,1,1);\n\
-							 return color;\n","<float4>",
-							nullptr, std::bind(&TSDFImages::HandleMessages, &tsdfImgs, _1, _2, _3, _4));
-	multiTexture.AddTexture(poseEstimator.m_pKinectTPC->ppMeshNormalTexSRV, D_W, D_H);
 	multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshRGBZTexSRV, D_W, D_H);
 	//multiTexture.AddTexture(tsdfImgs.m_pGeneratedTPC->ppMeshNormalTexSRV, D_W, D_H);
 	/*multiTexture.AddTexture(&histoPyraimdMC.m_pOutSRV,640,480,"","<float4>",
@@ -206,15 +198,17 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 {
 	// Get new depth and color frmae from RGBD sensor
 	pointCloud.Render(pd3dImmediateContext);
-
+	DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Render");
 	tsdfImgs.Get3ImgForKinect(pd3dImmediateContext);
+	DXUT_EndPerfEvent();
+
+	DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"Simulate");
 	meshVolume.Integrate(pd3dImmediateContext);
+	DXUT_EndPerfEvent();
 	
 	// Render all sub texture to screen
 	multiTexture.Render(pd3dImmediateContext);
 
-	// Render the text
-	RenderText();
 }
 
 
@@ -359,7 +353,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	Initial();
 
-	DXUTCreateDevice(D3D_FEATURE_LEVEL_11_0, true, 1280, 800);
+	DXUTCreateDevice(D3D_FEATURE_LEVEL_11_0, true, 1024, 768);
 	DXUTMainLoop(); // Enter into the DXUT ren  der loop
 
 	// Perform any application-level cleanup here

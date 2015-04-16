@@ -189,6 +189,7 @@ void ActiveCellAndSOGS(point GS_INPUT particles[1], uint primID : SV_PrimitiveID
 
 	PS_INPUT output;
 	float4 f4HalfCellSize = float4(VOXEL_SIZE*CELLRATIO, VOXEL_SIZE*CELLRATIO, VOXEL_SIZE*CELLRATIO,2.f)*0.5f;
+		f4HalfCellSize.xyz*=1.3;
 	output.Pos=float4(1.0f,1.0f,1.0f,1.0f)*f4HalfCellSize+f4CellCenterOffset;output.projPos=mul(output.Pos,cb_mKinectViewProj);triStream.Append(output);
 	output.Pos=float4(1.0f,-1.0f,1.0f,1.0f)*f4HalfCellSize+f4CellCenterOffset;output.projPos=mul(output.Pos,cb_mKinectViewProj);triStream.Append(output);
 	output.Pos=float4(1.0f,1.0f,-1.0f,1.0f)*f4HalfCellSize+f4CellCenterOffset;output.projPos=mul(output.Pos,cb_mKinectViewProj);triStream.Append(output);
@@ -314,6 +315,13 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 	output.Normal = float4 ( 0, 0, 0, -1 );
 	output.DepthOut = 1000.f;
 
+
+	Ray eyeray;
+	//world space
+	eyeray.o = cb_f4KinectPos;
+	eyeray.d = input.Pos - eyeray.o;
+
+#if NEW_METHOD
 	// calculate ray intersection with bounding box
 	int3 i3Idx = int3(input.Tex,0);
 	float4 resu = g_srvFarNear.Load(i3Idx);
@@ -324,22 +332,17 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 	return output;*/
 
 	//if(resu.g < 0.5) return output;
-
-	Ray eyeray;
-	//world space
-	eyeray.o = cb_f4KinectPos;
-	eyeray.d = input.Pos - eyeray.o;
-	eyeray.d = normalize(eyeray.d);
-
-
+	f2NearFar = f2NearFar*length(eyeray.d.xyz);
+#else
 	// calculate ray intersection with bounding box
 	float tnear, tfar;
 	bool hit = IntersectBox(eyeray, cb_f3VolBBMin, cb_f3VolBBMax, tnear, tfar);
 	if (!hit) return output;
 	if (tnear < 0) tnear = 0;
-	f2NearFar = float2(tnear,tfar);
+	float2 f2NearFar = float2(tnear,tfar);
+#endif
 
-
+	eyeray.d = float4(normalize(eyeray.d.xyz),0);
 
 	// calculate intersection points and convert to texture space
 	float3 f3Porg = (eyeray.o.xyz + eyeray.d.xyz * f2NearFar.x) * cb_f3InvVolSize + 0.5f;
@@ -390,6 +393,20 @@ PS_3_OUT RaymarchPS(MarchPS_INPUT input)
 			output.Normal = mul(float4(f3Normal, 0.f), cb_mInvKinectWorld);
 			// get color (maybe later I will use color to guide ICP)
 			float4 f4Col = g_srvColor.SampleLevel(g_samLinear, f3VolUVW, 0);
+
+				// the light is calculated in view space, since the normal is in view space
+				float4 f4LightPos = mul(g_cf4LightOffset + float4 ( 0.f, 0.f, 0.f, 1.f ), cb_mInvView); 
+				float4 f4LightDir = f4LightPos - f4SurfacePos;
+				float fLightDist = length ( f4LightDir );
+				f4LightDir /= fLightDist;
+				f4LightDir.w = clamp ( 1.0f / ( g_cf4LightAtte.x + 
+									 g_cf4LightAtte.y * fLightDist + 
+									 g_cf4LightAtte.z * fLightDist * fLightDist ), 0.f, 1.f );
+				//float fNdotL = clamp(dot(f3Normal, f4LightDir.xyz), 0, 1);
+				float fNdotL = abs(dot(f3Normal, f4LightDir.xyz));
+				f4Col = f4Col * (f4LightDir.w * fNdotL + g_cf4Ambient);
+
+
 			f4SurfacePos = mul(f4SurfacePos, cb_mInvKinectWorld);
 			output.Normal = output.Normal* 0.5f + 0.5f;
 			// output RGBD
