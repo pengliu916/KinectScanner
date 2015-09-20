@@ -34,6 +34,7 @@ class VolumeTSDF
 public:
 	ID3D11ComputeShader*			m_pCS;
 	ID3D11ComputeShader*			m_pResetCS;
+	ID3D11ComputeShader*			m_pRefreshCellCS;
 
 	CB_VolumeTSDF_PerCall			m_CBperCall;
 	ID3D11Buffer*					m_pCBperCall;
@@ -44,6 +45,10 @@ public:
 	ID3D11Texture3D*				m_pDWVolumeTex;
 	ID3D11ShaderResourceView*		m_pDWVolumeSRV;
 	ID3D11UnorderedAccessView*		m_pDWVolumeUAV;
+	// Volume for subVolume cell used for object-ordered empty space skipping
+	ID3D11Texture3D*				m_pBrickVolTex[2];
+	ID3D11ShaderResourceView*		m_pBrickVolSRV[2];
+	ID3D11UnorderedAccessView*		m_pBrickVolUAV[2];
 	// Volume for Color data
 	ID3D11Texture3D*				m_pColVolumeTex;
 	ID3D11ShaderResourceView*		m_pColVolumeSRV;
@@ -76,6 +81,9 @@ public:
 		V_RETURN(DXUTCompileFromFile(L"VolumeTSDF.hlsl", nullptr, "ResetCS", "cs_5_0", COMPILE_FLAG, 0, &pCSBlob));
 		V_RETURN(pd3dDevice->CreateComputeShader(pCSBlob->GetBufferPointer(), pCSBlob->GetBufferSize(), NULL, &m_pResetCS));
 		DXUT_SetDebugName(m_pResetCS, "m_pResetCS");
+		V_RETURN(DXUTCompileFromFile(L"VolumeTSDF.hlsl", nullptr, "RefreshCellCS", "cs_5_0", COMPILE_FLAG, 0, &pCSBlob));
+		V_RETURN(pd3dDevice->CreateComputeShader(pCSBlob->GetBufferPointer(), pCSBlob->GetBufferSize(), NULL, &m_pRefreshCellCS));
+		DXUT_SetDebugName(m_pRefreshCellCS, "m_pRefreshCellCS");
 		pCSBlob->Release();
 
 		D3D11_BUFFER_DESC bd;
@@ -109,7 +117,14 @@ public:
 		dstex.Format = DXGI_FORMAT_R10G10B10A2_TYPELESS;// the texture file should have 32bit typeless format
 		V_RETURN(pd3dDevice->CreateTexture3D(&dstex, NULL, &m_pColVolumeTex));
 		DXUT_SetDebugName(m_pColVolumeTex, "m_pColVolumeTex");
-
+		dstex.Width /= CELLRATIO;
+		dstex.Height /= CELLRATIO;
+		dstex.Depth /= CELLRATIO;
+		dstex.Format = DXGI_FORMAT_R8_SINT;// the texture file should have 32bit typeless format
+		V_RETURN(pd3dDevice->CreateTexture3D(&dstex, NULL, &m_pBrickVolTex[0]));
+		DXUT_SetDebugName(m_pBrickVolTex[0], "m_pBrickVolTex[0]");
+		V_RETURN(pd3dDevice->CreateTexture3D(&dstex, NULL, &m_pBrickVolTex[1]));
+		DXUT_SetDebugName(m_pBrickVolTex[1], "m_pBrickVolTex[1]");
 
 		// Create the resource view
 		D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
@@ -120,21 +135,32 @@ public:
 		SRVDesc.Texture3D.MipLevels = 1;
 		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pDWVolumeTex, &SRVDesc, &m_pDWVolumeSRV));
 		DXUT_SetDebugName(m_pDWVolumeSRV, "m_pDWVolumeSRV");
+		SRVDesc.Format = DXGI_FORMAT_R8_SINT;
+		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pBrickVolTex[0], &SRVDesc, &m_pBrickVolSRV[0]));
+		DXUT_SetDebugName(m_pBrickVolSRV[0], "m_pBrickVolSRV[0]");
+		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pBrickVolTex[1], &SRVDesc, &m_pBrickVolSRV[1]));
+		DXUT_SetDebugName(m_pBrickVolSRV[1], "m_pBrickVolSRV[1]");
 		SRVDesc.Format = DXGI_FORMAT_R10G10B10A2_UNORM;// the srv cannot have typeless formate, the format should match with the conversion func in pixel shader
 		V_RETURN(pd3dDevice->CreateShaderResourceView(m_pColVolumeTex, &SRVDesc, &m_pColVolumeSRV));
 		DXUT_SetDebugName(m_pColVolumeSRV, "m_pColVolumeSRV");
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 		ZeroMemory(&UAVDesc, sizeof(UAVDesc));
-		UAVDesc.Format = DXGI_FORMAT_R32_UINT; // the UAV must have thpis format to allow simultaneous read and write
+		UAVDesc.Format = DXGI_FORMAT_R32_UINT; // the UAV must have this format to allow simultaneous read and write
 		UAVDesc.Texture3D.FirstWSlice = 0;
 		UAVDesc.Texture3D.MipSlice = 0;
-		UAVDesc.Texture3D.WSize = dstex.Depth;
+		UAVDesc.Texture3D.WSize = (UINT)m_CBperCall.halfDepth * 2.f;
 		UAVDesc.ViewDimension = D3D11_UAV_DIMENSION::D3D11_UAV_DIMENSION_TEXTURE3D;
 		V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pDWVolumeTex, &UAVDesc, &m_pDWVolumeUAV));
 		DXUT_SetDebugName(m_pDWVolumeUAV, "m_pDWVolumeUAV");
 		V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pColVolumeTex, &UAVDesc, &m_pColVolumeUAV));
 		DXUT_SetDebugName(m_pColVolumeUAV, "m_pColVolumeUAV");
+		UAVDesc.Format = DXGI_FORMAT_R8_SINT;
+		UAVDesc.Texture3D.WSize = (UINT)m_CBperCall.halfDepth * 2.f / CELLRATIO;
+		V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pBrickVolTex[0], &UAVDesc, &m_pBrickVolUAV[0]));
+		DXUT_SetDebugName(m_pBrickVolUAV[0], "m_pBrickVolUAV[0]");
+		V_RETURN(pd3dDevice->CreateUnorderedAccessView(m_pBrickVolTex[1], &UAVDesc, &m_pBrickVolUAV[1]));
+		DXUT_SetDebugName(m_pBrickVolUAV[1], "m_pBrickVolUAV[1]");
 
 
 		m_pInputPC = inputTCP;
@@ -150,9 +176,12 @@ public:
 		// clear the render target
 		pd3dImmediateContext->CSSetShader(m_pResetCS, NULL, 0);
 		UINT initCounts = 0;
-		ID3D11UnorderedAccessView* uavs[2] = { m_pDWVolumeUAV, m_pColVolumeUAV };
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 2, uavs, &initCounts);
+		ID3D11UnorderedAccessView* uavs[4] = { m_pDWVolumeUAV, m_pColVolumeUAV, m_pBrickVolUAV[0], m_pBrickVolUAV[1]};
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 4, uavs, &initCounts);
 		pd3dImmediateContext->Dispatch(VOXEL_NUM_X / THREAD_X, VOXEL_NUM_Y / THREAD_Y, VOXEL_NUM_Z / THREAD_Z);
+
+		pd3dImmediateContext->CSSetShader(m_pRefreshCellCS, NULL, 0);
+		pd3dImmediateContext->Dispatch(ceil((float)VOXEL_NUM_X / CELLRATIO / THREAD_X), ceil((float)VOXEL_NUM_Y / CELLRATIO / THREAD_Y), ceil((float)VOXEL_NUM_Z / CELLRATIO / THREAD_Z));
 
 		m_bResetVol = false;
 		DXUT_EndPerfEvent();
@@ -162,6 +191,7 @@ public:
 	{
 		SAFE_RELEASE(m_pCS);
 		SAFE_RELEASE(m_pResetCS);
+		SAFE_RELEASE(m_pRefreshCellCS);
 
 		SAFE_RELEASE( m_pDWVolumeTex );
 		SAFE_RELEASE( m_pDWVolumeSRV );
@@ -171,6 +201,13 @@ public:
 		SAFE_RELEASE( m_pColVolumeSRV );
 		SAFE_RELEASE( m_pColVolumeUAV );
 
+		SAFE_RELEASE(m_pBrickVolTex[0]);
+		SAFE_RELEASE(m_pBrickVolSRV[0]);
+		SAFE_RELEASE(m_pBrickVolUAV[0]);
+		SAFE_RELEASE(m_pBrickVolTex[1]);
+		SAFE_RELEASE(m_pBrickVolSRV[1]);
+		SAFE_RELEASE(m_pBrickVolUAV[1]);
+
 		SAFE_RELEASE( m_pCBperCall );
 		SAFE_RELEASE( m_pCBperFrame );
 	}
@@ -179,26 +216,29 @@ public:
 	{
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"UpdateVolume");
 
-		if(m_bResetVol ) ClearVolume(pd3dImmediateContext);
+		if(m_bResetVol) ClearVolume(pd3dImmediateContext);
 
-		ID3D11UnorderedAccessView* uavs[2] = { m_pDWVolumeUAV, m_pColVolumeUAV };
+		ID3D11UnorderedAccessView* uavs[4] = { m_pDWVolumeUAV, m_pColVolumeUAV, m_pBrickVolUAV[0], m_pBrickVolUAV[1] };
 
 		XMVECTOR t;
 		m_CBperFrame.mInversedWorld_kinect = XMMatrixTranspose(XMMatrixInverse(&t,m_pInputPC->mCurFrame));
 		pd3dImmediateContext->UpdateSubresource( m_pCBperFrame, 0, NULL, &m_CBperFrame, 0, 0 );
 
-		pd3dImmediateContext->CSSetShader(m_pCS, NULL, 0);
 		pd3dImmediateContext->CSSetConstantBuffers( 0, 1, &m_pCBperCall );
 		pd3dImmediateContext->CSSetConstantBuffers( 1, 1, &m_pCBperFrame );
 		pd3dImmediateContext->CSSetShaderResources( 0, 1, m_pInputPC->ppMeshRawRGBZTexSRV );
 		pd3dImmediateContext->CSSetShaderResources( 1, 1, m_pInputPC->ppMeshNormalTexSRV );
 		UINT initCounts = 0;
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 2, uavs, &initCounts);
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 4, uavs, &initCounts);
+		pd3dImmediateContext->CSSetShader(m_pRefreshCellCS, NULL, 0);
+		pd3dImmediateContext->Dispatch(ceil((float)VOXEL_NUM_X / CELLRATIO / THREAD_X), ceil((float)VOXEL_NUM_Y / CELLRATIO / THREAD_Y), ceil((float)VOXEL_NUM_Z / CELLRATIO / THREAD_Z));
+
+		pd3dImmediateContext->CSSetShader(m_pCS, NULL, 0);
 		pd3dImmediateContext->Dispatch(VOXEL_NUM_X / THREAD_X, VOXEL_NUM_Y / THREAD_Y, VOXEL_NUM_Z / THREAD_Z);
 
-		ID3D11UnorderedAccessView* nulluavs[2] = { NULL, NULL };
+		ID3D11UnorderedAccessView* nulluavs[4] = { NULL, NULL, NULL, NULL };
 		ID3D11ShaderResourceView* nullsrvs[2] = { NULL, NULL };
-		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 2, nulluavs, &initCounts);
+		pd3dImmediateContext->CSSetUnorderedAccessViews(0, 4, nulluavs, &initCounts);
 		pd3dImmediateContext->CSSetShaderResources(0,2,nullsrvs);
 		DXUT_EndPerfEvent();
 	}

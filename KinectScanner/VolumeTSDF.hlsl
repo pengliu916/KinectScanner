@@ -3,6 +3,8 @@
 // UAV to write to
 RWTexture3D<uint> tex_DistWeight : register(u0);
 RWTexture3D<uint> tex_RGBColor : register(u1);
+RWTexture3D<int> tex_BrickFront : register(u2);
+RWTexture3D<int> tex_BrickBack : register(u3);
 // SRV to read from
 Texture2D<float4> txRGBD  : register(t0); // Contain color and depth(alpha channel)
 Texture2D<float4> txNormal : register(t1); // Contain normal, for bad data rejection
@@ -81,14 +83,34 @@ void CS(uint3 DTid: SV_DispatchThreadID)
 
 		tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(DepthWeight);
 
-		//if( norAngle < previousColor.z) return 0;
+		float3 f3CellVolIdx = (float3)DTid / CELLRATIO;
+		int3 i3CellVolIdx = DTid / CELLRATIO;
+
+		float3 f3o = f3CellVolIdx - i3CellVolIdx - 0.5f;
+		float3 f3 = abs(f3o);
+		float fFactor = 4.f;
+		int3 i3NeighborIdx;
+		if(f3.z>=f3.y){
+			if(f3.y>=f3.x) i3NeighborIdx = int3(0,0,f3o.z*fFactor);
+			else if(f3.x>f3.z) i3NeighborIdx = int3(f3o.x*fFactor,0,0);
+		}else{
+			if(f3.y>=f3.x) i3NeighborIdx = int3(0,f3o.y*fFactor,0);
+			else i3NeighborIdx = int3(f3o.x*fFactor,0,0);
+		}
+		if(DepthWeight.x < 0.f){
+			tex_BrickFront[i3CellVolIdx] = 1;
+			tex_BrickFront[i3CellVolIdx + i3NeighborIdx] = 1;
+		}else{ 
+			tex_BrickBack[i3CellVolIdx] = -1;
+			tex_BrickBack[i3CellVolIdx + i3NeighborIdx] = -1;
+		}
+			//if( norAngle < previousColor.z) return 0;
 		if (dot(RGBD.xyz, RGBD.xyz)<0.001) return;
 		float3 col = (RGBD.xyz * weight + previousColor.xyz * pre_weight) / (weight + pre_weight);
 		tex_RGBColor[DTid] = D3DX_FLOAT4_to_R10G10B10A2_UNORM(float4(col, norAngle));
 
 		return;
 	}
-	//tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(float2(R_F, 0.f));
 	return;
 }
 
@@ -97,4 +119,11 @@ void ResetCS(uint3 DTid: SV_DispatchThreadID)
 {
 	tex_DistWeight[DTid] = D3DX_FLOAT2_to_R16G16_FLOAT(float2(INVALID_VALUE,0.f));
 	tex_RGBColor[DTid] = D3DX_FLOAT4_to_R10G10B10A2_UNORM(float4(0, 0, 0, 0));
+}
+
+[numthreads(THREAD_X, THREAD_Y, THREAD_Z)]
+void RefreshCellCS(uint3 DTid: SV_DispatchThreadID)
+{
+	tex_BrickFront[DTid] = 0;
+	tex_BrickBack[DTid] = 0;
 }

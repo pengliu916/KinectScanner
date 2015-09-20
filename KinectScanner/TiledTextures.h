@@ -146,7 +146,7 @@ public:
 	{
 		stringstream  shaderCode;
 		for (int i = 0; i < m_vecTiledObjs.size(); i++){
-			shaderCode << "Texture2D" << m_vecTiledObjs[i].strTexFormat << " textures_" << i << ";\n";
+			shaderCode << m_vecTiledObjs[i].strTexFormat << " textures_" << i << ";\n";
 		}
 		//int idx = 0;
 		//for(auto i:m_vecTiledObjs)
@@ -230,7 +230,7 @@ public:
 	void AddTexture(ID3D11ShaderResourceView** ppInputSRV,
 					int _iResWidth = 640, int _iResHeight = 480,
 					string strPScode = "",
-					string strFormat = "<float4>",
+					string strFormat = "Texture2D<float4>",
 					function<HRESULT(ID3D11Device*, int, int)> _resizeFunc = nullptr,
 					function<LRESULT(HWND, UINT, WPARAM, LPARAM)> _msgFunc = nullptr)
 	{
@@ -239,7 +239,7 @@ public:
 		texObj.iResWidth = _iResWidth;
 		texObj.iResHeight = _iResHeight;
 		texObj.strTexFormat = strFormat;
-		if (strFormat.compare(1, 5, "float") == 0){
+		if (strFormat.compare(0, 14, "Texture2D<float") == 0){
 			defaultPScode = "color = texture.Sample(samColor, input.Tex);\n return color;";
 		} else{
 			std::ostringstream buff;
@@ -274,19 +274,19 @@ public:
 
 		ID3DBlob* pVSBlob = NULL;
 
-		V_RETURN(CompileFormString(shaderCode, nullptr, "VS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob))
-			V_RETURN(pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &m_pPassVS));
+		V_RETURN(CompileFormString(shaderCode, nullptr, "VS", "vs_5_0", COMPILE_FLAG, 0, &pVSBlob));
+		V_RETURN(pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), NULL, &m_pPassVS));
 		DXUT_SetDebugName(m_pPassVS, "m_pPassVS");
 
 		ID3DBlob* pGSBlob = NULL;
-		V_RETURN(CompileFormString(shaderCode, nullptr, "GS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob))
-			V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pTiledQuadGS));
+		V_RETURN(CompileFormString(shaderCode, nullptr, "GS", "gs_5_0", COMPILE_FLAG, 0, &pGSBlob));
+		V_RETURN(pd3dDevice->CreateGeometryShader(pGSBlob->GetBufferPointer(), pGSBlob->GetBufferSize(), NULL, &m_pTiledQuadGS));
 		DXUT_SetDebugName(m_pTiledQuadGS, "m_pTiledQuadGS");
 		pGSBlob->Release();
 
 		ID3DBlob* pPSBlob = NULL;
-		V_RETURN(CompileFormString(shaderCode, nullptr, "PS", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob))
-			V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pTexPS));
+		V_RETURN(CompileFormString(shaderCode, nullptr, "PS", "ps_5_0", COMPILE_FLAG, 0, &pPSBlob));
+		V_RETURN(pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), NULL, &m_pTexPS));
 		DXUT_SetDebugName(m_pTexPS, "m_pTexPS");
 		pPSBlob->Release();
 
@@ -503,6 +503,8 @@ public:
 					curse_y < m_vecTiledObjs[i].iLTcorner_y + m_vecTiledObjs[i].iOutHeight){
 					short new_x = curse_x - m_vecTiledObjs[i].iLTcorner_x;
 					short new_y = curse_y - m_vecTiledObjs[i].iLTcorner_y;
+					new_x *= (float)m_vecTiledObjs[i].iResWidth / m_vecTiledObjs[i].iOutWidth;
+					new_y *= (float)m_vecTiledObjs[i].iResHeight / m_vecTiledObjs[i].iOutHeight;
 					nlParam = ((long)new_y << 16) | (long)new_x;
 					m_vecTiledObjs[i].msgFunc(hWnd, uMsg, wParam, nlParam);
 				}
