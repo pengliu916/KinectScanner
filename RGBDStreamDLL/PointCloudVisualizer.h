@@ -15,6 +15,7 @@
 #endif
 
 #include <d3d11.h>
+#include <sstream>
 #include "DXUT.h"
 #include "DXUTcamera.h"	// CModelViewerCamera
 //#include "SDKmisc.h"	// DXUTCompileFromFile

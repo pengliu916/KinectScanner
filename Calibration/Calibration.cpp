@@ -504,8 +504,8 @@ void Calibration::BundleCalibration( string outputFileName, vector<vector<Mat>>&
 										   cameraMatrix[iSensorIdx], distCoeffs[iSensorIdx],
 										   imgSize[iSensorIdx], R[iSensorIdx], T[iSensorIdx],
 										   E[iSensorIdx], F[iSensorIdx],
-										   TermCriteria( CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 100, 1e-5 ),
-										   STEREO_CALIB_FLAG );
+										   STEREO_CALIB_FLAG, 
+										   TermCriteria( CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 100, 1e-6 ));
 		cout << " StereoCalibration done with rms: " << stereo_rms[iSensorIdx];
 		vector<Mat> cMat, dMat;
 		cMat.push_back( cameraMatrix[0] );

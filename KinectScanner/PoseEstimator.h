@@ -2,6 +2,8 @@
 #pragma once
 #include <D3D11.h>
 #include <DirectXMath.h>
+
+#include "Eigen/Dense"
 #include "DXUT.h"
 #include "SDKmisc.h"
 
@@ -196,7 +198,7 @@ public:
 			}
 	}
 
-	bool Processing(ID3D11DeviceContext* pd3dImmediateContext, AccessSize Asize = AccessSize::fullSize;)
+	bool Processing(ID3D11DeviceContext* pd3dImmediateContext, AccessSize Asize = AccessSize::fullSize)
 	{
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"PoseEstimat Computing");
 

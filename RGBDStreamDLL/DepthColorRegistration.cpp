@@ -1,5 +1,5 @@
 #include "DepthColorRegistration.h"
-
+#include <sstream>
 
 HRESULT DepthColorRegistration::CompileFormString(string code,
 										const D3D_SHADER_MACRO* pDefines,

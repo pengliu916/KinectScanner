@@ -6,6 +6,7 @@
 #include "DXUTcamera.h"
 #include "SDKmisc.h"
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <functional>
 
@@ -153,7 +154,7 @@ public:
         //    shaderCode << "Texture2D" << i.strTexFormat << " textures_" << idx++ << ";\n";
         //
 		shaderCode << "SamplerState samColor : register(s0);\n";
-		shaderCode << "cbuffer cbTileLocation : register(c0)\n";
+		shaderCode << "cbuffer cbTileLocation : register(b0)\n";
 		shaderCode << "{\n float4 g_TilePos["<<m_vecTiledObjs.size()<<"];\n }; \n";
         shaderCode << "struct GS_INPUT{};\n";
         shaderCode << "struct PS_INPUT{float4 Pos:SV_POSITION;float2 Tex:TEXCOORD0;uint PrimID:SV_PrimitiveID;};\n";

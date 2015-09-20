@@ -1,0 +1,342 @@
+Description,Event,CPU ¦Ìs,GPU ¦Ìs,0 Errors Found,Context
+(Start of Capture),0,0,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'm_pDepthTex', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad014068) = 0x0",1,524,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'm_pDepthTex', UINT Subresource = 0)",2,38676,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'm_pColorTex', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad0140b0) = 0x0",3,43,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'm_pColorTex', UINT Subresource = 0)",4,604972,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'm_pInfraredTex', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad0140f8) = 0x0",5,48,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'm_pInfraredTex', UINT Subresource = 0)",6,31639,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'm_pColLookupForDetphTex', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad014140) = 0x0",7,42,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'm_pColLookupForDetphTex', UINT Subresource = 0)",8,127422,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 5, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL, NULL })",9,1555,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 5, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL, NULL })",10,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0141e8, ID3D11DepthStencilView* pDepthStencilView = NULL)",11,11,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'm_pPassIL'),12,3,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),13,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'm_pPassVB' }, UINT* pStrides = { 0 }, UINT* pOffsets = { 0 })",14,243,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",15,16,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pQuadGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",16,7,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pUndistortRegisteredRGBDPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",17,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 3, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pColorSRV', 'm_pDepthSRV', 'm_pColLookupForDepthSRV' })",18,10,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'm_pSS' })",19,35,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad0142d0)",20,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",21,533,117,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'm_pAddDepthRTV', FLOAT ColorRGBA[4] = 0x1dad0142f8)",22,9,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::ClearDepthStencilView(ID3D11DepthStencilView* pDepthStencilView = 'm_pAddDepthDSSRV', UINT ClearFlags = 0x00000001, FLOAT Depth = 1.000000, UINT8 Stencil = 0)",23,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014338, ID3D11DepthStencilView* pDepthStencilView = 'm_pAddDepthDSSRV')",24,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pAddDepthGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",25,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pAddDepthPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",26,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShaderResources(UINT StartSlot = 3, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pUndistortRegisteredRGBDSRV' })",27,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 217088, UINT StartVertexLocation = 0)",28,10,228,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 5, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL, NULL })",29,2,0,,0x0000001D9B4D6440
+Filter the RGBD and Creat Normal Map,30,552,228,,
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'm_pScreenQuadIL'),31,11,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),32,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'm_pScreenQuadVB' }, UINT* pStrides = { 0 }, UINT* pOffsets = { 0 })",33,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",34,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pScreenQuadGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",35,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad0144b8)",36,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pPS_H', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",37,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014500, ID3D11DepthStencilView* pDepthStencilView = NULL)",38,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pAddDepthSRV' })",39,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",40,145,84,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014540, ID3D11DepthStencilView* pDepthStencilView = NULL)",41,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pPS_V', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",42,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 10' })",43,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",44,220,83,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014598, ID3D11DepthStencilView* pDepthStencilView = NULL)",45,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",46,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 9' })",47,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",48,130,61,,0x0000001D9B4D6440
+int D3DPERF_EndEvent() = 0xffffffff,49,3,0,,
+Generate 3 img from Volume,50,352,8487,,
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),51,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'RTV 13', FLOAT ColorRGBA[4] = 0x1dad014640)",52,7,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'RTV 14', FLOAT ColorRGBA[4] = 0x1dad014658)",53,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'RTV 12', FLOAT ColorRGBA[4] = 0x1dad014670)",54,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'TSDFImages_pm_CB_TSDFImg_KinectPerFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad0146b0, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",55,247,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 3, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014758, ID3D11DepthStencilView* pDepthStencilView = NULL)",56,24,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'InputLayout 6'),57,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'Buffer 8' }, UINT* pStrides = { 2 }, UINT* pOffsets = { 0 })",58,13,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad0147c0)",59,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",60,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pKinectQuadGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",61,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'TSDFImages_pCB_TSDFImg_PerCall' })",62,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pKinect3ImgPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",63,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'TSDFImages_pCB_TSDFImg_PerCall' })",64,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetConstantBuffers(UINT StartSlot = 1, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'TSDFImages_pm_CB_TSDFImg_KinectPerFrame' })",65,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'SamplerState 18' })",66,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pDWVolumeSRV' })",67,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 1, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pColVolumeSRV' })",68,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",69,19,8487,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 3, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL })",70,2,0,,0x0000001D9B4D6440
+int D3DPERF_EndEvent() = 0xffffffff,71,2,0,,
+PoseEstimat Computing,72,26293,994,,
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'm_pScreenQuadIL'),73,2,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),74,<1,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'm_pScreenQuadVB' }, UINT* pStrides = { 0 }, UINT* pOffsets = { 0 })",75,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",76,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad0149a0)",77,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetConstantBuffers(UINT StartSlot = 1, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperFrame' })",78,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperCall' })",79,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",80,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pPS_I', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",81,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad014a48, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",82,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 4, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014ae0, ID3D11DepthStencilView* pDepthStencilView = NULL)",83,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 9' })",84,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 1, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 17' })",85,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 2, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 11' })",86,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 3, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 18' })",87,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",88,554,211,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pPS_II', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",89,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 3, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014b98, ID3D11DepthStencilView* pDepthStencilView = NULL)",90,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",91,372,148,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 4, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL })",92,3,0,,0x0000001D9B4D6440
+Reduction,93,25318,635,,
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'm_pScreenQuadIL'),94,2,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),95,1,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'Reduction_m_pScreenQuadVB' }, UINT* pStrides = { 0 }, UINT* pOffsets = { 0 })",96,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",97,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",98,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",99,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'Reduction_m_pCBperCall' })",100,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad014cd0)",101,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'Reduction_m_pCBperCall', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad014d18, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",102,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014d40, ID3D11DepthStencilView* pDepthStencilView = NULL)",103,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 26' })",104,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",105,101,60,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014d80, ID3D11DepthStencilView* pDepthStencilView = NULL)",106,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 33' })",107,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",108,95,60,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014dc0, ID3D11DepthStencilView* pDepthStencilView = NULL)",109,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 40' })",110,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",111,95,59,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014e00, ID3D11DepthStencilView* pDepthStencilView = NULL)",112,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 47' })",113,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",114,97,60,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014e40, ID3D11DepthStencilView* pDepthStencilView = NULL)",115,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 54' })",116,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",117,96,59,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014e80, ID3D11DepthStencilView* pDepthStencilView = NULL)",118,9,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 61' })",119,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",120,95,60,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014ec0, ID3D11DepthStencilView* pDepthStencilView = NULL)",121,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 68' })",122,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",123,98,61,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad014ef8)",124,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'Reduction_m_pCBperCall', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad014f40, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",125,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014f68, ID3D11DepthStencilView* pDepthStencilView = NULL)",126,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_1_0' })",127,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",128,94,11,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014fa8, ID3D11DepthStencilView* pDepthStencilView = NULL)",129,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_1_1' })",130,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",131,96,10,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad014fe8, ID3D11DepthStencilView* pDepthStencilView = NULL)",132,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_1_2' })",133,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",134,103,10,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015028, ID3D11DepthStencilView* pDepthStencilView = NULL)",135,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_1_3' })",136,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",137,90,10,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015068, ID3D11DepthStencilView* pDepthStencilView = NULL)",138,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_1_4' })",139,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",140,91,10,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0150a8, ID3D11DepthStencilView* pDepthStencilView = NULL)",141,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_1_5' })",142,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",143,100,10,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0150e8, ID3D11DepthStencilView* pDepthStencilView = NULL)",144,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_1_6' })",145,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",146,92,10,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad015120)",147,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'Reduction_m_pCBperCall', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad015168, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",148,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015190, ID3D11DepthStencilView* pDepthStencilView = NULL)",149,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_2_0' })",150,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",151,94,6,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0151d0, ID3D11DepthStencilView* pDepthStencilView = NULL)",152,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_2_1' })",153,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",154,106,6,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015210, ID3D11DepthStencilView* pDepthStencilView = NULL)",155,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_2_2' })",156,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",157,89,6,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015250, ID3D11DepthStencilView* pDepthStencilView = NULL)",158,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_2_3' })",159,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",160,95,6,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015290, ID3D11DepthStencilView* pDepthStencilView = NULL)",161,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_2_4' })",162,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",163,91,6,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0152d0, ID3D11DepthStencilView* pDepthStencilView = NULL)",164,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_2_5' })",165,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",166,89,6,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015310, ID3D11DepthStencilView* pDepthStencilView = NULL)",167,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_2_6' })",168,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",169,105,6,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad015348)",170,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'Reduction_m_pCBperCall', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad015390, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",171,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0153b8, ID3D11DepthStencilView* pDepthStencilView = NULL)",172,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_3_0' })",173,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",174,94,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0153f8, ID3D11DepthStencilView* pDepthStencilView = NULL)",175,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_3_1' })",176,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",177,93,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015438, ID3D11DepthStencilView* pDepthStencilView = NULL)",178,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_3_2' })",179,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",180,93,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015478, ID3D11DepthStencilView* pDepthStencilView = NULL)",181,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_3_3' })",182,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",183,90,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0154b8, ID3D11DepthStencilView* pDepthStencilView = NULL)",184,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_3_4' })",185,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",186,91,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0154f8, ID3D11DepthStencilView* pDepthStencilView = NULL)",187,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_3_5' })",188,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",189,92,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015538, ID3D11DepthStencilView* pDepthStencilView = NULL)",190,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_3_6' })",191,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",192,95,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad015570)",193,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'Reduction_m_pCBperCall', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad0155b8, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",194,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0155e0, ID3D11DepthStencilView* pDepthStencilView = NULL)",195,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_4_0' })",196,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",197,91,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015620, ID3D11DepthStencilView* pDepthStencilView = NULL)",198,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_4_1' })",199,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",200,91,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015660, ID3D11DepthStencilView* pDepthStencilView = NULL)",201,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_4_2' })",202,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",203,91,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0156a0, ID3D11DepthStencilView* pDepthStencilView = NULL)",204,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_4_3' })",205,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",206,107,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0156e0, ID3D11DepthStencilView* pDepthStencilView = NULL)",207,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_4_4' })",208,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",209,92,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015720, ID3D11DepthStencilView* pDepthStencilView = NULL)",210,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_4_5' })",211,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",212,90,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015760, ID3D11DepthStencilView* pDepthStencilView = NULL)",213,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_4_6' })",214,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",215,91,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad015798)",216,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'Reduction_m_pCBperCall', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad0157e0, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",217,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015808, ID3D11DepthStencilView* pDepthStencilView = NULL)",218,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_5_0' })",219,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",220,105,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015848, ID3D11DepthStencilView* pDepthStencilView = NULL)",221,7,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_5_1' })",222,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",223,101,4,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015888, ID3D11DepthStencilView* pDepthStencilView = NULL)",224,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_5_2' })",225,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",226,94,4,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad0158c8, ID3D11DepthStencilView* pDepthStencilView = NULL)",227,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_5_3' })",228,9,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",229,120,4,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015908, ID3D11DepthStencilView* pDepthStencilView = NULL)",230,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_5_4' })",231,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",232,94,4,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015948, ID3D11DepthStencilView* pDepthStencilView = NULL)",233,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_5_5' })",234,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",235,92,4,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015988, ID3D11DepthStencilView* pDepthStencilView = NULL)",236,7,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'Reduction_m_pTexReductionSRV_5_6' })",237,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",238,94,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::CopyResource(ID3D11Resource* pDstResource = 'Reduction_m_pFinalTexForCPU_0', ID3D11Resource* pSrcResource = 'Reduction_m_pTexReduction_6_0')",239,5,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_0', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_READ, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad0159e8) = 0x0",240,20031,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_0', UINT Subresource = 0)",241,32,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::CopyResource(ID3D11Resource* pDstResource = 'Reduction_m_pFinalTexForCPU_1', ID3D11Resource* pSrcResource = 'Reduction_m_pTexReduction_6_1')",242,12,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_1', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_READ, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad015a40) = 0x0",243,117,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_1', UINT Subresource = 0)",244,10,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::CopyResource(ID3D11Resource* pDstResource = 'Reduction_m_pFinalTexForCPU_2', ID3D11Resource* pSrcResource = 'Reduction_m_pTexReduction_6_2')",245,6,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_2', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_READ, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad015a98) = 0x0",246,61,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_2', UINT Subresource = 0)",247,10,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::CopyResource(ID3D11Resource* pDstResource = 'Reduction_m_pFinalTexForCPU_3', ID3D11Resource* pSrcResource = 'Reduction_m_pTexReduction_6_3')",248,6,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_3', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_READ, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad015af0) = 0x0",249,90,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_3', UINT Subresource = 0)",250,93,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::CopyResource(ID3D11Resource* pDstResource = 'Reduction_m_pFinalTexForCPU_4', ID3D11Resource* pSrcResource = 'Reduction_m_pTexReduction_6_4')",251,9,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_4', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_READ, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad015b48) = 0x0",252,71,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_4', UINT Subresource = 0)",253,51,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::CopyResource(ID3D11Resource* pDstResource = 'Reduction_m_pFinalTexForCPU_5', ID3D11Resource* pSrcResource = 'Reduction_m_pTexReduction_6_5')",254,6,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_5', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_READ, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad015ba0) = 0x0",255,70,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_5', UINT Subresource = 0)",256,47,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::CopyResource(ID3D11Resource* pDstResource = 'Reduction_m_pFinalTexForCPU_6', ID3D11Resource* pSrcResource = 'Reduction_m_pTexReduction_6_6')",257,7,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_6', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_READ, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad015bf8) = 0x0",258,74,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'Reduction_m_pFinalTexForCPU_6', UINT Subresource = 0)",259,48,0,,0x0000001D9B4D6440
+int D3DPERF_EndEvent() = 0xffffffff,260,8,0,,
+int D3DPERF_EndEvent() = 0xffffffff,261,1,0,,
+UpdateVolume,262,1450,10796,,
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad015c70)",263,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetRenderTargetsAndUnorderedAccessViews(UINT NumRTVs = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015cb8, ID3D11DepthStencilView* pDepthStencilView = NULL, UINT UAVStartSlot = 1, UINT NumUAVs = 2, ID3D11UnorderedAccessView** ppUnorderedAccessViews = 0x1dad015cc0, UINT* pUAVInitialCounts = 0x00000000)",264,17,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'm_pScreenQuadIL'),265,3,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),266,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'm_pScreenQuadVB' }, UINT* pStrides = { 2 }, UINT* pOffsets = { 0 })",267,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0x1dad015d48, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",268,59,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",269,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",270,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperCall' })",271,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",272,19,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperCall' })",273,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetConstantBuffers(UINT StartSlot = 1, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperFrame' })",274,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 2, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pAddDepthSRV' })",275,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 3, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 11' })",276,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 384, UINT StartVertexLocation = 0)",277,1307,10796,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 4, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL })",278,3,0,,0x0000001D9B4D6440
+int D3DPERF_EndEvent() = 0xffffffff,279,3,0,,
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0x1dad015ea0, ID3D11DepthStencilView* pDepthStencilView = NULL)",280,8,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'm_pPassIL'),281,2,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),282,1,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'm_pPassVB' }, UINT* pStrides = { 0 }, UINT* pOffsets = { 0 })",283,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",284,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pTiledQuadGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",285,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pTexPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",286,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'Buffer 23' })",287,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 4, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pAddDepthSRV', 'SRV 17', 'SRV 11', 'SRV 18' })",288,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'm_pSS' })",289,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0x1dad015fa8)",290,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'DXUT', FLOAT ColorRGBA[4] = 0x1dad015fc8)",291,6,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 4, UINT StartVertexLocation = 0)",292,7,135,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 4, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL })",293,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMGetDepthStencilState(ID3D11DepthStencilState** ppDepthStencilState = 0x1dad016020, UINT* pStencilRef = 0x1dad016028)",294,2,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::RSGetState(ID3D11RasterizerState** ppRasterizerState = 0x1dad016038),295,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMGetBlendState(ID3D11BlendState** ppBlendState = 0x1dad016060, FLOAT BlendFactor[4] = 0x1dad016048, UINT* pSampleMask = 0x1dad016068)",296,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSGetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'm_pSS' })",297,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'CDXUTDialogResourceManager', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",298,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::HSSetShader(ID3D11HullShader* pHullShader = NULL, ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",299,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::DSSetShader(ID3D11DomainShader* pDomainShader = NULL, ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",300,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = NULL, ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",301,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'CDXUTDialogResourceManager', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",302,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetDepthStencilState(ID3D11DepthStencilState* pDepthStencilState = 'CDXUTDialogResourceManager', UINT StencilRef = 0)",303,3,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::RSSetState(ID3D11RasterizerState* pRasterizerState = 'CDXUTDialogResourceManager'),304,3,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetBlendState(ID3D11BlendState* pBlendState = 'CDXUTDialogResourceManager', FLOAT BlendFactor[4] = 0x1dad01612c, UINT SampleMask = 0xffffffff)",305,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'CDXUTDialogResourceManager' })",306,2,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad016180) = 0x0",307,594525,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0)",308,1769,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSGetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",309,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 1' })",310,8,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'DXUT Text11' }, UINT* pStrides = { 36 }, UINT* pOffsets = { 0 })",311,4,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'CDXUTDialogResourceManager'),312,3,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST),313,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 90, UINT StartVertexLocation = 0)",314,21,6,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",315,3,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad016260) = 0x0",316,388,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0)",317,35,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSGetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",318,<1,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 1' })",319,11,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'DXUT Text11' }, UINT* pStrides = { 36 }, UINT* pOffsets = { 0 })",320,3,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'CDXUTDialogResourceManager'),321,9,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST),322,1,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 90, UINT StartVertexLocation = 0)",323,8,5,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",324,2,0,,0x0000001D9B4D6440
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0x1dad016340) = 0x0",325,112,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0)",326,51,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSGetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",327,<1,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 1' })",328,5,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'DXUT Text11' }, UINT* pStrides = { 36 }, UINT* pOffsets = { 0 })",329,3,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'CDXUTDialogResourceManager'),330,2,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST),331,1,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 90, UINT StartVertexLocation = 0)",332,7,4,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",333,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetDepthStencilState(ID3D11DepthStencilState* pDepthStencilState = NULL, UINT StencilRef = 0)",334,3,0,,0x0000001D9B4D6440
+void ID3D11DeviceContext1::RSSetState(ID3D11RasterizerState* pRasterizerState = 'RasterizerState 17'),335,4,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::OMSetBlendState(ID3D11BlendState* pBlendState = NULL, FLOAT BlendFactor[4] = 0x1dad016424, UINT SampleMask = 0xffffffff)",336,2,0,,0x0000001D9B4D6440
+"void ID3D11DeviceContext1::PSSetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'm_pSS' })",337,3,0,,0x0000001D9B4D6440
+ULONG ID3D11RasterizerState::Release() = 0x1,338,2,0,,
+ULONG ID3D11SamplerState::Release() = 0x3,339,<1,0,,
+"HRESULT IDXGISwapChain1::Present(UINT SyncInterval = 0, UINT Flags = 0x00000000) = 0x0",340,1094,0,,

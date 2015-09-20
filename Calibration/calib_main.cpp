@@ -25,18 +25,18 @@ int main()
 	vector<vector<Mat>> imgList;
 #if IMG_ACQUISITION
 	imshow( "Sensor0", cv::Mat( 320, 240, CV_16UC1 ) );
-	IRGBDStreamForOpenCV* kinect = OpenCVStreamFactory::createFromKinect();
+	/*IRGBDStreamForOpenCV* kinect = OpenCVStreamFactory::createFromKinect();
 	if( FAILED( kinect->Initialize() ) ){
 		cout << "Cannot initialize kinect." << endl;
 		exit( 1 );
-	}
+	}*/
 	IRGBDStreamForOpenCV* kinect2 = OpenCVStreamFactory::createFromKinect2();
 	if( FAILED( kinect2->Initialize() ) ){
 		cout << "Cannot initialize kinect2." << endl;
 		exit( 1 );
 	}
 
-	imgList = Calibration::ImagesAcquisition( 2,[&kinect2,&kinect]( vector<Mat>& imgs )->bool{
+	imgList = Calibration::ImagesAcquisition( 2,[&kinect2/*,&kinect*/]( vector<Mat>& imgs )->bool{
 		bool succeed;
 		succeed = kinect2->UpdateMats();
 		Mat img;

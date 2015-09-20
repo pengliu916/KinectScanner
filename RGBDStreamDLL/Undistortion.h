@@ -16,6 +16,7 @@
 #endif
 
 #include <d3d11.h>
+#include <sstream>
 #include "DXUT.h"
 
 using namespace DirectX;

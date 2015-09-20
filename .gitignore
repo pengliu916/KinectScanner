@@ -5,6 +5,10 @@
 *.suo
 *.user
 *.sln.docstates
+*.yml
+*.html
+*.cfg
+Results/
 
 # Build results
 

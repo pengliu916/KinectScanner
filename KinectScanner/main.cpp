@@ -310,7 +310,7 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 				RenderText();
 				auto swapchain = DXUTGetDXGISwapChain();
 				swapchain->Present(0,0);
-				if(g_uFrameCount==g_uPauseFrame)g_bRepeat=true;
+				//if(g_uFrameCount==g_uPauseFrame)g_bRepeat=true;
 
 				if (bTracked && !g_bRepeat){
 					// Update the Sensor Pose info

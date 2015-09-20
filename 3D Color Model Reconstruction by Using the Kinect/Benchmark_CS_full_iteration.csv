@@ -1,0 +1,193 @@
+Description,Event,CPU ¦Ìs,GPU ¦Ìs,0 Errors Found,Context
+(Start of Capture),0,0,0,,0x000000B67D2BA0F0
+Generate 3 img from Volume,1,888,2951,,
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'TSDFImages_pm_CB_TSDFImg_KinectPerFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13a0c0, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",2,505,0,,0x000000B67D2BA0F0
+Render the tNearFar,3,321,346,,
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'm_pKinectOutRTV[0]', FLOAT ColorRGBA[4] = 0xb61a13a1d8)",4,13,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'm_pKinectOutRTV[1]', FLOAT ColorRGBA[4] = 0xb61a13a1f0)",5,5,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'm_pFarNearRTV', FLOAT ColorRGBA[4] = 0xb61a13a208)",6,5,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),7,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0xb61a13a238, ID3D11DepthStencilView* pDepthStencilView = NULL)",8,254,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'InputLayout 5'),9,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'm_pPassVB' }, UINT* pStrides = { 2 }, UINT* pOffsets = { 0 })",10,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0xb61a13a290)",11,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",12,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pActiveCellAndSOGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",13,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'TSDFImages_pCB_TSDFImg_PerCall' })",14,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetConstantBuffers(UINT StartSlot = 1, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'TSDFImages_pm_CB_TSDFImg_KinectPerFrame' })",15,1,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetShaderResources(UINT StartSlot = 2, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pBrickVolSRV[0]' })",16,6,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetShaderResources(UINT StartSlot = 3, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pBrickVolSRV[1]' })",17,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pFarNearPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",18,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMGetBlendState(ID3D11BlendState** ppBlendState = 0xb61a13a370, FLOAT BlendFactor[4] = 0xb61a13a358, UINT* pSampleMask = 0xb61a13a378)",19,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetBlendState(ID3D11BlendState* pBlendState = 'BlendState 17', FLOAT BlendFactor[4] = 0x00000000, UINT SampleMask = 0xffffffff)",20,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 110592, UINT StartVertexLocation = 0)",21,9,346,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetBlendState(ID3D11BlendState* pBlendState = NULL, FLOAT BlendFactor[4] = 0xb61a13a3c4, UINT SampleMask = 0xffffffff)",22,2,0,,0x000000B67D2BA0F0
+int D3DPERF_EndEvent() = 0xffffffff,23,2,0,,
+Rendering active cell grid,24,29,371,,
+"void ID3D11DeviceContext1::ClearDepthStencilView(ID3D11DepthStencilView* pDepthStencilView = 'm_pDebug_DSSV', UINT ClearFlags = 0x00000001, FLOAT Depth = 1.000000, UINT8 Stencil = 0)",25,6,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pDebug_CellGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",26,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pDebug_CellPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",27,4,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0xb61a13a490, ID3D11DepthStencilView* pDepthStencilView = 'm_pDebug_DSSV')",28,6,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 110592, UINT StartVertexLocation = 0)",29,9,371,,0x000000B67D2BA0F0
+int D3DPERF_EndEvent() = 0xffffffff,30,1,0,,
+Raymarching,31,34,2234,,
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pRaymarchGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",32,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pRayCastingPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",33,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 2, ID3D11RenderTargetView** ppRenderTargetViews = 0xb61a13a520, ID3D11DepthStencilView* pDepthStencilView = 'm_pDebug_DSSV')",34,5,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'TSDFImages_pCB_TSDFImg_PerCall' })",35,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetConstantBuffers(UINT StartSlot = 1, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'TSDFImages_pm_CB_TSDFImg_KinectPerFrame' })",36,1,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pDWVolumeSRV' })",37,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 1, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pColVolumeSRV' })",38,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 4, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pFarNearSRV' })",39,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 1, UINT StartVertexLocation = 0)",40,12,2234,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 5, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL, NULL })",41,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 5, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL, NULL })",42,2,0,,0x000000B67D2BA0F0
+int D3DPERF_EndEvent() = 0xffffffff,43,1,0,,
+int D3DPERF_EndEvent() = 0xffffffff,44,<1,0,,
+PoseEstimat Computing,45,0,0,,
+"void ID3D11DeviceContext1::CSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperFrame' })",46,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetShader(ID3D11ComputeShader* pComputeShader = 'm_pCS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",47,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13a6d8, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",48,5,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 7, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'UAV 5', 'UAV 6', 'UAV 7', 'UAV 8', 'UAV 9', 'UAV 10', 'UAV 11' }, UINT* pUAVInitialCounts = 0xb61a13a778)",49,9,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 4, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 9', 'm_pKinectOutSRV[0]', 'SRV 11', 'm_pKinectOutSRV[1]' })",50,4,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 64, UINT ThreadGroupCountY = 53, UINT ThreadGroupCountZ = 1)",51,639,349,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 4, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL })",52,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 7, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { NULL, NULL, NULL, NULL, NULL, NULL, NULL }, UINT* pUAVInitialCounts = 0xb61a13a858)",53,2,0,,0x000000B67D2BA0F0
+Reduction,54,10031,417,,
+"void ID3D11DeviceContext1::CSSetShader(ID3D11ComputeShader* pComputeShader = 'm_pCS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",55,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperFrame' })",56,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 1, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'UAV 5' }, UINT* pUAVInitialCounts = 0xb61a13a8f8)",57,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13a930, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",58,5,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 848, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",59,6,46,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13a980, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",60,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 4, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",61,4,7,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13a9d0, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",62,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 1, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",63,4,6,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 1, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'UAV 6' }, UINT* pUAVInitialCounts = 0xb61a13aa10)",64,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13aa48, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",65,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 848, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",66,4,45,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13aa98, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",67,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 4, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",68,3,7,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13aae8, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",69,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 1, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",70,3,6,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 1, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'UAV 7' }, UINT* pUAVInitialCounts = 0xb61a13ab28)",71,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13ab60, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",72,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 848, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",73,6,45,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13abb0, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",74,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 4, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",75,4,7,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13ac00, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",76,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 1, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",77,4,7,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 1, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'UAV 8' }, UINT* pUAVInitialCounts = 0xb61a13ac40)",78,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13ac78, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",79,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 848, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",80,5,46,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13acc8, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",81,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 4, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",82,5,7,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13ad18, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",83,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 1, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",84,3,6,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 1, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'UAV 9' }, UINT* pUAVInitialCounts = 0xb61a13ad58)",85,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13ad90, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",86,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 848, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",87,4,46,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13ade0, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",88,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 4, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",89,3,7,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13ae30, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",90,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 1, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",91,3,6,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 1, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'UAV 10' }, UINT* pUAVInitialCounts = 0xb61a13ae70)",92,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13aea8, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",93,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 848, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",94,5,46,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13aef8, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",95,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 4, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",96,3,7,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13af48, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",97,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 1, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",98,3,6,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 1, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'UAV 11' }, UINT* pUAVInitialCounts = 0xb61a13af88)",99,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13afc0, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",100,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 848, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",101,4,45,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13b010, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",102,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 4, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",103,3,7,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13b060, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",104,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 1, UINT ThreadGroupCountY = 1, UINT ThreadGroupCountZ = 1)",105,3,6,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 1, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { NULL }, UINT* pUAVInitialCounts = 0xb61a13b0a0)",106,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CopySubresourceRegion(ID3D11Resource* pDstResource = 'm_pSumForCPU', UINT DstSubresource = 0, UINT DstX = 0, UINT DstY = 0, UINT DstZ = 0, ID3D11Resource* pSrcResource = 'Buffer 13', UINT SrcSubresource = 0, D3D11_BOX* pSrcBox = 0xb61a13b0d8)",107,21,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CopySubresourceRegion(ID3D11Resource* pDstResource = 'm_pSumForCPU', UINT DstSubresource = 0, UINT DstX = 16, UINT DstY = 0, UINT DstZ = 0, ID3D11Resource* pSrcResource = 'Buffer 14', UINT SrcSubresource = 0, D3D11_BOX* pSrcBox = 0xb61a13b120)",108,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CopySubresourceRegion(ID3D11Resource* pDstResource = 'm_pSumForCPU', UINT DstSubresource = 0, UINT DstX = 32, UINT DstY = 0, UINT DstZ = 0, ID3D11Resource* pSrcResource = 'Buffer 15', UINT SrcSubresource = 0, D3D11_BOX* pSrcBox = 0xb61a13b168)",109,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CopySubresourceRegion(ID3D11Resource* pDstResource = 'm_pSumForCPU', UINT DstSubresource = 0, UINT DstX = 48, UINT DstY = 0, UINT DstZ = 0, ID3D11Resource* pSrcResource = 'Buffer 16', UINT SrcSubresource = 0, D3D11_BOX* pSrcBox = 0xb61a13b1b0)",110,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CopySubresourceRegion(ID3D11Resource* pDstResource = 'm_pSumForCPU', UINT DstSubresource = 0, UINT DstX = 64, UINT DstY = 0, UINT DstZ = 0, ID3D11Resource* pSrcResource = 'Buffer 17', UINT SrcSubresource = 0, D3D11_BOX* pSrcBox = 0xb61a13b1f8)",111,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CopySubresourceRegion(ID3D11Resource* pDstResource = 'm_pSumForCPU', UINT DstSubresource = 0, UINT DstX = 80, UINT DstY = 0, UINT DstZ = 0, ID3D11Resource* pSrcResource = 'Buffer 18', UINT SrcSubresource = 0, D3D11_BOX* pSrcBox = 0xb61a13b240)",112,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CopySubresourceRegion(ID3D11Resource* pDstResource = 'm_pSumForCPU', UINT DstSubresource = 0, UINT DstX = 96, UINT DstY = 0, UINT DstZ = 0, ID3D11Resource* pSrcResource = 'Buffer 19', UINT SrcSubresource = 0, D3D11_BOX* pSrcBox = 0xb61a13b288)",113,2,0,,0x000000B67D2BA0F0
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'm_pSumForCPU', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_READ, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0xb61a13b2c8) = 0x0",114,9524,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'm_pSumForCPU', UINT Subresource = 0)",115,302,0,,0x000000B67D2BA0F0
+int D3DPERF_EndEvent() = 0xffffffff,116,6,0,,
+UpdateVolume,117,1275,8975,,
+"void ID3D11DeviceContext1::UpdateSubresource(ID3D11Resource* pDstResource = 'm_pCBperFrame', UINT DstSubresource = 0, D3D11_BOX* pDstBox = 0x00000000, void* pSrcData = 0xb61a13b358, UINT SrcRowPitch = 0, UINT SrcDepthPitch = 0)",118,51,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperCall' })",119,8,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetConstantBuffers(UINT StartSlot = 1, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'm_pCBperFrame' })",120,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 9' })",121,5,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetShaderResources(UINT StartSlot = 1, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 11' })",122,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 4, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { 'm_pDWVolumeUAV', 'm_pColVolumeUAV', 'm_pBrickVolUAV[0]', 'm_pBrickVolUAV[1]' }, UINT* pUAVInitialCounts = 0xb61a13b430)",123,8,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetShader(ID3D11ComputeShader* pComputeShader = 'm_pRefreshCellCS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",124,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 6, UINT ThreadGroupCountY = 6, UINT ThreadGroupCountZ = 6)",125,1172,18,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetShader(ID3D11ComputeShader* pComputeShader = 'm_pCS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",126,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Dispatch(UINT ThreadGroupCountX = 48, UINT ThreadGroupCountY = 48, UINT ThreadGroupCountZ = 48)",127,13,8957,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetUnorderedAccessViews(UINT StartSlot = 0, UINT NumUAVs = 4, ID3D11UnorderedAccessView** ppUnorderedAccessViews = { NULL, NULL, NULL, NULL }, UINT* pUAVInitialCounts = 0xb61a13b4c8)",128,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::CSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 2, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL })",129,2,0,,0x000000B67D2BA0F0
+int D3DPERF_EndEvent() = 0xffffffff,130,3,0,,
+"void ID3D11DeviceContext1::OMSetRenderTargets(UINT NumViews = 1, ID3D11RenderTargetView** ppRenderTargetViews = 0xb61a13b518, ID3D11DepthStencilView* pDepthStencilView = NULL)",131,9,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'm_pPassIL'),132,2,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST),133,1,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'm_pPassVB' }, UINT* pStrides = { 0 }, UINT* pOffsets = { 0 })",134,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'm_pPassVS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",135,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = 'm_pTiledQuadGS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",136,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'm_pTexPS', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",137,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetConstantBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppConstantBuffers = { 'Buffer 36' })",138,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 4, ID3D11ShaderResourceView** ppShaderResourceViews = { 'm_pAddDepthSRV', 'm_pFarNearSRV', 'SRV 11', 'm_pKinectOutSRV[0]' })",139,5,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'm_pSS' })",140,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::RSSetViewports(UINT NumViewports = 1, D3D11_VIEWPORT* pViewports = 0xb61a13b620)",141,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::ClearRenderTargetView(ID3D11RenderTargetView* pRenderTargetView = 'DXUT', FLOAT ColorRGBA[4] = 0xb61a13b640)",142,8,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 4, UINT StartVertexLocation = 0)",143,5,114,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 4, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL, NULL, NULL, NULL })",144,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMGetDepthStencilState(ID3D11DepthStencilState** ppDepthStencilState = 0xb61a13b698, UINT* pStencilRef = 0xb61a13b6a0)",145,1,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::RSGetState(ID3D11RasterizerState** ppRasterizerState = 0xb61a13b6b0),146,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMGetBlendState(ID3D11BlendState** ppBlendState = 0xb61a13b6d8, FLOAT BlendFactor[4] = 0xb61a13b6c0, UINT* pSampleMask = 0xb61a13b6e0)",147,1,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSGetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'm_pSS' })",148,<1,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::VSSetShader(ID3D11VertexShader* pVertexShader = 'CDXUTDialogResourceManager', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",149,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::HSSetShader(ID3D11HullShader* pHullShader = NULL, ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",150,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::DSSetShader(ID3D11DomainShader* pDomainShader = NULL, ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",151,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::GSSetShader(ID3D11GeometryShader* pShader = NULL, ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",152,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShader(ID3D11PixelShader* pPixelShader = 'CDXUTDialogResourceManager', ID3D11ClassInstance** ppClassInstances = 0x00000000, UINT NumClassInstances = 0)",153,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetDepthStencilState(ID3D11DepthStencilState* pDepthStencilState = 'CDXUTDialogResourceManager', UINT StencilRef = 0)",154,3,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::RSSetState(ID3D11RasterizerState* pRasterizerState = 'CDXUTDialogResourceManager'),155,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetBlendState(ID3D11BlendState* pBlendState = 'CDXUTDialogResourceManager', FLOAT BlendFactor[4] = 0xb61a13b7a4, UINT SampleMask = 0xffffffff)",156,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'CDXUTDialogResourceManager' })",157,2,0,,0x000000B67D2BA0F0
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0xb61a13b7f8) = 0x0",158,346514,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0)",159,447,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSGetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",160,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 1' })",161,10,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'DXUT Text11' }, UINT* pStrides = { 36 }, UINT* pOffsets = { 0 })",162,5,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'CDXUTDialogResourceManager'),163,3,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST),164,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 90, UINT StartVertexLocation = 0)",165,30,6,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",166,3,0,,0x000000B67D2BA0F0
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0xb61a13b8d8) = 0x0",167,279,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0)",168,33,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSGetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",169,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 1' })",170,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'DXUT Text11' }, UINT* pStrides = { 36 }, UINT* pOffsets = { 0 })",171,2,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'CDXUTDialogResourceManager'),172,5,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST),173,2,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 90, UINT StartVertexLocation = 0)",174,10,5,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",175,4,0,,0x000000B67D2BA0F0
+"HRESULT ID3D11DeviceContext1::Map(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0, D3D11_MAP MapType = D3D11_MAP_WRITE_DISCARD, UINT MapFlags = 0x00000000, D3D11_MAPPED_SUBRESOURCE* pMappedResource = 0xb61a13b9b8) = 0x0",176,146,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Unmap(ID3D11Resource* pResource = 'DXUT Text11', UINT Subresource = 0)",177,48,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSGetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",178,<1,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { 'SRV 1' })",179,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::IASetVertexBuffers(UINT StartSlot = 0, UINT NumBuffers = 1, ID3D11Buffer** ppVertexBuffers = { 'DXUT Text11' }, UINT* pStrides = { 36 }, UINT* pOffsets = { 0 })",180,2,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetInputLayout(ID3D11InputLayout* pInputLayout = 'CDXUTDialogResourceManager'),181,2,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST),182,1,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::Draw(UINT VertexCount = 90, UINT StartVertexLocation = 0)",183,8,5,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetShaderResources(UINT StartSlot = 0, UINT NumViews = 1, ID3D11ShaderResourceView** ppShaderResourceViews = { NULL })",184,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetDepthStencilState(ID3D11DepthStencilState* pDepthStencilState = NULL, UINT StencilRef = 0)",185,4,0,,0x000000B67D2BA0F0
+void ID3D11DeviceContext1::RSSetState(ID3D11RasterizerState* pRasterizerState = 'RasterizerState 17'),186,4,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::OMSetBlendState(ID3D11BlendState* pBlendState = NULL, FLOAT BlendFactor[4] = 0xb61a13ba9c, UINT SampleMask = 0xffffffff)",187,3,0,,0x000000B67D2BA0F0
+"void ID3D11DeviceContext1::PSSetSamplers(UINT StartSlot = 0, UINT NumSamplers = 1, ID3D11SamplerState** ppSamplers = { 'm_pSS' })",188,5,0,,0x000000B67D2BA0F0
+ULONG ID3D11RasterizerState::Release() = 0x1,189,2,0,,
+ULONG ID3D11SamplerState::Release() = 0x3,190,<1,0,,
+"HRESULT IDXGISwapChain1::Present(UINT SyncInterval = 0, UINT Flags = 0x00000000) = 0x0",191,2383,0,,
